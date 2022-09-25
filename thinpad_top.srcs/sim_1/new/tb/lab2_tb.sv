@@ -25,7 +25,7 @@ module lab2_tb;
     #100;
     reset_btn = 0;
     
-    for (integer i = 0; i < 20; i = i + 1) begin
+    for (integer i = 0; i < 40; i = i + 1) begin
       #100;  // 等待 100ns
       push_btn = 1;  // 按下 push_btn 按钮
       #100;  // 等待 100ns
