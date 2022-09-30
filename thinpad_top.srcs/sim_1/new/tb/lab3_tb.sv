@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 module lab3_tb;
 
   wire clk_50M, clk_11M0592;
@@ -42,6 +42,33 @@ module lab3_tb;
   logic [4:0] rd, rs1, rs2;
   logic [3:0] opcode;
 
+  logic [15:0] random_value[32];
+  logic [15:0] expect_reg[32];
+
+  task execute_instruction(input [31:0] instruction);
+    dip_sw = instruction;
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    // wait
+    #1000;
+  endtask
+
+  task read_and_assert_register(input [4:0] addr, string info);
+    execute_instruction(`inst_peek(addr, 0));
+    assert(leds == expect_reg[addr]) else $display("(%s) reg[%0d] = %0d, expect %0d",info, addr, dip_sw, expect_reg[addr]);
+  endtask
+
+  task write_register(input [4:0] addr, input [15:0] value);
+    execute_instruction(`inst_poke(addr, value));
+    if (addr != 0) begin
+      expect_reg[addr] = value;
+    end
+    else begin
+      expect_reg[addr] = 0;
+    end
+  endtask
+
   initial begin
     // 在这里可以自定义测试输入序列，例如：
     dip_sw = 32'h0;
@@ -49,26 +76,242 @@ module lab3_tb;
     reset_btn = 0;
     push_btn = 0;
 
+
     #100;
     reset_btn = 1;
     #100;
     reset_btn = 0;
-    #1000;  // 等待复位结束
+    #2500;  // 等待复位结束
 
-    // 样例：使用 POKE 指令为寄存器赋随机初值
-    for (int i = 1; i < 32; i = i + 1) begin
+    // use POKE/PEEK instruction to test register IO
+    for (int i = 0; i < 32; i = i + 1) begin
       #100;
-      rd = i;   // only lower 5 bits
-      dip_sw = `inst_poke(rd, $urandom_range(0, 65536));
-      push_btn = 1;
-
-      #100;
-      push_btn = 0;
-
-      #1000;
+      rd = i;
+      imm = $urandom_range(0, 65535);
+      write_register(rd, imm);
+      read_and_assert_register(rd,"POKE/PEEK");
     end
 
-    // TODO: 随机测试各种指令
+
+    // use ADD instruction to add two registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, ADD));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] + expect_reg[rs2];
+      end
+
+      read_and_assert_register(rd,"ADD");
+    end
+
+    // use SUB instruction to subtract two registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, SUB));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] - expect_reg[rs2];
+      end
+
+      read_and_assert_register(rd,"SUB");
+    end
+
+    // use AND instruction to and two registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, AND));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] & expect_reg[rs2];
+      end
+
+      read_and_assert_register(rd,"AND");
+    end
+
+    // use OR instruction to or two registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, OR));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] | expect_reg[rs2];
+      end
+
+      read_and_assert_register(rd,"OR");
+    end
+
+    // use XOR instruction to xor two registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, XOR));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] ^ expect_reg[rs2];
+      end
+
+      read_and_assert_register(rd,"XOR");
+    end
+
+    // use NOT instruction to not a register
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+
+      execute_instruction(`inst_rtype(rd, rs1, 0, NOT));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = ~expect_reg[rs1];
+      end
+
+      read_and_assert_register(rd,"NOT");
+    end
+
+    // use SLL instruction to shift left a register
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      // write_register(rs2, $urandom_range(1, 15));
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, SLL));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] << expect_reg[rs2][3:0];
+      end
+
+      read_and_assert_register(rd,"SLL");
+    end
+
+    // use SRL instruction to shift right a register
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      // write_register(rs2, $urandom_range(1, 15));
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, SRL));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = expect_reg[rs1] >> expect_reg[rs2][3:0];
+      end
+
+      read_and_assert_register(rd,"SRL");
+    end
+
+    // use SRA instruction to shift right a register
+    for (int i = 0; i < 1000; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      write_register(rs1, $urandom_range(0, 65535));
+      write_register(rs2, $urandom_range(0, 65535));
+
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, SRA));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = ({16 {expect_reg[rs1][15]}} << (16-expect_reg[rs2][3:0])) | (expect_reg[rs1] >> expect_reg[rs2][3:0]);
+      end
+
+      read_and_assert_register(rd, "SRA");
+    end
+
+    // use ROL instruction to rotate left a register
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;   // only lower 5 bits
+      rs1 = $urandom_range(0, 31);
+      rs2 = $urandom_range(0, 31);
+
+      // write_register(rs2, $urandom_range(1, 15));
+
+      execute_instruction(`inst_rtype(rd, rs1, rs2, ROL));
+
+      // wait instruction to complete
+      #1000;
+      if( rd==0 ) begin
+        expect_reg[rd] = 0;
+      end else begin
+        expect_reg[rd] = (expect_reg[rs1] << expect_reg[rs2][3:0] )| (expect_reg[rs1] >> (16-expect_reg[rs2][3:0]));
+      end
+
+      read_and_assert_register(rd,"ROL");
+    end
+
+
+
+
+
+    
+
+
+
+
+
 
     #10000 $finish;
   end

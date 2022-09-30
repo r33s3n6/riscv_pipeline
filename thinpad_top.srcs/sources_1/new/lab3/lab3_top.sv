@@ -1,5 +1,267 @@
 `default_nettype none
 
+
+module instruction_decoder(
+    input  wire [31:0] instruction,
+    output wire [15:0] imm16,
+    output wire [ 4:0] rd,
+    output wire [ 4:0] rs1,
+    output wire [ 4:0] rs2,
+    output wire [ 3:0] op,
+    output wire [ 2:0] op_type
+);
+  
+  assign      rd = instruction[11: 7];
+  assign     rs1 = instruction[19:15];
+  assign     rs2 = instruction[24:20];
+  assign      op = instruction[ 6: 3];
+  assign op_type = instruction[ 2: 0];
+  assign   imm16 = instruction[31:16];
+endmodule
+
+module reg_file(
+  input  wire         clk,
+  input  wire         rst,
+  input  wire [ 4: 0] waddr,
+  input  wire [15: 0] wdata,
+  input  wire         we,
+  input  wire [ 4: 0] raddr_a,
+  input  wire [ 4: 0] raddr_b,
+  output wire [15: 0] rdata_a,
+  output wire [15: 0] rdata_b
+);
+  // real registers
+  reg [15:0] reg_file [0:31];
+
+
+  // data buffer
+
+  //logic [15:0] rdata_a_reg;
+  //logic [15:0] rdata_b_reg;
+
+  //assign rdata_a = rdata_a_reg;
+  //assign rdata_b = rdata_b_reg;
+  assign rdata_a = reg_file[raddr_a];
+  assign rdata_b = reg_file[raddr_b];
+
+  
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      reg_file <= '{default: '0};
+    end else begin
+      //rdata_a_reg <= reg_file[raddr_a];
+      //rdata_b_reg <= reg_file[raddr_b];
+      // dont write to zero register
+      if (we && waddr) begin
+        reg_file[waddr] <= wdata;
+      end
+    end
+  end
+
+endmodule
+
+module alu(
+  input  wire signed [15:0] a,
+  input  wire        [15:0] b,
+  input  wire        [ 3:0] op,
+  output logic       [15:0] result
+);
+  parameter ADD = 4'd1;
+  parameter SUB = 4'd2;
+  parameter AND = 4'd3;
+  parameter OR  = 4'd4;
+  parameter XOR = 4'd5;
+  parameter NOT = 4'd6;
+  parameter SLL = 4'd7;
+  parameter SRL = 4'd8;
+  parameter SRA = 4'd9;
+  parameter ROL = 4'd10;
+
+  always_comb begin
+    case (op)
+      ADD: result = a + b;
+      SUB: result = a - b;
+      AND: result = a & b;
+      OR:  result = a | b;
+      XOR: result = a ^ b;
+      NOT: result = ~a;
+      SLL: result = a << b[3:0];
+      SRL: result = a >> b[3:0];
+      SRA: result = a >>> b[3:0];
+      ROL: result = a << b[3:0] | a >> (16 - b[3:0]);
+      default: result = 16'b0;
+    endcase
+  end
+    
+endmodule
+
+
+module controller (
+    input wire clk,
+    input wire rst,
+
+    // to register file
+    output reg  [ 4:0]  rf_raddr_a,
+    input  wire [15:0]  rf_rdata_a,
+    output reg  [ 4:0]  rf_raddr_b,
+    input  wire [15:0]  rf_rdata_b,
+    output reg  [ 4:0]  rf_waddr,
+    output reg  [15:0]  rf_wdata,
+    output reg          rf_we,
+
+    // to alu
+    output wire  [15:0] alu_a,
+    output wire  [15:0] alu_b,
+    output wire  [ 3:0] alu_op,
+    input  wire  [15:0] alu_y,
+
+    input  wire        step,     // confirm
+    input  wire [31:0] instruction,
+    output reg  [15:0] leds
+);
+  parameter rtype = 3'b001;
+  parameter itype = 3'b010;
+
+  parameter iop_poke = 4'b0001;
+  parameter iop_peek = 4'b0010;
+
+  logic [ 4:0] next_rf_raddr_a_comb;
+  logic [ 4:0] next_rf_raddr_b_comb;
+  logic [ 4:0] next_rf_waddr_comb;
+  logic [15:0] next_rf_wdata_comb;
+  logic        next_rf_we_comb;
+
+  logic [15:0] next_leds_comb;
+
+
+  logic [31:0] inst_reg; //register buffer
+  logic [31:0] next_inst_comb;
+
+
+  logic [15:0] imm16_comb;
+  logic [ 4:0] rd_comb;
+  logic [ 4:0] rs1_comb;
+  logic [ 4:0] rs2_comb;
+  logic [ 3:0] op_comb;
+  logic [ 2:0] op_type_comb;
+
+  // hardwire the alu with the data read from the register file
+  assign alu_a  = rf_rdata_a;
+  assign alu_b  = rf_rdata_b;
+  assign alu_op = op_comb;
+
+  instruction_decoder inst_decoder(
+    .instruction(inst_reg),
+    .imm16(imm16_comb),
+    .rd(rd_comb),
+    .rs1(rs1_comb),
+    .rs2(rs2_comb),
+    .op(op_comb),
+    .op_type(op_type_comb)
+  );
+
+  typedef enum logic [3:0] {
+    ST_INIT,
+    ST_DECODE,
+    ST_CALC,
+    ST_READ_REG,
+    ST_WRITE_REG
+  } state_t;
+
+  state_t state_reg;
+  state_t next_state_comb;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      state_reg            <= ST_INIT;
+      inst_reg             <= 16'b0;
+      rf_raddr_a           <= 5'b0;
+      rf_raddr_b           <= 5'b0;
+      rf_waddr             <= 5'b0;
+      rf_wdata             <= 16'b0;
+      rf_we                <= 1'b0;
+      leds                 <= 16'b0;
+
+    end else begin
+      state_reg  <= next_state_comb;
+      inst_reg   <= next_inst_comb;
+      rf_raddr_a <= next_rf_raddr_a_comb;
+      rf_raddr_b <= next_rf_raddr_b_comb;
+      rf_waddr   <= next_rf_waddr_comb;
+      rf_wdata   <= next_rf_wdata_comb;
+      rf_we      <= next_rf_we_comb;
+      leds       <= next_leds_comb;
+
+    end
+  end
+
+  always_comb begin
+    // default set to themselves
+    next_state_comb      = state_reg;
+    next_inst_comb       = inst_reg;
+    next_rf_raddr_a_comb = rf_raddr_a;
+    next_rf_raddr_b_comb = rf_raddr_b;
+    next_rf_waddr_comb   = rf_waddr;
+    next_rf_wdata_comb   = rf_wdata;
+    next_rf_we_comb      = rf_we;
+    next_leds_comb       = leds;
+
+    case(state_reg)
+      ST_INIT: begin
+        if(step) begin
+          next_state_comb = ST_DECODE;
+          next_inst_comb  = instruction;
+        end
+      end
+      ST_DECODE: begin
+        // we got the decoder output
+        if (op_type_comb == rtype) begin
+          next_state_comb      = ST_CALC;
+          next_rf_raddr_a_comb = rs1_comb;
+          next_rf_raddr_b_comb = rs2_comb;
+        end else if (op_type_comb == itype) begin
+          if(op_comb == iop_peek) begin
+            next_state_comb      = ST_READ_REG;
+            next_rf_raddr_a_comb = rd_comb;
+          end else if (op_comb == iop_poke) begin
+            next_state_comb      = ST_WRITE_REG;
+            next_rf_waddr_comb   = rd_comb;
+            next_rf_wdata_comb   = imm16_comb;
+            next_rf_we_comb      = 1'b1;
+          end else begin
+            // invalid instruction
+            next_state_comb = ST_INIT;
+          end
+        end else begin
+          // invalid instruction
+          next_state_comb = ST_INIT;
+        end
+      end
+      ST_CALC: begin
+        // we got the result, write back
+        next_state_comb      = ST_WRITE_REG;
+        next_rf_waddr_comb   = rd_comb;
+        next_rf_wdata_comb   = alu_y;
+        next_rf_we_comb      = 1'b1;
+      end
+      ST_READ_REG: begin
+        // display the value
+        next_state_comb = ST_INIT;
+        next_leds_comb  = rf_rdata_a;
+      end
+      ST_WRITE_REG: begin
+        next_state_comb = ST_INIT;
+      end
+      default: begin
+        next_state_comb = ST_INIT;
+      end
+    endcase
+  end
+
+
+endmodule
+
 module lab3_top (
     input wire clk_50M,     // 50MHz 时钟输入
     input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
@@ -104,10 +366,72 @@ module lab3_top (
   end
 
   /* =========== Demo code end =========== */
+  logic [ 4:0] waddr_comb;
+  logic [15:0] wdata_comb;
+  logic        we_comb;
+  logic [ 4:0] raddr_a_comb;
+  logic [ 4:0] raddr_b_comb;
+  logic [15:0] rdata_a_comb;
+  logic [15:0] rdata_b_comb;
+  reg_file reg_file_inst (
+      .clk(clk_10M),
+      .rst(reset_of_clk10M),
+      .waddr(waddr_comb),
+      .wdata(wdata_comb),
+      .we(we_comb),
+      .raddr_a(raddr_a_comb),
+      .raddr_b(raddr_b_comb),
+      .rdata_a(rdata_a_comb),
+      .rdata_b(rdata_b_comb)
+  );
 
-  // TODO: 内部信号声明
+  logic [15:0] alu_a_comb;
+  logic [15:0] alu_b_comb;
+  logic [3: 0] alu_op_comb;
+  logic [15:0] alu_result_comb;
 
-  // TODO: 实验模块例化
+  alu alu_inst (
+      .a(alu_a_comb),
+      .b(alu_b_comb),
+      .op(alu_op_comb),
+      .result(alu_result_comb)
+  );
+
+  logic push_btn_trigger_comb;
+
+   trigger trigger_inst (
+      .clk    (clk_10M),
+      .rst    (reset_of_clk10M),
+      .btn    (push_btn),
+      .trigger(push_btn_trigger_comb)
+  );
+
+  controller controller_inst (
+      .clk(clk_10M),
+      .rst(reset_of_clk10M),
+
+      // register file
+      .rf_waddr(waddr_comb),
+      .rf_wdata(wdata_comb),
+      .rf_we(we_comb),
+      .rf_raddr_a(raddr_a_comb),
+      .rf_raddr_b(raddr_b_comb),
+      .rf_rdata_a(rdata_a_comb),
+      .rf_rdata_b(rdata_b_comb),
+
+      //alu
+      .alu_a(alu_a_comb),
+      .alu_b(alu_b_comb),
+      .alu_op(alu_op_comb),
+      .alu_y(alu_result_comb),
+
+      // io
+      .step(push_btn_trigger_comb),
+      .instruction(dip_sw),
+      .leds(leds));
+
+
+
 
 
 endmodule

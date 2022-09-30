@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="lab3_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="lab3_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="45757302fs"></ZoomStartTime>
+      <ZoomEndTime time="46769137fs"></ZoomEndTime>
+      <Cursor1Time time="4256338fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="175"></NameColumnWidth>
+      <ValueColumnWidth column_width="126"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="16" />
+   <wvobject fp_name="/lab3_tb/dut/clk_10M" type="logic">
+      <obj_property name="ElementShortName">clk_10M</obj_property>
+      <obj_property name="ObjectShortName">clk_10M</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/push_btn" type="logic">
+      <obj_property name="ElementShortName">push_btn</obj_property>
+      <obj_property name="ObjectShortName">push_btn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/reset_btn" type="logic">
+      <obj_property name="ElementShortName">reset_btn</obj_property>
+      <obj_property name="ObjectShortName">reset_btn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/reset_of_clk10M" type="logic">
+      <obj_property name="ElementShortName">reset_of_clk10M</obj_property>
+      <obj_property name="ObjectShortName">reset_of_clk10M</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dip_sw" type="array">
+      <obj_property name="ElementShortName">dip_sw[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dip_sw[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/leds" type="array">
+      <obj_property name="ElementShortName">leds[15:0]</obj_property>
+      <obj_property name="ObjectShortName">leds[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/step" type="logic">
+      <obj_property name="ElementShortName">step</obj_property>
+      <obj_property name="ObjectShortName">step</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_raddr_a" type="array">
+      <obj_property name="ElementShortName">rf_raddr_a[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_raddr_a[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_rdata_a" type="array">
+      <obj_property name="ElementShortName">rf_rdata_a[15:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_rdata_a[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_raddr_b" type="array">
+      <obj_property name="ElementShortName">rf_raddr_b[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_raddr_b[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_rdata_b" type="array">
+      <obj_property name="ElementShortName">rf_rdata_b[15:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_rdata_b[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_waddr" type="array">
+      <obj_property name="ElementShortName">rf_waddr[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_waddr[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_wdata" type="array">
+      <obj_property name="ElementShortName">rf_wdata[15:0]</obj_property>
+      <obj_property name="ObjectShortName">rf_wdata[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/rf_we" type="logic">
+      <obj_property name="ElementShortName">rf_we</obj_property>
+      <obj_property name="ObjectShortName">rf_we</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/controller_inst/state_reg" type="array">
+      <obj_property name="ElementShortName">state_reg[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state_reg[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab3_tb/dut/reg_file_inst/reg_file" type="array">
+      <obj_property name="ElementShortName">reg_file[0:31][15:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_file[0:31][15:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+</wave_config>
