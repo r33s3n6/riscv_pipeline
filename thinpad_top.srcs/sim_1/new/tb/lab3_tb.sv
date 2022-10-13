@@ -257,7 +257,7 @@ module lab3_tb;
     end
 
     // use SRA instruction to shift right a register
-    for (int i = 0; i < 1000; i = i + 1) begin
+    for (int i = 0; i < 100; i = i + 1) begin
       #100;
       rd = i;   // only lower 5 bits
       rs1 = $urandom_range(0, 31);

@@ -33,26 +33,13 @@ module reg_file(
   // real registers
   reg [15:0] reg_file [0:31];
 
-
-  // data buffer
-
-  //logic [15:0] rdata_a_reg;
-  //logic [15:0] rdata_b_reg;
-
-  //assign rdata_a = rdata_a_reg;
-  //assign rdata_b = rdata_b_reg;
   assign rdata_a = reg_file[raddr_a];
   assign rdata_b = reg_file[raddr_b];
-
-  
 
   always_ff @(posedge clk) begin
     if (rst) begin
       reg_file <= '{default: '0};
     end else begin
-      //rdata_a_reg <= reg_file[raddr_a];
-      //rdata_b_reg <= reg_file[raddr_b];
-      // dont write to zero register
       if (we && waddr) begin
         reg_file[waddr] <= wdata;
       end
@@ -102,13 +89,13 @@ module controller (
     input wire rst,
 
     // to register file
-    output reg  [ 4:0]  rf_raddr_a,
-    input  wire [15:0]  rf_rdata_a,
-    output reg  [ 4:0]  rf_raddr_b,
-    input  wire [15:0]  rf_rdata_b,
-    output reg  [ 4:0]  rf_waddr,
-    output reg  [15:0]  rf_wdata,
-    output reg          rf_we,
+    output wire  [ 4:0]  rf_raddr_a,
+    input  wire  [15:0]  rf_rdata_a,
+    output wire  [ 4:0]  rf_raddr_b,
+    input  wire  [15:0]  rf_rdata_b,
+    output wire  [ 4:0]  rf_waddr,
+    output wire  [15:0]  rf_wdata,
+    output wire          rf_we,
 
     // to alu
     output wire  [15:0] alu_a,
@@ -126,14 +113,16 @@ module controller (
   parameter iop_poke = 4'b0001;
   parameter iop_peek = 4'b0010;
 
-  logic [ 4:0] next_rf_raddr_a_comb;
-  logic [ 4:0] next_rf_raddr_b_comb;
-  logic [ 4:0] next_rf_waddr_comb;
-  logic [15:0] next_rf_wdata_comb;
-  logic        next_rf_we_comb;
+  typedef enum logic [3:0] {
+    ST_INIT,
+    ST_DECODE,
+    ST_CALC,
+    ST_READ_REG,
+    ST_WRITE_REG
+  } state_t;
+
 
   logic [15:0] next_leds_comb;
-
 
   logic [31:0] inst_reg; //register buffer
   logic [31:0] next_inst_comb;
@@ -146,10 +135,25 @@ module controller (
   logic [ 3:0] op_comb;
   logic [ 2:0] op_type_comb;
 
-  // hardwire the alu with the data read from the register file
-  assign alu_a  = rf_rdata_a;
-  assign alu_b  = rf_rdata_b;
-  assign alu_op = op_comb;
+
+  logic  [ 4:0]  rf_raddr_a_comb;
+  logic  [ 4:0]  rf_raddr_b_comb;
+  logic  [ 4:0]  rf_waddr_comb;
+  logic  [15:0]  rf_wdata_comb;
+  logic          rf_we_comb;
+
+  assign rf_raddr_a = rf_raddr_a_comb;
+  assign rf_raddr_b = rf_raddr_b_comb;
+  assign rf_waddr = rf_waddr_comb;
+  assign rf_wdata = rf_wdata_comb;
+  // assign rf_we = rf_we_comb;
+
+
+
+  state_t state_reg;
+  state_t next_state_comb;
+
+
 
   instruction_decoder inst_decoder(
     .instruction(inst_reg),
@@ -161,36 +165,54 @@ module controller (
     .op_type(op_type_comb)
   );
 
-  typedef enum logic [3:0] {
-    ST_INIT,
-    ST_DECODE,
-    ST_CALC,
-    ST_READ_REG,
-    ST_WRITE_REG
-  } state_t;
+  // instruction to register file control signals
+  always_comb begin
+    rf_raddr_a_comb = 5'b00000;
+    rf_raddr_b_comb = 5'b00000;
+    rf_waddr_comb   = 5'b00000;    
+    rf_wdata_comb   = 16'b0;
 
-  state_t state_reg;
-  state_t next_state_comb;
+    case(op_type_comb)
+      rtype: begin
+        rf_raddr_a_comb = rs1_comb;
+        rf_raddr_b_comb = rs2_comb;
+        rf_waddr_comb   = rd_comb;
+        rf_wdata_comb   = alu_y;
+      end
+      itype: begin
+        case(op_comb)
+          iop_poke: begin
+            rf_waddr_comb   = rd_comb;
+            rf_wdata_comb   = imm16_comb;
+          end
+          iop_peek: begin
+            rf_raddr_a_comb = rd_comb;
+          end
+        endcase
+      end
+    endcase
+
+  end
+
+  assign rf_we = (state_reg == ST_WRITE_REG);
+
+  // hardwire the alu with the data read from the register file
+  assign alu_a  = rf_rdata_a;
+  assign alu_b  = rf_rdata_b;
+  assign alu_op = op_comb;
+
+
+
 
   always_ff @(posedge clk) begin
     if (rst) begin
       state_reg            <= ST_INIT;
       inst_reg             <= 16'b0;
-      rf_raddr_a           <= 5'b0;
-      rf_raddr_b           <= 5'b0;
-      rf_waddr             <= 5'b0;
-      rf_wdata             <= 16'b0;
-      rf_we                <= 1'b0;
       leds                 <= 16'b0;
 
     end else begin
       state_reg  <= next_state_comb;
       inst_reg   <= next_inst_comb;
-      rf_raddr_a <= next_rf_raddr_a_comb;
-      rf_raddr_b <= next_rf_raddr_b_comb;
-      rf_waddr   <= next_rf_waddr_comb;
-      rf_wdata   <= next_rf_wdata_comb;
-      rf_we      <= next_rf_we_comb;
       leds       <= next_leds_comb;
 
     end
@@ -200,11 +222,6 @@ module controller (
     // default set to themselves
     next_state_comb      = state_reg;
     next_inst_comb       = inst_reg;
-    next_rf_raddr_a_comb = rf_raddr_a;
-    next_rf_raddr_b_comb = rf_raddr_b;
-    next_rf_waddr_comb   = rf_waddr;
-    next_rf_wdata_comb   = rf_wdata;
-    next_rf_we_comb      = rf_we;
     next_leds_comb       = leds;
 
     case(state_reg)
@@ -218,17 +235,11 @@ module controller (
         // we got the decoder output
         if (op_type_comb == rtype) begin
           next_state_comb      = ST_CALC;
-          next_rf_raddr_a_comb = rs1_comb;
-          next_rf_raddr_b_comb = rs2_comb;
         end else if (op_type_comb == itype) begin
           if(op_comb == iop_peek) begin
             next_state_comb      = ST_READ_REG;
-            next_rf_raddr_a_comb = rd_comb;
           end else if (op_comb == iop_poke) begin
             next_state_comb      = ST_WRITE_REG;
-            next_rf_waddr_comb   = rd_comb;
-            next_rf_wdata_comb   = imm16_comb;
-            next_rf_we_comb      = 1'b1;
           end else begin
             // invalid instruction
             next_state_comb = ST_INIT;
@@ -241,9 +252,6 @@ module controller (
       ST_CALC: begin
         // we got the result, write back
         next_state_comb      = ST_WRITE_REG;
-        next_rf_waddr_comb   = rd_comb;
-        next_rf_wdata_comb   = alu_y;
-        next_rf_we_comb      = 1'b1;
       end
       ST_READ_REG: begin
         // display the value
