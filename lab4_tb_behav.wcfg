@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="lab4_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="lab4_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="236681490fs"></ZoomStartTime>
+      <ZoomEndTime time="237325940fs"></ZoomEndTime>
+      <Cursor1Time time="236907752fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="319"></NameColumnWidth>
+      <ValueColumnWidth column_width="426"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="65" />
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/clk_i" type="logic">
+      <obj_property name="ElementShortName">clk_i</obj_property>
+      <obj_property name="ObjectShortName">clk_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/rst_i" type="logic">
+      <obj_property name="ElementShortName">rst_i</obj_property>
+      <obj_property name="ObjectShortName">rst_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/start" type="logic">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/random_seed" type="array">
+      <obj_property name="ElementShortName">random_seed[31:0]</obj_property>
+      <obj_property name="ObjectShortName">random_seed[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_cyc_o" type="logic">
+      <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+      <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_stb_o" type="logic">
+      <obj_property name="ElementShortName">wb_stb_o</obj_property>
+      <obj_property name="ObjectShortName">wb_stb_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_ack_i" type="logic">
+      <obj_property name="ElementShortName">wb_ack_i</obj_property>
+      <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_adr_o" type="array">
+      <obj_property name="ElementShortName">wb_adr_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_adr_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_dat_o" type="array">
+      <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_dat_i" type="array">
+      <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_sel_o" type="array">
+      <obj_property name="ElementShortName">wb_sel_o[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_sel_o[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/wb_we_o" type="logic">
+      <obj_property name="ElementShortName">wb_we_o</obj_property>
+      <obj_property name="ObjectShortName">wb_we_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/done" type="logic">
+      <obj_property name="ElementShortName">done</obj_property>
+      <obj_property name="ObjectShortName">done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/error" type="logic">
+      <obj_property name="ElementShortName">error</obj_property>
+      <obj_property name="ObjectShortName">error</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/error_round" type="array">
+      <obj_property name="ElementShortName">error_round[31:0]</obj_property>
+      <obj_property name="ObjectShortName">error_round[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/error_addr" type="array">
+      <obj_property name="ElementShortName">error_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">error_addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/error_read_data" type="array">
+      <obj_property name="ElementShortName">error_read_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">error_read_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/error_expected_data" type="array">
+      <obj_property name="ElementShortName">error_expected_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">error_expected_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/count" type="array">
+      <obj_property name="ElementShortName">count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">count[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/data_expected" type="array">
+      <obj_property name="ElementShortName">data_expected[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data_expected[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/data_mask" type="array">
+      <obj_property name="ElementShortName">data_mask[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data_mask[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/read_compare" type="array">
+      <obj_property name="ElementShortName">read_compare[3:0]</obj_property>
+      <obj_property name="ObjectShortName">read_compare[3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/state" type="array">
+      <obj_property name="ElementShortName">state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/state_n" type="array">
+      <obj_property name="ElementShortName">state_n[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state_n[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/rng_load" type="logic">
+      <obj_property name="ElementShortName">rng_load</obj_property>
+      <obj_property name="ObjectShortName">rng_load</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/rng_enable" type="logic">
+      <obj_property name="ElementShortName">rng_enable</obj_property>
+      <obj_property name="ObjectShortName">rng_enable</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/rng_addr" type="array">
+      <obj_property name="ElementShortName">rng_addr[22:0]</obj_property>
+      <obj_property name="ObjectShortName">rng_addr[22:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/u_sram_tester/rng_data" type="array">
+      <obj_property name="ElementShortName">rng_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rng_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider199">
+      <obj_property name="label">1</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_cyc_i" type="logic">
+      <obj_property name="ElementShortName">wb_cyc_i</obj_property>
+      <obj_property name="ObjectShortName">wb_cyc_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_stb_i" type="logic">
+      <obj_property name="ElementShortName">wb_stb_i</obj_property>
+      <obj_property name="ObjectShortName">wb_stb_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_ack_o" type="logic">
+      <obj_property name="ElementShortName">wb_ack_o</obj_property>
+      <obj_property name="ObjectShortName">wb_ack_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_adr_i" type="array">
+      <obj_property name="ElementShortName">wb_adr_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_adr_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_dat_i" type="array">
+      <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_dat_o" type="array">
+      <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_sel_i" type="array">
+      <obj_property name="ElementShortName">wb_sel_i[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_sel_i[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_we_i" type="logic">
+      <obj_property name="ElementShortName">wb_we_i</obj_property>
+      <obj_property name="ObjectShortName">wb_we_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_addr" type="array">
+      <obj_property name="ElementShortName">sram_addr[19:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_addr[19:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_data" type="array">
+      <obj_property name="ElementShortName">sram_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_ce_n" type="logic">
+      <obj_property name="ElementShortName">sram_ce_n</obj_property>
+      <obj_property name="ObjectShortName">sram_ce_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_oe_n" type="logic">
+      <obj_property name="ElementShortName">sram_oe_n</obj_property>
+      <obj_property name="ObjectShortName">sram_oe_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_we_n" type="logic">
+      <obj_property name="ElementShortName">sram_we_n</obj_property>
+      <obj_property name="ObjectShortName">sram_we_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_be_n" type="array">
+      <obj_property name="ElementShortName">sram_be_n[3:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_be_n[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_data_o_comb" type="array">
+      <obj_property name="ElementShortName">sram_data_o_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_data_o_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_data_i_comb" type="array">
+      <obj_property name="ElementShortName">sram_data_i_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_data_i_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_data_t_comb" type="logic">
+      <obj_property name="ElementShortName">sram_data_t_comb</obj_property>
+      <obj_property name="ObjectShortName">sram_data_t_comb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/state_reg" type="array">
+      <obj_property name="ElementShortName">state_reg[1:0]</obj_property>
+      <obj_property name="ObjectShortName">state_reg[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/next_state_comb" type="array">
+      <obj_property name="ElementShortName">next_state_comb[1:0]</obj_property>
+      <obj_property name="ObjectShortName">next_state_comb[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/ready_reg" type="logic">
+      <obj_property name="ElementShortName">ready_reg</obj_property>
+      <obj_property name="ObjectShortName">ready_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/next_ready_comb" type="logic">
+      <obj_property name="ElementShortName">next_ready_comb</obj_property>
+      <obj_property name="ObjectShortName">next_ready_comb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/wb_dat_o_reg" type="array">
+      <obj_property name="ElementShortName">wb_dat_o_reg[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wb_dat_o_reg[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/next_wb_dat_o_comb" type="array">
+      <obj_property name="ElementShortName">next_wb_dat_o_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">next_wb_dat_o_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/addr_comb" type="array">
+      <obj_property name="ElementShortName">addr_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/addr_buf_reg" type="array">
+      <obj_property name="ElementShortName">addr_buf_reg[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr_buf_reg[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/data_in_comb" type="array">
+      <obj_property name="ElementShortName">data_in_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data_in_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/data_in_buf_reg" type="array">
+      <obj_property name="ElementShortName">data_in_buf_reg[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data_in_buf_reg[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sel_comb" type="array">
+      <obj_property name="ElementShortName">sel_comb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">sel_comb[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sel_buf_reg" type="array">
+      <obj_property name="ElementShortName">sel_buf_reg[3:0]</obj_property>
+      <obj_property name="ObjectShortName">sel_buf_reg[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/address_offset_comb" type="array">
+      <obj_property name="ElementShortName">address_offset_comb[1:0]</obj_property>
+      <obj_property name="ObjectShortName">address_offset_comb[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/accessible_mask_comb" type="array">
+      <obj_property name="ElementShortName">accessible_mask_comb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">accessible_mask_comb[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/request_access_comb" type="array">
+      <obj_property name="ElementShortName">request_access_comb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">request_access_comb[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/real_sram_data_comb" type="array">
+      <obj_property name="ElementShortName">real_sram_data_comb[31:0]</obj_property>
+      <obj_property name="ObjectShortName">real_sram_data_comb[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_ce_n_comb" type="logic">
+      <obj_property name="ElementShortName">sram_ce_n_comb</obj_property>
+      <obj_property name="ObjectShortName">sram_ce_n_comb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_oe_n_comb" type="logic">
+      <obj_property name="ElementShortName">sram_oe_n_comb</obj_property>
+      <obj_property name="ObjectShortName">sram_oe_n_comb</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab4_tb/dut/sram_controller_base/sram_we_n_comb" type="logic">
+      <obj_property name="ElementShortName">sram_we_n_comb</obj_property>
+      <obj_property name="ObjectShortName">sram_we_n_comb</obj_property>
+   </wvobject>
+</wave_config>
