@@ -62,7 +62,7 @@ module lab5_tb;
 
 
     // 等待一段时间，结束仿真
-    #50000 $finish;
+    #100000 $finish;
   end
 
   // 待测试用户设计

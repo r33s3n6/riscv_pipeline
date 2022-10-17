@@ -104,43 +104,43 @@ always_comb begin
   case (state_next)
     // read status register
     ST_UART_WAIT_READ, ST_UART_WAIT_WRITE: begin
-      wb_cyc_o_next <= 1'b1;
-      wb_stb_o_next <= 1'b1;
-      wb_adr_o_next <= UART_STATUS_ADDR;
-      wb_sel_o_next <= UART_STATUS_ADDR_SEL;
-      wb_we_o_next  <= 1'b0;
+      wb_cyc_o_next = 1'b1;
+      wb_stb_o_next = 1'b1;
+      wb_adr_o_next = UART_STATUS_ADDR;
+      wb_sel_o_next = UART_STATUS_ADDR_SEL;
+      wb_we_o_next  = 1'b0;
     end
 
     ST_UART_READ: begin
-      wb_cyc_o_next <= 1'b1;
-      wb_stb_o_next <= 1'b1;
-      wb_adr_o_next <= UART_DATA_ADDR;
-      wb_sel_o_next <= UART_DATA_ADDR_SEL;
-      wb_we_o_next  <= 1'b0;
+      wb_cyc_o_next = 1'b1;
+      wb_stb_o_next = 1'b1;
+      wb_adr_o_next = UART_DATA_ADDR;
+      wb_sel_o_next = UART_DATA_ADDR_SEL;
+      wb_we_o_next  = 1'b0;
     end
 
     ST_UART_WRITE: begin
-      wb_cyc_o_next <= 1'b1;
-      wb_stb_o_next <= 1'b1;
-      wb_adr_o_next <= UART_DATA_ADDR;
-      wb_sel_o_next <= UART_DATA_ADDR_SEL;
-      wb_we_o_next  <= 1'b1;
-      wb_dat_o_next <= data_buf_next;
+      wb_cyc_o_next = 1'b1;
+      wb_stb_o_next = 1'b1;
+      wb_adr_o_next = UART_DATA_ADDR;
+      wb_sel_o_next = UART_DATA_ADDR_SEL;
+      wb_we_o_next  = 1'b1;
+      wb_dat_o_next = data_buf_next;
     end
 
     ST_SRAM_WRITE: begin
       // do write sram request
-      wb_cyc_o_next <= 1'b1;
-      wb_stb_o_next <= 1'b1;
-      wb_adr_o_next <= addr_reg;
-      wb_sel_o_next <= 4'b0001; // write only 1 byte
-      wb_we_o_next  <= 1'b1;
-      wb_dat_o_next <= data_buf_next;
+      wb_cyc_o_next = 1'b1;
+      wb_stb_o_next = 1'b1;
+      wb_adr_o_next = addr_reg;
+      wb_sel_o_next = 4'b0001; // write only 1 byte
+      wb_we_o_next  = 1'b1;
+      wb_dat_o_next = data_buf_next;
     end
 
     ST_DONE: begin
-      wb_cyc_o_next <= 1'b0;
-      wb_stb_o_next <= 1'b0;
+      wb_cyc_o_next = 1'b0;
+      wb_stb_o_next = 1'b0;
     end
   endcase
 
