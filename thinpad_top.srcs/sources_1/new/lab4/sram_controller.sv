@@ -37,7 +37,6 @@ module sram_controller #(
   logic sram_data_t_comb; // z
 
   // select bit mask
-  // TODO: generate
   logic [DATA_WIDTH-1:0] sel_bit_mask_comb;
 
   // generate bit mask
@@ -46,8 +45,6 @@ module sram_controller #(
       assign sel_bit_mask_comb[i+7:i] = {8{wb_sel_i[i/8]}};
     end
   endgenerate
-
-  // assign sel_bit_mask_comb = {{8{wb_sel_i[3]}},{8{wb_sel_i[2]}},{8{wb_sel_i[1]}},{8{wb_sel_i[0]}}};
   
 
   assign sram_data = sram_data_t_comb ? {SRAM_DATA_WIDTH{1'bz}} : sram_data_to_comb;
