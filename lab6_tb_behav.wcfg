@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="lab6_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="lab6_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="134034030fs"></ZoomStartTime>
+      <ZoomEndTime time="135009355fs"></ZoomEndTime>
+      <Cursor1Time time="134149590fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="337"></NameColumnWidth>
+      <ValueColumnWidth column_width="292"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="12" />
+   <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_register_file_inst/reg_file" type="array">
+      <obj_property name="ElementShortName">reg_file[0:31][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_file[0:31][31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab6_tb/dut/reset_btn" type="logic">
+      <obj_property name="ElementShortName">reset_btn</obj_property>
+      <obj_property name="ObjectShortName">reset_btn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab6_tb/dut/sys_clk" type="logic">
+      <obj_property name="ElementShortName">sys_clk</obj_property>
+      <obj_property name="ObjectShortName">sys_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/lab6_tb/dut/sys_rst" type="logic">
+      <obj_property name="ElementShortName">sys_rst</obj_property>
+      <obj_property name="ObjectShortName">sys_rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="group373" type="group">
+      <obj_property name="label">stage_if</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/if_pc_reg_inst/pc_o" type="array">
+         <obj_property name="ElementShortName">pc_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/if_pc_reg_inst/next_pc_i" type="array">
+         <obj_property name="ElementShortName">next_pc_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">next_pc_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/_if_inst_addr" type="array">
+         <obj_property name="ElementShortName">_if_inst_addr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_if_inst_addr[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/_if_inst" type="array">
+         <obj_property name="ElementShortName">_if_inst[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_if_inst[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/if_pipeline_regs_inst/bubble_i" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">bubble_i</obj_property>
+         <obj_property name="ObjectShortName">bubble_i</obj_property>
+         <obj_property name="label">if_bubble_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/if_pipeline_regs_inst/stall_i" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">stall_i</obj_property>
+         <obj_property name="ObjectShortName">stall_i</obj_property>
+         <obj_property name="label">if_stall_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/_if_pc_stall" type="logic">
+         <obj_property name="ElementShortName">_if_pc_stall</obj_property>
+         <obj_property name="ObjectShortName">_if_pc_stall</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/_if_pc_valid" type="logic">
+         <obj_property name="ElementShortName">_if_pc_valid</obj_property>
+         <obj_property name="ObjectShortName">_if_pc_valid</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/id_is_branch_i" type="logic">
+         <obj_property name="ElementShortName">id_is_branch_i</obj_property>
+         <obj_property name="ObjectShortName">id_is_branch_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/id_reg_is_branch_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_is_branch_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_is_branch_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/_if_do_branch" type="logic">
+         <obj_property name="ElementShortName">_if_do_branch</obj_property>
+         <obj_property name="ObjectShortName">_if_do_branch</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/if_pc_controller_inst/branch_last_i" type="logic">
+         <obj_property name="ElementShortName">branch_last_i</obj_property>
+         <obj_property name="ObjectShortName">branch_last_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/id_wait_reg_i" type="logic">
+         <obj_property name="ElementShortName">id_wait_reg_i</obj_property>
+         <obj_property name="ObjectShortName">id_wait_reg_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/id_stall_i" type="logic">
+         <obj_property name="ElementShortName">id_stall_i</obj_property>
+         <obj_property name="ObjectShortName">id_stall_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/wb_cyc_o" type="logic">
+         <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+         <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_if_inst/wb_ack_i" type="logic">
+         <obj_property name="ElementShortName">wb_ack_i</obj_property>
+         <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group354" type="group">
+      <obj_property name="label">stage_id</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/if_reg_inst_i" type="array">
+         <obj_property name="ElementShortName">if_reg_inst_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">if_reg_inst_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/if_reg_inst_pc_i" type="array">
+         <obj_property name="ElementShortName">if_reg_inst_pc_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">if_reg_inst_pc_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_reg_rs1" type="array">
+         <obj_property name="ElementShortName">_id_reg_rs1[4:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_reg_rs1[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_reg_rs2" type="array">
+         <obj_property name="ElementShortName">_id_reg_rs2[4:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_reg_rs2[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_data_rs1" type="array">
+         <obj_property name="ElementShortName">_id_data_rs1[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_data_rs1[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_data_rs2" type="array">
+         <obj_property name="ElementShortName">_id_data_rs2[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_data_rs2[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_imm" type="array">
+         <obj_property name="ElementShortName">_id_imm[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_imm[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_alu_op" type="array">
+         <obj_property name="ElementShortName">_id_alu_op[3:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_alu_op[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_cmp_op" type="array">
+         <obj_property name="ElementShortName">_id_cmp_op[2:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_cmp_op[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_reg_rd" type="array">
+         <obj_property name="ElementShortName">_id_reg_rd[4:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_reg_rd[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/wait_reg_o" type="logic">
+         <obj_property name="ElementShortName">wait_reg_o</obj_property>
+         <obj_property name="ObjectShortName">wait_reg_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/exe_stall_i" type="logic">
+         <obj_property name="ElementShortName">exe_stall_i</obj_property>
+         <obj_property name="ObjectShortName">exe_stall_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_reg_rd" type="array">
+         <obj_property name="ElementShortName">_id_reg_rd[4:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_reg_rd[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_rf_write_enable" type="logic">
+         <obj_property name="ElementShortName">_id_rf_write_enable</obj_property>
+         <obj_property name="ObjectShortName">_id_rf_write_enable</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group364" type="group">
+      <obj_property name="label">stage_exe</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_inst_pc_i" type="array">
+         <obj_property name="ElementShortName">id_reg_inst_pc_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_inst_pc_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/use_alu_pc_o" type="logic">
+         <obj_property name="ElementShortName">use_alu_pc_o</obj_property>
+         <obj_property name="ObjectShortName">use_alu_pc_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/alu_y_o" type="array">
+         <obj_property name="ElementShortName">alu_y_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">alu_y_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/_exe_alu_a" type="array">
+         <obj_property name="ElementShortName">_exe_alu_a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_exe_alu_a[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/_exe_alu_b" type="array">
+         <obj_property name="ElementShortName">_exe_alu_b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_exe_alu_b[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_alu_op_i" type="array">
+         <obj_property name="ElementShortName">id_reg_alu_op_i[3:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_alu_op_i[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_alu_a_use_pc_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_alu_a_use_pc_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_alu_a_use_pc_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_alu_b_use_imm_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_alu_b_use_imm_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_alu_b_use_imm_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_cmp_op_i" type="array">
+         <obj_property name="ElementShortName">id_reg_cmp_op_i[2:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_cmp_op_i[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_data_rs1_i" type="array">
+         <obj_property name="ElementShortName">id_reg_data_rs1_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_data_rs1_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_data_rs2_i" type="array">
+         <obj_property name="ElementShortName">id_reg_data_rs2_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_data_rs2_i[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group394" type="group">
+      <obj_property name="label">stage_mem</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/exe_reg_inst_pc_i" type="array">
+         <obj_property name="ElementShortName">exe_reg_inst_pc_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">exe_reg_inst_pc_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_cyc_o" type="logic">
+         <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+         <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_stb_o" type="logic">
+         <obj_property name="ElementShortName">wb_stb_o</obj_property>
+         <obj_property name="ObjectShortName">wb_stb_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_ack_i" type="logic">
+         <obj_property name="ElementShortName">wb_ack_i</obj_property>
+         <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_adr_o" type="array">
+         <obj_property name="ElementShortName">wb_adr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_adr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_dat_o" type="array">
+         <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_dat_i" type="array">
+         <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_sel_o" type="array">
+         <obj_property name="ElementShortName">wb_sel_o[3:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_sel_o[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_we_o" type="logic">
+         <obj_property name="ElementShortName">wb_we_o</obj_property>
+         <obj_property name="ObjectShortName">wb_we_o</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group408" type="group">
+      <obj_property name="label">stage_wb</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/mem_reg_data_rd_i" type="array">
+         <obj_property name="ElementShortName">mem_reg_data_rd_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_reg_data_rd_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/mem_reg_reg_rd_i" type="array">
+         <obj_property name="ElementShortName">mem_reg_reg_rd_i[4:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_reg_reg_rd_i[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/mem_reg_rf_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">mem_reg_rf_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">mem_reg_rf_write_enable_i</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group382" type="group">
+      <obj_property name="label">sram_controller</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/clk_i" type="logic">
+         <obj_property name="ElementShortName">clk_i</obj_property>
+         <obj_property name="ObjectShortName">clk_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_cyc_i" type="logic">
+         <obj_property name="ElementShortName">wb_cyc_i</obj_property>
+         <obj_property name="ObjectShortName">wb_cyc_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_stb_i" type="logic">
+         <obj_property name="ElementShortName">wb_stb_i</obj_property>
+         <obj_property name="ObjectShortName">wb_stb_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_ack_o" type="logic">
+         <obj_property name="ElementShortName">wb_ack_o</obj_property>
+         <obj_property name="ObjectShortName">wb_ack_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_adr_i" type="array">
+         <obj_property name="ElementShortName">wb_adr_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_adr_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_dat_i" type="array">
+         <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_dat_o" type="array">
+         <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_sel_i" type="array">
+         <obj_property name="ElementShortName">wb_sel_i[3:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_sel_i[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/wb_we_i" type="logic">
+         <obj_property name="ElementShortName">wb_we_i</obj_property>
+         <obj_property name="ObjectShortName">wb_we_i</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group464" type="group">
+      <obj_property name="label">ext_controller</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_cyc_i" type="logic">
+         <obj_property name="ElementShortName">wb_cyc_i</obj_property>
+         <obj_property name="ObjectShortName">wb_cyc_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_stb_i" type="logic">
+         <obj_property name="ElementShortName">wb_stb_i</obj_property>
+         <obj_property name="ObjectShortName">wb_stb_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_ack_o" type="logic">
+         <obj_property name="ElementShortName">wb_ack_o</obj_property>
+         <obj_property name="ObjectShortName">wb_ack_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_adr_i" type="array">
+         <obj_property name="ElementShortName">wb_adr_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_adr_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_dat_i" type="array">
+         <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_dat_o" type="array">
+         <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_sel_i" type="array">
+         <obj_property name="ElementShortName">wb_sel_i[3:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_sel_i[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_ext/wb_we_i" type="logic">
+         <obj_property name="ElementShortName">wb_we_i</obj_property>
+         <obj_property name="ObjectShortName">wb_we_i</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group444" type="group">
+      <obj_property name="label">uart_controller</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/lab6_tb/uart/rxd" type="logic">
+         <obj_property name="ElementShortName">rxd</obj_property>
+         <obj_property name="ObjectShortName">rxd</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/txd" type="logic">
+         <obj_property name="ElementShortName">txd</obj_property>
+         <obj_property name="ObjectShortName">txd</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/uart_clk" type="logic">
+         <obj_property name="ElementShortName">uart_clk</obj_property>
+         <obj_property name="ObjectShortName">uart_clk</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/txd_start" type="logic">
+         <obj_property name="ElementShortName">txd_start</obj_property>
+         <obj_property name="ObjectShortName">txd_start</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/txd_data" type="array">
+         <obj_property name="ElementShortName">txd_data[7:0]</obj_property>
+         <obj_property name="ObjectShortName">txd_data[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/txd_busy" type="logic">
+         <obj_property name="ElementShortName">txd_busy</obj_property>
+         <obj_property name="ObjectShortName">txd_busy</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/rxd_data_ready" type="logic">
+         <obj_property name="ElementShortName">rxd_data_ready</obj_property>
+         <obj_property name="ObjectShortName">rxd_data_ready</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/rxd_clear" type="logic">
+         <obj_property name="ElementShortName">rxd_clear</obj_property>
+         <obj_property name="ObjectShortName">rxd_clear</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/rxd_data" type="array">
+         <obj_property name="ElementShortName">rxd_data[7:0]</obj_property>
+         <obj_property name="ObjectShortName">rxd_data[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/uart/BAUD" type="array">
+         <obj_property name="ElementShortName">BAUD[31:0]</obj_property>
+         <obj_property name="ObjectShortName">BAUD[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>
