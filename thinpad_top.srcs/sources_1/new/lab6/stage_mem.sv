@@ -25,10 +25,10 @@ assign wb_stb_o = operation_i;
 
 assign wb_adr_o = addr_i;
 assign wb_dat_o = data_write_i;
-assign wb_sel_o = byte_sel_i;
+assign wb_sel_o = byte_sel_i << addr_i[1:0]; // not aligned
 assign wb_we_o  = write_enable_i;
 
-assign data_read_o = wb_dat_i;
+assign data_read_o = wb_dat_i >> (addr_i[1:0] * 8); // not aligned
 assign done_o      = wb_ack_i;
 
 endmodule
