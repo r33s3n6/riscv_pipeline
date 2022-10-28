@@ -4,9 +4,9 @@
 module id_instruction_decoder (
     input wire   [31:0] inst_i,
 
-    output wire  [4:0]  reg_rd_o,
-    output wire  [4:0]  reg_rs1_o,
-    output wire  [4:0]  reg_rs2_o,
+    output wire  [ 4:0] reg_rd_o,
+    output wire  [ 4:0] reg_rs1_o,
+    output wire  [ 4:0] reg_rs2_o,
 
     output logic [31:0] imm_o,
 
