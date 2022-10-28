@@ -10,7 +10,7 @@
                        // and RX receives one bit per clock cycle (for fast simulations)
 
 ////////////////////////////////////////////////////////
-
+`timescale 1ns / 1ns
 module async_transmitter(
 	input wire clk,
 	input wire TxD_start,

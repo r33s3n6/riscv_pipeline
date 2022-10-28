@@ -1,3 +1,4 @@
+`timescale 1ns / 1ns
 module uart_controller #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32,

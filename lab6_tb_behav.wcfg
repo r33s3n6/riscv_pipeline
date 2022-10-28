@@ -11,15 +11,18 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="134034030fs"></ZoomStartTime>
-      <ZoomEndTime time="135009355fs"></ZoomEndTime>
-      <Cursor1Time time="134149590fs"></Cursor1Time>
+      <ZoomStartTime time="4796759830fs"></ZoomStartTime>
+      <ZoomEndTime time="4797720034fs"></ZoomEndTime>
+      <Cursor1Time time="4797147944fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="337"></NameColumnWidth>
-      <ValueColumnWidth column_width="292"></ValueColumnWidth>
+      <ValueColumnWidth column_width="286"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="12" />
+   <wave_markers>
+      <marker time="4796911846" label="" />
+   </wave_markers>
    <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_register_file_inst/reg_file" type="array">
       <obj_property name="ElementShortName">reg_file[0:31][31:0]</obj_property>
       <obj_property name="ObjectShortName">reg_file[0:31][31:0]</obj_property>
@@ -260,6 +263,14 @@
       <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/wb_we_o" type="logic">
          <obj_property name="ElementShortName">wb_we_o</obj_property>
          <obj_property name="ObjectShortName">wb_we_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/exe_reg_mem_operation_i" type="logic">
+         <obj_property name="ElementShortName">exe_reg_mem_operation_i</obj_property>
+         <obj_property name="ObjectShortName">exe_reg_mem_operation_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_mem_inst/exe_reg_mem_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">exe_reg_mem_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">exe_reg_mem_write_enable_i</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group408" type="group">

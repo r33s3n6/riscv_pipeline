@@ -40,19 +40,19 @@ module id_instruction_decoder (
 
     inst_type_t inst_type;
     
-    logic [2:0] funct3;
-    logic [6:0] funct7;
+    logic [ 2:0] funct3;
+    logic [ 6:0] funct7;
 
     assign funct3 = inst_i[14:12];
     assign funct7 = inst_i[31:25];
-
-    assign reg_rd_o = inst_i[11:7];
-    assign reg_rs1_o = inst_i[19:15];
-    assign reg_rs2_o = inst_i[24:20];
-
+    
     logic [ 6:0] opcode;
 
     assign opcode = inst_i[6:0];
+
+    assign reg_rd_o = inst_i[11:7];
+    assign reg_rs1_o = (opcode[6:0] == 7'b0110111) ? 5'b0 : inst_i[19:15]; // lui use rs1 as 0
+    assign reg_rs2_o = inst_i[24:20];
 
     always_comb begin
         if (opcode[6:0] == 7'b0110111 // lui
@@ -122,7 +122,7 @@ module id_instruction_decoder (
         end
     end
 
-    assign cmp_op_o = opcode[6:0]==7'b1100111 ? `CMP_NONE : funct3[2:0]; // jalr no cmp
+    assign cmp_op_o = (opcode[6:0]==7'b1100111 || opcode[6:0]==7'b1101111)? `CMP_NONE : funct3[2:0]; // jal/jalr no cmp
 
     always_comb begin
         case (funct3[2:0])
@@ -150,16 +150,16 @@ module id_instruction_decoder (
     assign alu_a_use_pc_o = (  opcode == 7'b0010111 // auipc
                             || opcode == 7'b1101111 // jal
                             || inst_type == B_TYPE // branch
-                             );
+                            );
     assign alu_b_use_imm_o = !( inst_type == R_TYPE
-                            || opcode == 7'b1110011 && funct3[2] // csrr{w,s,c}i
+                            ||  opcode == 7'b1110011 && funct3[2] // csrr{w,s,c}i
                              );
 
     assign mem_operation_o = (  opcode == 7'b0100011 // store
-                            || opcode == 7'b0000011 // load
+                             || opcode == 7'b0000011 // load
                              );
 
-    assign mem_write_enable_o = (  opcode == 7'b0100011 // store
+    assign mem_write_enable_o = ( opcode == 7'b0100011 // store
                                 );
 
     assign rf_write_enable_o = ( inst_type == R_TYPE
