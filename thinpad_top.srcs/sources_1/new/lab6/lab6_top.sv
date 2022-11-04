@@ -86,13 +86,13 @@ module lab6_top (
   /* =========== Demo code begin =========== */
 
   // PLL 分频示例
-  logic locked, clk_10M, clk_20M;
+  logic locked, clk_10M, clk_60M;
   pll_example clock_gen (
       // Clock in ports
       .clk_in1(clk_50M),  // 外部时钟输入
       // Clock out ports
       .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�?????
-      .clk_out2(clk_20M),  // 时钟输出 2，频率在 IP 配置界面中设�?????
+      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�?????
       // Status and control signals
       .reset(reset_btn),  // PLL 复位输入
       .locked(locked)  // PLL 锁定指示输出�?????"1"表示时钟稳定�?????
@@ -100,10 +100,15 @@ module lab6_top (
   );
 
   logic reset_of_clk10M;
-  // 异步复位，同步释放，�????? locked 信号转为后级电路的复�????? reset_of_clk10M
   always_ff @(posedge clk_10M or negedge locked) begin
     if (~locked) reset_of_clk10M <= 1'b1;
     else reset_of_clk10M <= 1'b0;
+  end
+
+  logic reset_of_clk60M;
+  always_ff @(posedge clk_60M or negedge locked) begin
+    if (~locked) reset_of_clk60M <= 1'b1;
+    else reset_of_clk60M <= 1'b0;
   end
 
   /* =========== Demo code end =========== */
@@ -111,8 +116,8 @@ module lab6_top (
   logic sys_clk;
   logic sys_rst;
 
-  assign sys_clk = clk_10M;
-  assign sys_rst = reset_of_clk10M;
+  assign sys_clk = clk_60M;
+  assign sys_rst = reset_of_clk60M;
 
   // 本实验不使用 CPLD 串口，禁用防止�?�线冲突
   assign uart_rdn = 1'b1;
@@ -340,7 +345,7 @@ module lab6_top (
   // 串口控制器模�?????
   // NOTE: 如果修改系统时钟频率，也�?????要修改此处的时钟频率参数
   uart_controller #(
-      .CLK_FREQ(10_000_000),
+      .CLK_FREQ(80_000_000),
       .BAUD    (115200)
   ) uart_controller (
       .clk_i(sys_clk),
@@ -403,7 +408,7 @@ module lab6_top (
     wire        exe_reg_mem_operation;
     wire        exe_reg_mem_write_enable;
     wire        exe_reg_mem_unsigned_ext;
-    wire       exe_reg_rf_write_enable;
+    wire        exe_reg_rf_write_enable;
     wire [ 1:0] exe_reg_data_rd_mux;
     wire [ 3:0] exe_reg_byte_sel; 
     wire [31:0] exe_reg_data_rs2;
