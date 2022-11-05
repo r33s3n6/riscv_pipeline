@@ -379,6 +379,7 @@ module lab6_top (
     wire id_wait_reg;
     wire exe_stall;
     wire mem_stall;
+    wire [31:0] mem_data_rd;
     wire mem_done;
 
     // register wires
@@ -458,9 +459,16 @@ module lab6_top (
 
         .id_reg_reg_rd_i           (id_reg_reg_rd),
         .id_reg_rf_write_enable_i  (id_reg_rf_write_enable),
+        .exe_alu_y_i               (exe_alu_y),
+        .exe_load_data_i           (id_reg_mem_operation && !id_reg_mem_write_enable),
    
         .exe_reg_reg_rd_i          (exe_reg_reg_rd),
         .exe_reg_rf_write_enable_i (exe_reg_rf_write_enable),
+        .exe_reg_alu_y_i           (exe_reg_alu_y),
+        .mem_load_data_i           (exe_reg_mem_operation && !exe_reg_mem_write_enable),
+
+        .mem_data_rd_i             (mem_data_rd),
+        .mem_done_i                (mem_done),
 
         .mem_reg_data_rd_i         (mem_reg_data_rd),
         .mem_reg_reg_rd_i          (mem_reg_reg_rd),
@@ -534,7 +542,8 @@ module lab6_top (
         .rst_i                      (sys_rst),
         
         .stall_o                    (mem_stall),
-        .done_o                 (mem_done),
+        .done_o                     (mem_done),
+        .data_rd_o                  (mem_data_rd),
         
         .exe_reg_inst_pc_i          (exe_reg_inst_pc),
         .exe_reg_alu_y_i            (exe_reg_alu_y),

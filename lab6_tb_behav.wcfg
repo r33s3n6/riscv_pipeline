@@ -11,13 +11,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="4796759830fs"></ZoomStartTime>
-      <ZoomEndTime time="4797720034fs"></ZoomEndTime>
-      <Cursor1Time time="4797147944fs"></Cursor1Time>
+      <ZoomStartTime time="3366300fs"></ZoomStartTime>
+      <ZoomEndTime time="3557401fs"></ZoomEndTime>
+      <Cursor1Time time="3417000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="337"></NameColumnWidth>
-      <ValueColumnWidth column_width="286"></ValueColumnWidth>
+      <ValueColumnWidth column_width="280"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="12" />
    <wave_markers>
@@ -134,6 +134,14 @@
          <obj_property name="ElementShortName">_id_reg_rs2[4:0]</obj_property>
          <obj_property name="ObjectShortName">_id_reg_rs2[4:0]</obj_property>
       </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_data_rs1_old" type="array">
+         <obj_property name="ElementShortName">_id_data_rs1_old[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_data_rs1_old[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_data_rs2_old" type="array">
+         <obj_property name="ElementShortName">_id_data_rs2_old[31:0]</obj_property>
+         <obj_property name="ObjectShortName">_id_data_rs2_old[31:0]</obj_property>
+      </wvobject>
       <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_data_rs1" type="array">
          <obj_property name="ElementShortName">_id_data_rs1[31:0]</obj_property>
          <obj_property name="ObjectShortName">_id_data_rs1[31:0]</obj_property>
@@ -173,6 +181,87 @@
       <wvobject fp_name="/lab6_tb/dut/stage_id_inst/_id_rf_write_enable" type="logic">
          <obj_property name="ElementShortName">_id_rf_write_enable</obj_property>
          <obj_property name="ObjectShortName">_id_rf_write_enable</obj_property>
+      </wvobject>
+      <wvobject fp_name="group523" type="group">
+         <obj_property name="label">forward</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/reg_rs1_i" type="array">
+            <obj_property name="ElementShortName">reg_rs1_i[4:0]</obj_property>
+            <obj_property name="ObjectShortName">reg_rs1_i[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/reg_rs2_i" type="array">
+            <obj_property name="ElementShortName">reg_rs2_i[4:0]</obj_property>
+            <obj_property name="ObjectShortName">reg_rs2_i[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/data_rs1_i" type="array">
+            <obj_property name="ElementShortName">data_rs1_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_rs1_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/data_rs2_i" type="array">
+            <obj_property name="ElementShortName">data_rs2_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_rs2_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/id_reg_reg_rd_i" type="array">
+            <obj_property name="ElementShortName">id_reg_reg_rd_i[4:0]</obj_property>
+            <obj_property name="ObjectShortName">id_reg_reg_rd_i[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/id_reg_rf_write_enable_i" type="logic">
+            <obj_property name="ElementShortName">id_reg_rf_write_enable_i</obj_property>
+            <obj_property name="ObjectShortName">id_reg_rf_write_enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/exe_alu_y_i" type="array">
+            <obj_property name="ElementShortName">exe_alu_y_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">exe_alu_y_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/exe_load_data_i" type="logic">
+            <obj_property name="ElementShortName">exe_load_data_i</obj_property>
+            <obj_property name="ObjectShortName">exe_load_data_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/exe_reg_reg_rd_i" type="array">
+            <obj_property name="ElementShortName">exe_reg_reg_rd_i[4:0]</obj_property>
+            <obj_property name="ObjectShortName">exe_reg_reg_rd_i[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/exe_reg_rf_write_enable_i" type="logic">
+            <obj_property name="ElementShortName">exe_reg_rf_write_enable_i</obj_property>
+            <obj_property name="ObjectShortName">exe_reg_rf_write_enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/exe_reg_alu_y_i" type="array">
+            <obj_property name="ElementShortName">exe_reg_alu_y_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">exe_reg_alu_y_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/mem_load_data_i" type="logic">
+            <obj_property name="ElementShortName">mem_load_data_i</obj_property>
+            <obj_property name="ObjectShortName">mem_load_data_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/mem_data_rd_i" type="array">
+            <obj_property name="ElementShortName">mem_data_rd_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">mem_data_rd_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/mem_done_i" type="logic">
+            <obj_property name="ElementShortName">mem_done_i</obj_property>
+            <obj_property name="ObjectShortName">mem_done_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/data_rs1_o" type="array">
+            <obj_property name="ElementShortName">data_rs1_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_rs1_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/data_rs2_o" type="array">
+            <obj_property name="ElementShortName">data_rs2_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_rs2_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/wait_reg_o" type="logic">
+            <obj_property name="ElementShortName">wait_reg_o</obj_property>
+            <obj_property name="ObjectShortName">wait_reg_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/wait_reg_rs1" type="logic">
+            <obj_property name="ElementShortName">wait_reg_rs1</obj_property>
+            <obj_property name="ObjectShortName">wait_reg_rs1</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/stage_id_inst/id_wait_reg_controller_inst/wait_reg_rs2" type="logic">
+            <obj_property name="ElementShortName">wait_reg_rs2</obj_property>
+            <obj_property name="ObjectShortName">wait_reg_rs2</obj_property>
+         </wvobject>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group364" type="group">
@@ -222,6 +311,22 @@
       <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_data_rs2_i" type="array">
          <obj_property name="ElementShortName">id_reg_data_rs2_i[31:0]</obj_property>
          <obj_property name="ObjectShortName">id_reg_data_rs2_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_mem_operation_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_mem_operation_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_mem_operation_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_mem_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_mem_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_mem_write_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_rf_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">id_reg_rf_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">id_reg_rf_write_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/stage_exe_inst/id_reg_reg_rd_i" type="array">
+         <obj_property name="ElementShortName">id_reg_reg_rd_i[4:0]</obj_property>
+         <obj_property name="ObjectShortName">id_reg_reg_rd_i[4:0]</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group394" type="group">

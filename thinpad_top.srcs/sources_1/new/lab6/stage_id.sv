@@ -358,21 +358,99 @@ module id_wait_reg_controller (
     input wire [4:0] reg_rs1_i,
     input wire [4:0] reg_rs2_i,
 
-    input wire [4:0] id_reg_reg_rd_i,
-    input wire       id_reg_rf_write_enable_i,
+    input wire [31:0] data_rs1_i,
+    input wire [31:0] data_rs2_i,
 
-    input wire [4:0] exe_reg_reg_rd_i,
-    input wire       exe_reg_rf_write_enable_i,
+    input wire [4:0]  id_reg_reg_rd_i,
+    input wire        id_reg_rf_write_enable_i,
+    input wire [31:0] exe_alu_y_i, // forward from exe (arithmetic instruction)
+    input wire        exe_load_data_i, // is data loaded from memory
 
-    output wire wait_reg_o
+    input wire [4:0]  exe_reg_reg_rd_i,
+    input wire        exe_reg_rf_write_enable_i,
+    input wire [31:0] exe_reg_alu_y_i, // forward from mem (arithmetic instruction)
+    input wire        mem_load_data_i, // is data loaded from memory
+
+    input wire [31:0] mem_data_rd_i, // forward from mem (load instruction)
+    input wire        mem_done_i, // is memory operation done
+
+    output logic [31:0] data_rs1_o,
+    output logic [31:0] data_rs2_o,
+
+    output logic wait_reg_o
 );
+    logic wait_reg_rs1, wait_reg_rs2;
+    assign wait_reg_o = wait_reg_rs1 | wait_reg_rs2;
 
-    assign wait_reg_o = (id_reg_rf_write_enable_i 
-                            && ((reg_rs1_i==id_reg_reg_rd_i) 
-                                    || (reg_rs2_i==id_reg_reg_rd_i)))
-                    || (exe_reg_rf_write_enable_i 
-                            && ((reg_rs1_i==exe_reg_reg_rd_i) 
-                                    || (reg_rs2_i==exe_reg_reg_rd_i)));   
+    always_comb begin
+        // default
+        data_rs1_o = data_rs1_i;
+        data_rs2_o = data_rs2_i;
+        wait_reg_rs1 = 1'b0;
+        wait_reg_rs2 = 1'b0;
+
+        // forward from mem
+        if (exe_reg_rf_write_enable_i) begin
+            if(mem_load_data_i) begin
+                if (!mem_done_i) begin // wait reg (load instruction)
+                    if (exe_reg_reg_rd_i == reg_rs1_i) begin
+                        wait_reg_rs1 = 1'b1;
+                    end
+                    if (exe_reg_reg_rd_i == reg_rs2_i) begin
+                        wait_reg_rs2 = 1'b1;
+                    end
+                end else begin
+                    // memory operation done, forward data (load instruction)
+                    if (exe_reg_reg_rd_i == reg_rs1_i) begin
+                        data_rs1_o = mem_data_rd_i;
+                        wait_reg_rs1 = 1'b0;
+                    end
+                    if (exe_reg_reg_rd_i == reg_rs2_i) begin
+                        data_rs2_o = mem_data_rd_i;
+                        wait_reg_rs2 = 1'b0;
+                    end
+                end
+                
+            end else begin
+                // forward rs1 from mem (arithmetic instruction)
+                if (exe_reg_reg_rd_i == reg_rs1_i) begin
+                    data_rs1_o = exe_reg_alu_y_i;
+                    wait_reg_rs1 = 1'b0;
+                end
+                // forward rs2 from mem (arithmetic instruction)
+                if (exe_reg_reg_rd_i == reg_rs2_i) begin
+                    data_rs2_o = exe_reg_alu_y_i;
+                    wait_reg_rs2 = 1'b0;
+                end
+            end
+        end
+
+        // nearest instruction has higher priority
+        if (id_reg_rf_write_enable_i) begin
+            if(exe_load_data_i) begin // wait reg (load instruction)
+                if (id_reg_reg_rd_i == reg_rs1_i) begin
+                    wait_reg_rs1 = 1'b1;
+                end
+                if (id_reg_reg_rd_i == reg_rs2_i) begin
+                    wait_reg_rs2 = 1'b1;
+                end
+            end else begin
+                // forward rs1 from exe (arithmetic instruction)
+                if (id_reg_reg_rd_i == reg_rs1_i) begin
+                    data_rs1_o = exe_alu_y_i;
+                    wait_reg_rs1 = 1'b0;
+                end
+                // forward rs2 from exe (arithmetic instruction)
+                if (id_reg_reg_rd_i == reg_rs2_i) begin
+                    data_rs2_o = exe_alu_y_i;
+                    wait_reg_rs2 = 1'b0;
+                end
+            end
+        end
+
+    
+
+    end
 
 endmodule
 
@@ -386,9 +464,16 @@ module stage_id (
 
     input wire [4:0]    id_reg_reg_rd_i,
     input wire          id_reg_rf_write_enable_i,
+    input wire [31:0]   exe_alu_y_i, // forward from exe
+    input wire          exe_load_data_i, // is data loaded from memory
    
     input wire [4:0]    exe_reg_reg_rd_i,
     input wire          exe_reg_rf_write_enable_i,
+    input wire [31:0]   exe_reg_alu_y_i,
+    input wire          mem_load_data_i, // is data loaded from memory
+
+    input wire [31:0]   mem_data_rd_i, // forward from mem
+    input wire          mem_done_i, // is memory operation done
 
     input wire [31:0]   mem_reg_data_rd_i,
     input wire [ 4:0]   mem_reg_reg_rd_i,
@@ -424,6 +509,9 @@ module stage_id (
   wire [4:0] _id_reg_rs1;
   wire [4:0] _id_reg_rs2;
   
+  wire [31:0] _id_data_rs1_old;
+  wire [31:0] _id_data_rs2_old;
+
   wire [31:0] _id_data_rs1;
   wire [31:0] _id_data_rs2;
   
@@ -481,8 +569,8 @@ module stage_id (
         .we_i(mem_reg_rf_write_enable_i),
         .raddr_a_i(_id_reg_rs1),
         .raddr_b_i(_id_reg_rs2),
-        .rdata_a_o(_id_data_rs1),
-        .rdata_b_o(_id_data_rs2)
+        .rdata_a_o(_id_data_rs1_old),
+        .rdata_b_o(_id_data_rs2_old)
     );
 
     // stall controller
@@ -502,10 +590,25 @@ module stage_id (
     id_wait_reg_controller id_wait_reg_controller_inst (
         .reg_rs1_i(_id_reg_rs1),
         .reg_rs2_i(_id_reg_rs2),
+        .data_rs1_i(_id_data_rs1_old),
+        .data_rs2_i(_id_data_rs2_old),
+
         .id_reg_reg_rd_i(id_reg_reg_rd_i),
         .id_reg_rf_write_enable_i(id_reg_rf_write_enable_i),
+        .exe_alu_y_i(exe_alu_y_i),
+        .exe_load_data_i(exe_load_data_i),
+
         .exe_reg_reg_rd_i(exe_reg_reg_rd_i),
         .exe_reg_rf_write_enable_i(exe_reg_rf_write_enable_i),
+        .exe_reg_alu_y_i(exe_reg_alu_y_i),
+        .mem_load_data_i(mem_load_data_i),
+
+        .mem_data_rd_i(mem_data_rd_i),
+        .mem_done_i(mem_done_i),
+
+        .data_rs1_o(_id_data_rs1),
+        .data_rs2_o(_id_data_rs2),
+        
         .wait_reg_o(wait_reg_o)
     );
 

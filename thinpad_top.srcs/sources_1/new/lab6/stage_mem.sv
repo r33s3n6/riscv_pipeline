@@ -151,6 +151,7 @@ module stage_mem (
     // input  wire         exe_stall_i,
     output wire         stall_o,
     output wire         done_o,
+    output wire [31:0]  data_rd_o,
 
     input  wire [31:0]  exe_reg_inst_pc_i,
     input  wire [31:0]  exe_reg_alu_y_i,
@@ -181,7 +182,6 @@ module stage_mem (
 wire [31:0] _mem_inst_pc_plus4;
 wire [31:0] _mem_data_read_final;
 wire [31:0] _mem_data_read;
-wire [31:0] _mem_data_rd;
 
 wire        _mem_bubble;
 
@@ -204,7 +204,7 @@ mem_data_rd_mux mem_data_rd_mux_inst(
     .alu_i(exe_reg_alu_y_i),
     .mem_i(_mem_data_read_final),
     .data_rd_mux_i(exe_reg_data_rd_mux_i),
-    .data_rd_o(_mem_data_rd)
+    .data_rd_o(data_rd_o)
 );
 
 mem_dm_controller mem_dm_controller_inst(
@@ -245,7 +245,7 @@ mem_pipeline_regs mem_pipeline_regs_inst(
     .bubble_i(_mem_bubble),
     .stall_i(stall_o),
 
-    .data_rd_i(_mem_data_rd),
+    .data_rd_i(data_rd_o),
     .reg_rd_i(exe_reg_reg_rd_i),
     .rf_write_enable_i(exe_reg_rf_write_enable_i),
 
