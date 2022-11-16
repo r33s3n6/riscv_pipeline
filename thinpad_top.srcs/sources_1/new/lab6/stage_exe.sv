@@ -1,5 +1,33 @@
 `include "alu_define.sv"
 
+module exe_clz(
+    input  wire  [31:0]  val32,
+    output logic [5:0]   result
+);
+
+    logic [15:0] val16;
+    logic [7:0]  val8;
+    logic [3:0]  val4;
+
+    always_comb begin
+        if(val32[31:0] == 32'b0) begin
+            result[5:0] = 6'd32;
+        end else begin
+            result[5] = 1'b0;
+            result[4] = (val32[31:16] == 16'b0);
+            val16     = result[4] ? val32[15:0] : val32[31:16];
+            result[3] = (val16[15:8] == 8'b0);
+            val8      = result[3] ? val16[7:0] : val16[15:8];
+            result[2] = (val8[7:4] == 4'b0);
+            val4      = result[2] ? val8[3:0] : val8[7:4];
+            result[1] = (val4[3:2] == 2'b0);
+            result[0] = result[1] ? ~val4[1] : ~val4[3];
+        end
+    end
+
+endmodule
+
+
 module exe_alu(
   input  wire signed [31:0] a,
   input  wire        [31:0] b,
@@ -7,7 +35,11 @@ module exe_alu(
   output logic       [31:0] y
 );
 
-
+  wire [5:0] clz_a;
+  exe_clz exe_clz_inst(
+    .val32(a),
+    .result(clz_a)
+  );
 
   always_comb begin
     case (op)
@@ -21,6 +53,9 @@ module exe_alu(
       `ALU_SRA : y = a >>> b[4:0];
       `ALU_OR  : y = a  |  b;
       `ALU_AND : y = a  &  b;
+      `ALU_XNOR: y = a  ^ ~b;
+      `ALU_CLZ : y = {26'b0, clz_a[5:0]};
+      `ALU_MIN : y =   signed'(a) <   signed'(b) ? a : b;
         default  y = 32'b0;
     endcase
   end

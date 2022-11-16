@@ -54,6 +54,8 @@ module id_instruction_decoder (
     assign reg_rs1_o = (opcode[6:0] == 7'b0110111) ? 5'b0 : inst_i[19:15]; // lui use rs1 as 0
     assign reg_rs2_o = inst_i[24:20];
 
+
+    // inst_type
     always_comb begin
         if (opcode[6:0] == 7'b0110111 // lui
         ||  opcode[6:0] == 7'b0010111 // auipc
@@ -105,6 +107,7 @@ module id_instruction_decoder (
 
     assign is_branch_o = (inst_type == B_TYPE || inst_type == J_TYPE || opcode[6:0] == 7'b1100111); // branch, jal, jalr
 
+    // alu_operation
     always_comb begin
         if (   inst_type == B_TYPE 
             || inst_type == U_TYPE 
@@ -114,11 +117,16 @@ module id_instruction_decoder (
             ) begin
             alu_op_o[3:0] = `ALU_ADD;
         end else begin
-            alu_op_o[2:0] = funct3[2:0];
-            alu_op_o[3] = (inst_type == R_TYPE 
-                        || funct3[2:0] == 3'b101 // I-type srli/srai
-                        || funct3[2:0] == 3'b001 // I-type slli
-                        ) ? funct7[5] : 1'b0;
+            if (inst_type == R_TYPE && funct7[6:0] == 7'b0000101) begin // min
+                alu_op_o[3:0] = `ALU_MIN;
+            end else begin
+                alu_op_o[2:0] = funct3[2:0];
+                alu_op_o[3] = (inst_type == R_TYPE 
+                            || funct3[2:0] == 3'b101 // I-type srli/srai
+                            || funct3[2:0] == 3'b001 // I-type slli/clz
+                            || funct3[2:0] == 3'b100 // I-type xnor
+                            ) ? funct7[5] : 1'b0;
+            end
         end
     end
 

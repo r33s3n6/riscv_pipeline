@@ -8,6 +8,11 @@
 `define ALU_SRA  4'b1101
 `define ALU_OR   4'b0110
 `define ALU_AND  4'b0111
+`define ALU_XNOR 4'b1100
+
+// non-standard ALU operations
+`define ALU_CLZ 4'b1001
+`define ALU_MIN 4'b1010
 
 
 `define CMP_EQ  3'b000
