@@ -8,7 +8,7 @@ module id_instruction_decoder (
     output wire  [ 4:0] reg_rd_o,
     output wire  [ 4:0] reg_rs1_o,
     output wire  [ 4:0] reg_rs2_o,
-    output logic [ 4:0] csr_id_o,
+    output logic [ 4:0] id_csr_o,
 
     output logic [31:0] imm_o,
 
@@ -19,15 +19,16 @@ module id_instruction_decoder (
 
     output wire         is_branch_o,
     output logic        invalid_inst_o,
-    output wire         alu_a_use_pc_o,
-    output wire         alu_b_use_imm_o,
 
     output wire         mem_operation_o,
     output wire         mem_write_enable_o,
     output wire         mem_unsigned_ext_o,
 
     output wire         rf_write_enable_o,
-    output logic [ 1:0] data_rd_mux_o // 0: alu, 1: mem, 2: pc+4
+
+    output wire  [ 1:0] alu_a_mux_o,
+    output wire  [ 1:0] alu_b_mux_o,
+    output logic [ 1:0] data_rd_mux_o // 0: alu, 1: mem, 2: pc+4, 3: csr
 );
 
     typedef enum logic [2:0] {
@@ -80,40 +81,40 @@ module id_instruction_decoder (
     // csr id
     always_comb begin
         case(csr)
-            `CSR_CYCLE    : csr_id_o = `CSR_ID_CYCLE    ;
-            `CSR_TIME     : csr_id_o = `CSR_ID_TIME     ;
-            `CSR_CYCLEH   : csr_id_o = `CSR_ID_CYCLEH   ;
-            `CSR_TIMEH    : csr_id_o = `CSR_ID_TIMEH    ;
+            `CSR_CYCLE    : id_csr_o = `CSR_ID_CYCLE    ;
+            `CSR_TIME     : id_csr_o = `CSR_ID_TIME     ;
+            `CSR_CYCLEH   : id_csr_o = `CSR_ID_CYCLEH   ;
+            `CSR_TIMEH    : id_csr_o = `CSR_ID_TIMEH    ;
 
-            `CSR_SSTATUS  : csr_id_o = `CSR_ID_SSTATUS  ;
-            `CSR_SIE      : csr_id_o = `CSR_ID_SIE      ;
-            `CSR_STVEC    : csr_id_o = `CSR_ID_STVEC    ;
+            `CSR_SSTATUS  : id_csr_o = `CSR_ID_SSTATUS  ;
+            `CSR_SIE      : id_csr_o = `CSR_ID_SIE      ;
+            `CSR_STVEC    : id_csr_o = `CSR_ID_STVEC    ;
 
-            `CSR_SSCRATCH : csr_id_o = `CSR_ID_SSCRATCH ;
-            `CSR_SEPC     : csr_id_o = `CSR_ID_SEPC     ;
-            `CSR_SCAUSE   : csr_id_o = `CSR_ID_SCAUSE   ;
-            `CSR_STVAL    : csr_id_o = `CSR_ID_STVAL    ;
-            `CSR_SIP      : csr_id_o = `CSR_ID_SIP      ;
+            `CSR_SSCRATCH : id_csr_o = `CSR_ID_SSCRATCH ;
+            `CSR_SEPC     : id_csr_o = `CSR_ID_SEPC     ;
+            `CSR_SCAUSE   : id_csr_o = `CSR_ID_SCAUSE   ;
+            `CSR_STVAL    : id_csr_o = `CSR_ID_STVAL    ;
+            `CSR_SIP      : id_csr_o = `CSR_ID_SIP      ;
 
-            `CSR_SATP     : csr_id_o = `CSR_ID_SATP     ;
+            `CSR_SATP     : id_csr_o = `CSR_ID_SATP     ;
 
-            `CSR_MHARTID  : csr_id_o = `CSR_ID_MHARTID  ;
+            `CSR_MHARTID  : id_csr_o = `CSR_ID_MHARTID  ;
 
-            `CSR_MSTATUS  : csr_id_o = `CSR_ID_MSTATUS  ;
-            `CSR_MEDELEG  : csr_id_o = `CSR_ID_MEDELEG  ;
-            `CSR_MIDELEG  : csr_id_o = `CSR_ID_MIDELEG  ;
-            `CSR_MIE      : csr_id_o = `CSR_ID_MIE      ;
-            `CSR_MTVEC    : csr_id_o = `CSR_ID_MTVEC    ;
+            `CSR_MSTATUS  : id_csr_o = `CSR_ID_MSTATUS  ;
+            `CSR_MEDELEG  : id_csr_o = `CSR_ID_MEDELEG  ;
+            `CSR_MIDELEG  : id_csr_o = `CSR_ID_MIDELEG  ;
+            `CSR_MIE      : id_csr_o = `CSR_ID_MIE      ;
+            `CSR_MTVEC    : id_csr_o = `CSR_ID_MTVEC    ;
 
-            `CSR_MSCRATCH : csr_id_o = `CSR_ID_MSCRATCH ;
-            `CSR_MEPC     : csr_id_o = `CSR_ID_MEPC     ;
-            `CSR_MCAUSE   : csr_id_o = `CSR_ID_MCAUSE   ;
-            `CSR_MTVAL    : csr_id_o = `CSR_ID_MTVAL    ;
-            `CSR_MIP      : csr_id_o = `CSR_ID_MIP      ;
+            `CSR_MSCRATCH : id_csr_o = `CSR_ID_MSCRATCH ;
+            `CSR_MEPC     : id_csr_o = `CSR_ID_MEPC     ;
+            `CSR_MCAUSE   : id_csr_o = `CSR_ID_MCAUSE   ;
+            `CSR_MTVAL    : id_csr_o = `CSR_ID_MTVAL    ;
+            `CSR_MIP      : id_csr_o = `CSR_ID_MIP      ;
 
-            `CSR_MCYCLE   : csr_id_o = `CSR_ID_MCYCLE   ;
-            `CSR_MCYCLEH  : csr_id_o = `CSR_ID_MCYCLEH  ;
-            default       : csr_id_o = `CSR_ID_UNKNOWN  ;
+            `CSR_MCYCLE   : id_csr_o = `CSR_ID_MCYCLE   ;
+            `CSR_MCYCLEH  : id_csr_o = `CSR_ID_MCYCLEH  ;
+            default       : id_csr_o = `CSR_ID_UNKNOWN  ;
         endcase
     end
 
@@ -545,6 +546,12 @@ module id_pipeline_regs (
     input wire [ 4:0] reg_rd_i,
     output reg [ 4:0] reg_rd_o,
 
+    input wire [ 4:0] id_csr_i,
+    output reg [ 4:0] id_csr_o,
+
+    input wire [31:0] data_csr_i,
+    output reg [31:0] data_csr_o,
+
     input wire        is_branch_i,
     output reg        is_branch_o,
 
@@ -569,13 +576,11 @@ module id_pipeline_regs (
     input wire [ 3:0] byte_sel_i, 
     output reg [ 3:0] byte_sel_o, 
 
-    input wire        alu_a_use_pc_i,
-    output reg        alu_a_use_pc_o,
+    input wire [ 1:0] alu_a_mux_i,
+    output reg [ 1:0] alu_a_mux_o,
     
-    input wire        alu_b_use_imm_i,
-    output reg        alu_b_use_imm_o
-
-
+    input wire [ 1:0] alu_b_mux_i,
+    output reg [ 1:0] alu_b_mux_o
 );
 
     always_ff @(posedge clk_i) begin

@@ -12,21 +12,21 @@
 `define ALU_XNOR 4'b1100
 
 // non-standard ALU operations
-`define ALU_CLZ 4'b1001
-`define ALU_MIN 4'b1010
+`define ALU_CLZ  4'b1001
+`define ALU_MIN  4'b1010
 
 // comparator operations
-`define CMP_EQ  3'b000
-`define CMP_NE  3'b001
-`define CMP_LT  3'b100
-`define CMP_GE  3'b101
-`define CMP_LTU 3'b110
-`define CMP_GEU 3'b111
+`define CMP_EQ   3'b000
+`define CMP_NE   3'b001
+`define CMP_LT   3'b100
+`define CMP_GE   3'b101
+`define CMP_LTU  3'b110
+`define CMP_GEU  3'b111
 `define CMP_NONE 3'b011
 
 // alu_a mux
-`define ALU_A_RS1 2'b00
-`define ALU_A_PC  2'b01
+`define ALU_A_RS1  2'b00
+`define ALU_A_PC   2'b01
 `define ALU_A_UIMM 2'b10
 
 // alu_b mux
