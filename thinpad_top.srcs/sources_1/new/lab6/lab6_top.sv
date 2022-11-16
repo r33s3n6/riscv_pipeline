@@ -1,5 +1,6 @@
 `default_nettype none
 
+`include "alu_define.sv"
 
 
 `timescale 1ns / 1ns
@@ -7,51 +8,51 @@ module lab6_top (
     input wire clk_50M,     // 50MHz 时钟输入
     input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
 
-    input wire push_btn,  // BTN5 按钮�?????关，带消抖电路，按下时为 1
-    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�????? 1
+    input wire push_btn,  // BTN5 按钮�???????????关，带消抖电路，按下时为 1
+    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�??????????? 1
 
     input  wire [ 3:0] touch_btn,  // BTN1~BTN4，按钮开关，按下时为 1
-    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�????? 1
-    output wire [15:0] leds,       // 16 �????? LED，输出时 1 点亮
+    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�??????????? 1
+    output wire [15:0] leds,       // 16 �??????????? LED，输出时 1 点亮
     output wire [ 7:0] dpy0,       // 数码管低位信号，包括小数点，输出 1 点亮
     output wire [ 7:0] dpy1,       // 数码管高位信号，包括小数点，输出 1 点亮
 
-    // CPLD 串口控制器信�?????
-    output wire uart_rdn,        // 读串口信号，低有�?????
-    output wire uart_wrn,        // 写串口信号，低有�?????
-    input  wire uart_dataready,  // 串口数据准备�?????
-    input  wire uart_tbre,       // 发�?�数据标�?????
-    input  wire uart_tsre,       // 数据发�?�完毕标�?????
+    // CPLD 串口控制器信�???????????
+    output wire uart_rdn,        // 读串口信号，低有�???????????
+    output wire uart_wrn,        // 写串口信号，低有�???????????
+    input  wire uart_dataready,  // 串口数据准备�???????????
+    input  wire uart_tbre,       // 发�?�数据标�???????????
+    input  wire uart_tsre,       // 数据发�?�完毕标�???????????
 
     // BaseRAM 信号
-    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�?????
+    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�???????????
     output wire [19:0] base_ram_addr,  // BaseRAM 地址
-    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�????? 0
-    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�?????
-    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�?????
-    output wire base_ram_we_n,  // BaseRAM 写使能，低有�?????
+    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????? 0
+    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�???????????
+    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�???????????
+    output wire base_ram_we_n,  // BaseRAM 写使能，低有�???????????
 
     // ExtRAM 信号
     inout wire [31:0] ext_ram_data,  // ExtRAM 数据
     output wire [19:0] ext_ram_addr,  // ExtRAM 地址
-    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�????? 0
-    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�?????
-    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�?????
-    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�?????
+    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????? 0
+    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�???????????
+    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�???????????
+    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�???????????
 
     // 直连串口信号
     output wire txd,  // 直连串口发�?�端
-    input  wire rxd,  // 直连串口接收�?????
+    input  wire rxd,  // 直连串口接收�???????????
 
     // Flash 存储器信号，参�?? JS28F640 芯片手册
-    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�?????16bit 模式无意�?????
+    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�???????????16bit 模式无意�???????????
     inout wire [15:0] flash_d,  // Flash 数据
     output wire flash_rp_n,  // Flash 复位信号，低有效
-    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�?????
-    output wire flash_ce_n,  // Flash 片�?�信号，低有�?????
-    output wire flash_oe_n,  // Flash 读使能信号，低有�?????
-    output wire flash_we_n,  // Flash 写使能信号，低有�?????
-    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �????? 16 位模式时请设�????? 1
+    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�???????????
+    output wire flash_ce_n,  // Flash 片�?�信号，低有�???????????
+    output wire flash_oe_n,  // Flash 读使能信号，低有�???????????
+    output wire flash_we_n,  // Flash 写使能信号，低有�???????????
+    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �??????????? 16 位模式时请设�??????????? 1
 
     // USB 控制器信号，参�?? SL811 芯片手册
     output wire sl811_a0,
@@ -74,13 +75,13 @@ module lab6_top (
     input wire dm9k_int,
 
     // 图像输出信号
-    output wire [2:0] video_red,    // 红色像素�?????3 �?????
-    output wire [2:0] video_green,  // 绿色像素�?????3 �?????
-    output wire [1:0] video_blue,   // 蓝色像素�?????2 �?????
-    output wire       video_hsync,  // 行同步（水平同步）信�?????
-    output wire       video_vsync,  // 场同步（垂直同步）信�?????
+    output wire [2:0] video_red,    // 红色像素�???????????3 �???????????
+    output wire [2:0] video_green,  // 绿色像素�???????????3 �???????????
+    output wire [1:0] video_blue,   // 蓝色像素�???????????2 �???????????
+    output wire       video_hsync,  // 行同步（水平同步）信�???????????
+    output wire       video_vsync,  // 场同步（垂直同步）信�???????????
     output wire       video_clk,    // 像素时钟输出
-    output wire       video_de      // 行数据有效信号，用于区分消隐�?????
+    output wire       video_de      // 行数据有效信号，用于区分消隐�???????????
 );
 
   /* =========== Demo code begin =========== */
@@ -91,11 +92,11 @@ module lab6_top (
       // Clock in ports
       .clk_in1(clk_50M),  // 外部时钟输入
       // Clock out ports
-      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�?????
-      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�?????
+      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�???????????
+      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�???????????
       // Status and control signals
       .reset(reset_btn),  // PLL 复位输入
-      .locked(locked)  // PLL 锁定指示输出�?????"1"表示时钟稳定�?????
+      .locked(locked)  // PLL 锁定指示输出�???????????"1"表示时钟稳定�???????????
                        // 后级电路复位信号应当由它生成（见下）
   );
 
@@ -116,8 +117,8 @@ module lab6_top (
   logic sys_clk;
   logic sys_rst;
 
-  assign sys_clk = clk_60M;
-  assign sys_rst = reset_of_clk60M;
+  assign sys_clk = clk_10M;
+  assign sys_rst = reset_of_clk10M;
 
   // 本实验不使用 CPLD 串口，禁用防止�?�线冲突
   assign uart_rdn = 1'b1;
@@ -342,10 +343,10 @@ module lab6_top (
       .sram_be_n(ext_ram_be_n)
   );
 
-  // 串口控制器模�?????
-  // NOTE: 如果修改系统时钟频率，也�?????要修改此处的时钟频率参数
+  // 串口控制器模�???????????
+  // NOTE: 如果修改系统时钟频率，也�???????????要修改此处的时钟频率参数
   uart_controller #(
-      .CLK_FREQ(80_000_000),
+      .CLK_FREQ(10_000_000),
       .BAUD    (115200)
   ) uart_controller (
       .clk_i(sys_clk),
@@ -367,208 +368,638 @@ module lab6_top (
 
   /* =========== Wishbone Slaves end =========== */
 
+    wire clk;
+    wire rst;
+
+    assign clk = sys_clk;
+    assign rst = sys_rst;
   /* =========== pipeline begin =========== */
 
-  // wires
-    wire id_is_branch;
-  
-    wire exe_use_alu_pc;
-    wire [31:0] exe_alu_y;
-  
-    wire id_stall;
-    wire id_wait_reg;
-    wire exe_stall;
-    wire mem_stall;
-    wire [31:0] mem_data_rd;
-    wire mem_done;
+    /* shared wires */
 
-    // register wires
+    // stage if
+    wire  [ 1:0] if_mode;
 
-    wire [31:0] if_reg_inst_pc;
-    wire [31:0] if_reg_inst;
+    // if-id-registers
+    wire  [ 1:0] id_mode;
+    wire  [31:0] id_inst_pc;
+    wire  [31:0] id_inst;
 
-    wire [ 3:0]  id_reg_alu_op;
-    wire [ 2:0]  id_reg_cmp_op;
-    wire [31:0]  id_reg_imm;
-    wire [31:0]  id_reg_data_rs1;
-    wire [31:0]  id_reg_data_rs2;
-    wire [ 4:0]  id_reg_reg_rd;
-    wire         id_reg_is_branch;
-    wire [31:0]  id_reg_inst_pc;
-    wire         id_reg_mem_operation;
-    wire         id_reg_mem_write_enable;
-    wire         id_reg_mem_unsigned_ext;
-    wire         id_reg_rf_write_enable;
-    wire [ 1:0]  id_reg_data_rd_mux;
-    wire [ 3:0]  id_reg_byte_sel;
-    wire         id_reg_alu_a_use_pc;
-    wire         id_reg_alu_b_use_imm;
+    // stage id
+    wire         id_stall;
+    wire         id_wait_reg;
+    wire         id_is_branch;
 
-    wire [31:0] exe_reg_inst_pc;
-    wire [31:0] exe_reg_alu_y;
-    wire        exe_reg_mem_operation;
-    wire        exe_reg_mem_write_enable;
-    wire        exe_reg_mem_unsigned_ext;
-    wire        exe_reg_rf_write_enable;
-    wire [ 1:0] exe_reg_data_rd_mux;
-    wire [ 3:0] exe_reg_byte_sel; 
-    wire [31:0] exe_reg_data_rs2;
-    wire [ 4:0] exe_reg_reg_rd;
+    // id-exe-registers
+    wire  [ 1:0] exe_mode;
+    wire  [31:0] exe_inst_pc;
+
+    wire  [ 1:0] exe_alu_a_mux;
+    wire  [ 1:0] exe_alu_b_mux;
+    wire  [ 3:0] exe_alu_op;
+
+    wire  [ 2:0] exe_cmp_op;
+
+    wire  [31:0] exe_imm;
+    wire  [31:0] exe_uimm;
+
+    wire  [31:0] exe_data_rs1;
+    wire  [31:0] exe_data_rs2;
+    
+    wire         exe_is_branch;
+    
+    wire  [ 4:0] exe_reg_rd;
+    wire  [ 1:0] exe_data_rd_mux;
+    wire         exe_rf_write_enable;
+
+    wire  [ 3:0] exe_byte_sel;
+    wire         exe_mem_operation;
+    wire         exe_mem_write_enable;
+    wire         exe_mem_unsigned_ext;
+
+    wire  [ 4:0] exe_id_csr;
+    wire  [31:0] exe_data_csr;
+    wire         exe_csr_write_enable;
+
+    // stage exe
+    wire         exe_stall;
+    wire         exe_branch_take;
+    wire  [31:0] exe_alu_y;
+
+    // exe-mem-registers
+    wire  [ 1:0] mem_mode;
+    // wire  [31:0] mem_inst_pc;
+    wire  [31:0] mem_data_rs2; // address
+
+    wire  [ 3:0] mem_byte_sel; 
+    wire         mem_mem_operation;
+    wire         mem_mem_write_enable;
+    wire         mem_mem_unsigned_ext;
+    
+    
+
+    wire  [31:0] mem_alu_y;
+    wire  [31:0] mem_data_csr;
+    wire  [31:0] mem_pc_plus4;
+    
+    wire  [ 4:0] mem_reg_rd;
+    wire  [31:0] mem_data_rd;
+    wire  [ 1:0] mem_data_rd_mux;
+    wire         mem_rf_write_enable;
+
+    wire  [ 4:0] mem_id_csr;
+    wire  [31:0] mem_new_data_csr;
+    wire         mem_csr_write_enable;
+
+    // stage mem
+    wire         mem_stall;
+    wire         mem_done;
+
+    // mem-wb-registers
+    // rf
+    wire  [31:0] wb_data_rd;
+    wire  [ 4:0] wb_reg_rd;
+    wire         wb_rf_write_enable;
+
+    // csr
+    wire  [31:0] wb_data_csr;
+    wire  [ 4:0] wb_id_csr;
+    wire         wb_csr_write_enable;
 
 
-    wire [31:0]  mem_reg_data_rd;
-    wire [ 4:0]  mem_reg_reg_rd;
-    wire         mem_reg_rf_write_enable;
+    /* =========== stage if begin =========== */
 
+    // internal wires
 
+    wire  [31:0] _if_pc_plus4;
+    wire  [31:0] _if_next_pc;
+    wire  [31:0] _if_inst_pc;
+    wire         _if_pc_stall;
+    wire         _if_pc_valid;
+    wire  [31:0] _if_inst;
+    wire  [31:0] _if_inst_addr;
+    wire         _if_bubble;
+    wire         _if_stall;
 
-    stage_if stage_if_inst (
-        .clk_i(sys_clk),
-        .rst_i(sys_rst),
+    wire         _if_branch_take;
 
-        .id_is_branch_i(id_is_branch),
-        .id_stall_i(id_stall),
+    // branch
+    assign _if_branch_take = exe_is_branch & exe_branch_take;
+
+    // mode
+    assign if_mode = 2'b01; // TODO: always in supervisor mode
+
+    // pc related
+    adder4 pc_adder (
+        .data_i(_if_inst_pc),
+        .data_plus4_o(_if_pc_plus4)
+    );
+
+    if_pc_reg if_pc_reg_inst (
+        .clk_i(clk),
+        .rst_i(rst),
+        .stall_i(_if_pc_stall),
+        .next_pc_i(_if_next_pc),
+        .pc_o(_if_inst_pc)
+    );
+
+    if_next_pc_mux if_next_pc_mux_inst (
+        .pc_plus4_i(_if_pc_plus4),
+        .pc_branch_target_i(exe_alu_y),
+        .do_branch_i(_if_branch_take),
+        .next_pc_o(_if_next_pc)
+    );
+
+    if_pc_controller if_pc_controller_inst (
+        .branch_last_i(id_is_branch),
+        .branch_take_i(_if_branch_take), // target address computed
+        .if_regs_stall_i(_if_stall),
+
+        .inst_addr_i(_if_inst_addr),
+        .inst_pc_i(_if_inst_pc),
+
+        .pc_stall_o(_if_pc_stall),
+        .pc_valid_o(_if_pc_valid)
+    );
+
+    // instruction memory controller
+    if_im_controller if_im_controller_inst (
+        .clk_i          (clk),
+        .rst_i          (rst),
+
+        .do_new_req_i   (_if_pc_valid & ~mem_mem_operation),
+        .addr_i         (_if_inst_pc),
+
+        .wb_ack_i       (wbm1_ack_i),
+        .wb_dat_i       (wbm1_dat_i),
+        .wb_cyc_o       (wbm1_cyc_o),
+        .wb_stb_o       (wbm1_stb_o),
+        .wb_adr_o       (wbm1_adr_o),
+        .wb_dat_o       (wbm1_dat_o),
+        .wb_sel_o       (wbm1_sel_o),
+        .wb_we_o        (wbm1_we_o ),
+
+        .data_addr_o    (_if_inst_addr),
+        .data_o         (_if_inst)
+    );
+
+    // stall controller
+    if_stall_controller if_stall_controller_inst(
         .id_wait_reg_i(id_wait_reg),
-
-        .id_reg_is_branch_i(id_reg_is_branch),
-        .exe_use_alu_pc_i(exe_use_alu_pc),
-        .exe_alu_y_i(exe_alu_y),
-
-        .mem_operation_i(exe_reg_mem_operation),
-
-        .wb_cyc_o(wbm1_cyc_o),
-        .wb_stb_o(wbm1_stb_o),
-        .wb_ack_i(wbm1_ack_i),
-        .wb_adr_o(wbm1_adr_o),
-        .wb_dat_o(wbm1_dat_o),
-        .wb_dat_i(wbm1_dat_i),
-        .wb_sel_o(wbm1_sel_o),
-        .wb_we_o (wbm1_we_o ),
-
-        .reg_inst_pc_o(if_reg_inst_pc),
-        .reg_inst_o(if_reg_inst)
+        .id_stall_i(id_stall),
+        .if_stall_o(_if_stall)
     );
 
-    stage_id stage_id_inst(
-        .clk_i                     (sys_clk),
-        .rst_i                     (sys_rst),
-
-        .exe_stall_i               (exe_stall),
-        .stall_o                   (id_stall),
-        .wait_reg_o                (id_wait_reg),
-
-        .id_reg_reg_rd_i           (id_reg_reg_rd),
-        .id_reg_rf_write_enable_i  (id_reg_rf_write_enable),
-        .exe_alu_y_i               (exe_alu_y),
-        .exe_load_data_i           (id_reg_mem_operation && !id_reg_mem_write_enable),
-   
-        .exe_reg_reg_rd_i          (exe_reg_reg_rd),
-        .exe_reg_rf_write_enable_i (exe_reg_rf_write_enable),
-        .exe_reg_alu_y_i           (exe_reg_alu_y),
-        .mem_load_data_i           (exe_reg_mem_operation && !exe_reg_mem_write_enable),
-
-        .mem_data_rd_i             (mem_data_rd),
-        .mem_done_i                (mem_done),
-
-        .mem_reg_data_rd_i         (mem_reg_data_rd),
-        .mem_reg_reg_rd_i          (mem_reg_reg_rd),
-        .mem_reg_rf_write_enable_i (mem_reg_rf_write_enable),
-
-        .if_reg_inst_i             (if_reg_inst),
-        .if_reg_inst_pc_i          (if_reg_inst_pc),
-        .is_branch_o               (id_is_branch),
-
-        .reg_alu_op_o              (id_reg_alu_op),
-        .reg_cmp_op_o              (id_reg_cmp_op),
-        .reg_imm_o                 (id_reg_imm),
-        .reg_data_rs1_o            (id_reg_data_rs1),
-        .reg_data_rs2_o            (id_reg_data_rs2),
-        .reg_reg_rd_o              (id_reg_reg_rd),
-        .reg_is_branch_o           (id_reg_is_branch),
-        .reg_inst_pc_o             (id_reg_inst_pc),
-        .reg_mem_operation_o       (id_reg_mem_operation),
-        .reg_mem_write_enable_o    (id_reg_mem_write_enable),
-        .reg_mem_unsigned_ext_o    (id_reg_mem_unsigned_ext),
-        .reg_rf_write_enable_o     (id_reg_rf_write_enable),
-        .reg_data_rd_mux_o         (id_reg_data_rd_mux),
-        .reg_byte_sel_o            (id_reg_byte_sel),
-        .reg_alu_a_use_pc_o        (id_reg_alu_a_use_pc),
-        .reg_alu_b_use_imm_o       (id_reg_alu_b_use_imm)
+    // bubble controller
+    if_bubble_controller if_bubble_controller_inst(
+        .inst_pc_i(_if_inst_pc),
+        .inst_addr_i(_if_inst_addr),
+        .if_bubble_o(_if_bubble)
     );
 
-    stage_exe stage_exe_inst(
-    .clk_i                             (sys_clk),
-    .rst_i                             (sys_rst),
+    if_pipeline_regs if_pipeline_regs_inst(
+        .clk_i(clk),
+        .rst_i(rst),
 
-    .mem_stall_i                       (mem_stall),
-    .stall_o                           (exe_stall),
-    .mem_done_i                         (mem_done),
+        .bubble_i(_if_bubble),
+        .stall_i(_if_stall),
 
-    .use_alu_pc_o                      (exe_use_alu_pc),
-    .alu_y_o                           (exe_alu_y),
+        .mode_i(if_mode),
+        .mode_o(id_mode),
 
-    .id_reg_alu_op_i                   (id_reg_alu_op),
-    .id_reg_cmp_op_i                   (id_reg_cmp_op),
-    .id_reg_imm_i                      (id_reg_imm),
-    .id_reg_data_rs1_i                 (id_reg_data_rs1),
-    .id_reg_data_rs2_i                 (id_reg_data_rs2),
-    .id_reg_reg_rd_i                   (id_reg_reg_rd),
-//    .id_reg_is_branch_i                (id_reg_is_branch),
-    .id_reg_inst_pc_i                  (id_reg_inst_pc),
-    .id_reg_mem_operation_i            (id_reg_mem_operation),
-    .id_reg_mem_write_enable_i         (id_reg_mem_write_enable),
-    .id_reg_mem_unsigned_ext_i         (id_reg_mem_unsigned_ext),
-    .id_reg_rf_write_enable_i          (id_reg_rf_write_enable),
-    .id_reg_data_rd_mux_i              (id_reg_data_rd_mux),
-    .id_reg_byte_sel_i                 (id_reg_byte_sel),
-    .id_reg_alu_a_use_pc_i             (id_reg_alu_a_use_pc),
-    .id_reg_alu_b_use_imm_i            (id_reg_alu_b_use_imm),
+        .inst_pc_i(_if_inst_pc),
+        .inst_pc_o(id_inst_pc),
 
-
-    .reg_inst_pc_o                     (exe_reg_inst_pc),
-    .reg_alu_y_o                       (exe_reg_alu_y),
-    .reg_mem_operation_o               (exe_reg_mem_operation),
-    .reg_mem_write_enable_o            (exe_reg_mem_write_enable),
-    .reg_mem_unsigned_ext_o            (exe_reg_mem_unsigned_ext),
-    .reg_rf_write_enable_o             (exe_reg_rf_write_enable),
-    .reg_data_rd_mux_o                 (exe_reg_data_rd_mux),
-    .reg_byte_sel_o                    (exe_reg_byte_sel), 
-    .reg_data_rs2_o                    (exe_reg_data_rs2),
-    .reg_reg_rd_o                      (exe_reg_reg_rd)
+        .inst_i(_if_inst),
+        .inst_o(id_inst)
     );
 
-    stage_mem stage_mem_inst(
-        .clk_i                      (sys_clk),
-        .rst_i                      (sys_rst),
-        
-        .stall_o                    (mem_stall),
-        .done_o                     (mem_done),
-        .data_rd_o                  (mem_data_rd),
-        
-        .exe_reg_inst_pc_i          (exe_reg_inst_pc),
-        .exe_reg_alu_y_i            (exe_reg_alu_y),
-        .exe_reg_mem_operation_i    (exe_reg_mem_operation),
-        .exe_reg_mem_write_enable_i (exe_reg_mem_write_enable),
-        .exe_reg_mem_unsigned_ext_i (exe_reg_mem_unsigned_ext),
-        .exe_reg_rf_write_enable_i  (exe_reg_rf_write_enable),
-        .exe_reg_data_rd_mux_i      (exe_reg_data_rd_mux),
-        .exe_reg_byte_sel_i         (exe_reg_byte_sel), 
-        .exe_reg_data_rs2_i         (exe_reg_data_rs2),
-        .exe_reg_reg_rd_i           (exe_reg_reg_rd),
-        
-        .wb_cyc_o                   (wbm0_cyc_o),
-        .wb_stb_o                   (wbm0_stb_o),
-        .wb_ack_i                   (wbm0_ack_i),
-        .wb_adr_o                   (wbm0_adr_o),
-        .wb_dat_o                   (wbm0_dat_o),
-        .wb_dat_i                   (wbm0_dat_i),
-        .wb_sel_o                   (wbm0_sel_o),
-        .wb_we_o                    (wbm0_we_o),
-        
-        .reg_data_rd_o              (mem_reg_data_rd),
-        .reg_reg_rd_o               (mem_reg_reg_rd),
-        .reg_rf_write_enable_o      (mem_reg_rf_write_enable)
+    /* =========== stage if end =========== */
+
+    /* =========== stage id begin =========== */
+
+    wire [4:0] _id_reg_rs1;
+    wire [4:0] _id_reg_rs2;
+    
+    wire [31:0] _id_data_rs1_old;
+    wire [31:0] _id_data_rs2_old;
+
+    wire [31:0] _id_data_rs1;
+    wire [31:0] _id_data_rs2;
+
+    wire [ 4:0] _id_id_csr;
+    wire [31:0] _id_data_csr;
+    
+    wire [31:0] _id_imm;
+    wire [31:0] _id_uimm;
+    wire [3:0]  _id_alu_op;
+    wire [2:0]  _id_cmp_op;
+    wire [4:0]  _id_reg_rd;
+
+    wire        _id_mem_operation;
+    wire        _id_mem_write_enable;
+    wire        _id_mem_unsigned_ext;
+
+    wire        _id_rf_write_enable;
+    wire        _id_csr_write_enable;
+
+    wire [1:0]  _id_data_rd_mux;
+    wire [3:0]  _id_byte_sel;
+    wire [1:0]  _id_alu_a_mux;
+    wire [1:0]  _id_alu_b_mux;
+
+    wire        _id_invalid_inst;
+    wire        _id_bubble;
+
+
+    // important csr
+    wire [31:0] _id_sstatus;
+    wire [31:0] _id_sie;
+    wire [31:0] _id_stvec;
+    wire [31:0] _id_sepc;
+    wire [31:0] _id_sip;
+    wire [31:0] _id_satp;
+
+    wire [31:0] _id_mstatus;
+    wire [31:0] _id_medeleg;
+    wire [31:0] _id_mideleg;
+    wire [31:0] _id_mie;
+    wire [31:0] _id_mtvec;
+    wire [31:0] _id_mepc;
+    wire [31:0] _id_mip;
+
+    // instruction decoder
+    id_instruction_decoder id_instruction_decoder_inst (
+        .inst_i             (id_inst),
+        .mode_i             (id_mode),
+
+        .invalid_inst_o     (_id_invalid_inst),
+        .is_branch_o        (id_is_branch),
+
+        .reg_rs1_o          (_id_reg_rs1),
+        .reg_rs2_o          (_id_reg_rs2),
+        .reg_rd_o           (_id_reg_rd),
+        .rf_write_enable_o  (_id_rf_write_enable),
+        .data_rd_mux_o      (_id_data_rd_mux),
+
+        .id_csr_o           (_id_id_csr),
+        .csr_write_enable_o (_id_csr_write_enable),
+
+        .imm_o              (_id_imm),
+        .uimm_o             (_id_uimm),
+
+        .alu_op_o           (_id_alu_op),
+        .alu_a_mux_o        (_id_alu_a_mux),
+        .alu_b_mux_o        (_id_alu_b_mux),
+
+        .cmp_op_o           (_id_cmp_op),
+
+        .byte_sel_o         (_id_byte_sel),
+        .mem_operation_o    (_id_mem_operation),
+        .mem_write_enable_o (_id_mem_write_enable),
+        .mem_unsigned_ext_o (_id_mem_unsigned_ext)
     );
+
+    // register file
+    id_register_file id_register_file_inst (
+        .clk_i      (clk),
+        .rst_i      (rst),
+
+        .waddr_i    (wb_reg_rd),
+        .wdata_i    (wb_data_rd),
+        .we_i       (wb_rf_write_enable),
+        .raddr_a_i  (_id_reg_rs1),
+        .raddr_b_i  (_id_reg_rs2),
+
+        .rdata_a_o  (_id_data_rs1_old),
+        .rdata_b_o  (_id_data_rs2_old)
+    );
+
+    // csr
+    id_csr_file id_csr_file_inst (
+        .clk_i           (clk    ),
+        .rst_i           (rst    ),
+
+        .raddr_a_i       (_id_id_csr             ),
+        .rdata_a_o       (_id_data_csr           ),
+
+        .waddr_i         (wb_id_csr              ),
+        .wdata_i         (wb_data_csr            ),
+        .we_i            (wb_csr_write_enable    ),
+
+        .mem_waddr_i     (mem_id_csr             ),
+        .mem_wdata_i     (mem_new_data_csr       ),
+        .mem_we_i        (mem_csr_write_enable   ),
+
+        .exe_waddr_i     (exe_id_csr             ),
+        .exe_wdata_i     (exe_data_csr           ),
+        .exe_we_i        (exe_csr_write_enable   ),
+
+        .sstatus_o       (_id_sstatus  ),
+        .sie_o           (_id_sie      ),
+        .stvec_o         (_id_stvec    ),
+        .sepc_o          (_id_sepc     ),
+        .sip_o           (_id_sip      ),
+        .satp_o          (_id_satp     ),
+
+        .mstatus_o       (_id_mstatus  ),
+        .medeleg_o       (_id_medeleg  ),
+        .mideleg_o       (_id_mideleg  ),
+        .mie_o           (_id_mie      ),
+        .mtvec_o         (_id_mtvec    ),
+        .mepc_o          (_id_mepc     ),
+        .mip_o           (_id_mip      )
+    );
+
+    // stall controller
+    id_stall_controller id_stall_controller_inst (
+        .exe_stall_i    (exe_stall),
+        .id_stall_o     (id_stall)
+    );
+
+    // bubble controller
+    id_bubble_controller id_bubble_controller_inst (
+        .wait_reg_i     (id_wait_reg),
+        .id_bubble_o    (_id_bubble)
+    );
+
+    // wait register controller
+
+    id_wait_reg_controller id_wait_reg_controller_inst (
+        .reg_rs1_i              (_id_reg_rs1),
+        .reg_rs2_i              (_id_reg_rs2),
+
+        .data_rs1_i             (_id_data_rs1_old),
+        .data_rs2_i             (_id_data_rs2_old),
+
+        .exe_reg_rd_i           (exe_reg_rd),
+        .exe_rf_write_enable_i  (exe_rf_write_enable),
+        .exe_alu_y_i            (exe_alu_y),        // (arithmetic instruction)
+        .exe_data_csr_i         (exe_data_csr),     // (csr instruction)
+        .exe_pc_plus4_i         (exe_pc_plus4),     // (jal/jalr instruction)
+        .exe_data_rd_mux_i      (exe_data_rd_mux), 
+
+        .mem_reg_rd_i           (mem_reg_rd),
+        .mem_rf_write_enable_i  (mem_rf_write_enable),
+        .mem_data_rd_i          (mem_data_rd),
+        .mem_load_data_i        (mem_data_rd_mux == `DATA_RD_MEM),
+        .mem_done_i             (mem_done),
+
+        .data_rs1_o             (_id_data_rs1),
+        .data_rs2_o             (_id_data_rs2),
+        
+        .wait_reg_o             (id_wait_reg)
+    );
+
+    // pipeline registers
+    id_pipeline_regs id_pipeline_regs_inst (
+        .clk_i                  (clk),
+        .rst_i                  (rst),
+
+        .bubble_i               (_id_bubble),
+        .stall_i                (id_stall),
+
+        .mode_i                 (id_mode),
+
+        .alu_op_i               (_id_alu_op),
+        .cmp_op_i               (_id_cmp_op),
+        .imm_i                  (_id_imm),
+        .uimm_i                 (_id_uimm),
+        .data_rs1_i             (_id_data_rs1),
+        .data_rs2_i             (_id_data_rs2),
+
+        .reg_rd_i               (_id_reg_rd),
+        .id_csr_i               (_id_id_csr),
+        .data_csr_i             (_id_data_csr),
+        .csr_write_enable_i     (_id_csr_write_enable),
+
+        .is_branch_i            (id_is_branch),
+        .inst_pc_i              (id_inst_pc),
+
+        .mem_operation_i        (_id_mem_operation),
+        .mem_write_enable_i     (_id_mem_write_enable),
+        .mem_unsigned_ext_i     (_id_mem_unsigned_ext),
+
+        .rf_write_enable_i      (_id_rf_write_enable),
+        .data_rd_mux_i          (_id_data_rd_mux),
+
+        .byte_sel_i             (_id_byte_sel),
+        .alu_a_mux_i            (_id_alu_a_mux),
+        .alu_b_mux_i            (_id_alu_b_mux),
+
+        .mode_o                 (exe_mode),
+        
+        .alu_op_o               (exe_alu_op),
+        .cmp_op_o               (exe_cmp_op),
+        .imm_o                  (exe_imm),
+        .uimm_o                 (exe_uimm),
+        .data_rs1_o             (exe_data_rs1),
+        .data_rs2_o             (exe_data_rs2),
+
+        .reg_rd_o               (exe_reg_rd),
+        .id_csr_o               (exe_id_csr),
+        .data_csr_o             (exe_data_csr),
+        .csr_write_enable_o     (exe_csr_write_enable),
+
+        .is_branch_o            (exe_is_branch),
+        .inst_pc_o              (exe_inst_pc),
+
+        .mem_operation_o        (exe_mem_operation),
+        .mem_write_enable_o     (exe_mem_write_enable),
+        .mem_unsigned_ext_o     (exe_mem_unsigned_ext),
+
+        .rf_write_enable_o      (exe_rf_write_enable),
+        .data_rd_mux_o          (exe_data_rd_mux),
+
+        .byte_sel_o             (exe_byte_sel),
+        .alu_a_mux_o            (exe_alu_a_mux),
+        .alu_b_mux_o            (exe_alu_b_mux)
+
+    );
+
+    /* =========== stage id end =========== */
+
+    /* =========== stage exe begin =========== */
+
+    // internal wires
+    logic [31:0] _exe_alu_a;
+    logic [31:0] _exe_alu_b;
+    wire         _exe_bubble;
+    wire  [31:0] exe_pc_plus4;
+    
+    // _exe_alu_a
+    always_comb begin
+        case (exe_alu_a_mux)
+            `ALU_A_PC   : _exe_alu_a = exe_inst_pc;
+            `ALU_A_RS1  : _exe_alu_a = exe_data_rs1;
+            `ALU_A_UIMM : _exe_alu_a = exe_uimm;
+            default     : _exe_alu_a = 32'b0;
+        endcase
+    end
+    
+    // _exe_alu_b
+    always_comb begin
+        case (exe_alu_b_mux)
+            `ALU_B_RS2  : _exe_alu_b = exe_data_rs2;
+            `ALU_B_IMM  : _exe_alu_b = exe_imm;
+            `ALU_B_CSR  : _exe_alu_b = exe_data_csr;
+            default     : _exe_alu_b = 32'b0;
+        endcase
+    end
+    
+    exe_alu exe_alu_inst (
+        .op(exe_alu_op),
+        .a(_exe_alu_a),
+        .b(_exe_alu_b),
+        .y(exe_alu_y)
+    );
+    
+    exe_comparator exe_comparator_inst (
+        .op (exe_cmp_op),
+        .a  (exe_data_rs1),
+        .b  (exe_data_rs2),
+        .y  (exe_branch_take)
+    );
+
+    adder4 exe_pc_adder(
+        .data_i         (exe_inst_pc),
+        .data_plus4_o   (exe_pc_plus4)
+    );
+    
+    exe_stall_controller exe_stall_controller_inst (
+        .mem_stall_i        (mem_stall),
+        .mem_operation_i    (mem_mem_operation),
+        .mem_done_i         (mem_done),
+        .exe_stall_o        (exe_stall)
+    );
+    
+    exe_bubble_controller exe_bubble_controller_inst (
+        .exe_bubble_o(_exe_bubble)
+    );
+    
+    // register outputs
+    exe_pipeline_regs exe_pipeline_regs_inst (
+        .clk_i                  (clk),
+        .rst_i                  (rst),
+    
+        .stall_i                (exe_stall),
+        .bubble_i               (_exe_bubble),
+
+        .mode_i                 (exe_mode),
+        .pc_plus4_i             (exe_pc_plus4),
+        .alu_y_i                (exe_alu_y),
+        .mem_operation_i        (exe_mem_operation),
+        .mem_write_enable_i     (exe_mem_write_enable),
+        .mem_unsigned_ext_i     (exe_mem_unsigned_ext),
+        .rf_write_enable_i      (exe_rf_write_enable),
+        .data_rd_mux_i          (exe_data_rd_mux),
+        .byte_sel_i             (exe_byte_sel),
+        .data_rs2_i             (exe_data_rs2),
+        .reg_rd_i               (exe_reg_rd),
+        .id_csr_i               (exe_id_csr),
+        .data_csr_i             (exe_data_csr),
+        .csr_write_enable_i     (exe_csr_write_enable),
+
+        .mode_o                 (mem_mode),
+        .pc_plus4_o             (mem_pc_plus4),
+        .alu_y_o                (mem_alu_y),
+        .mem_operation_o        (mem_mem_operation),
+        .mem_write_enable_o     (mem_mem_write_enable),
+        .mem_unsigned_ext_o     (mem_mem_unsigned_ext),
+        .rf_write_enable_o      (mem_rf_write_enable),
+        .data_rd_mux_o          (mem_data_rd_mux),
+        .byte_sel_o             (mem_byte_sel),
+        .data_rs2_o             (mem_data_rs2),
+        .reg_rd_o               (mem_reg_rd),
+        .id_csr_o               (mem_id_csr),
+        .data_csr_o             (mem_data_csr),
+        .csr_write_enable_o     (mem_csr_write_enable)
+    );
+
+    /* =========== stage exe end =========== */
+
+    /* =========== stage mem begin =========== */
+
+    // internal wires
+    wire [31:0] _mem_data_read_final;
+    wire [31:0] _mem_data_read;
+
+    wire        _mem_bubble;
+    
+    assign mem_new_data_csr = mem_alu_y;
+
+    mem_imm_gen mem_imm_gen_inst(
+        .imm_i          (_mem_data_read),
+        .byte_sel_i     (mem_byte_sel),
+        .unsigned_ext_i (mem_mem_unsigned_ext),
+        .imm_o          (_mem_data_read_final)
+    );
+
+    mem_data_rd_mux mem_data_rd_mux_inst(
+        .pc_i           (mem_pc_plus4),
+        .alu_i          (mem_alu_y),
+        .mem_i          (_mem_data_read_final),
+        .csr_i          (mem_data_csr),
+        .data_rd_mux_i  (mem_data_rd_mux),
+        .data_rd_o      (mem_data_rd)
+    );
+
+    mem_dm_controller mem_dm_controller_inst(
+        .operation_i    (mem_mem_operation),
+        .write_enable_i (mem_mem_write_enable),
+        .byte_sel_i     (mem_byte_sel),
+        .data_write_i   (mem_data_rs2),
+        .data_read_o    (_mem_data_read),
+        .addr_i         (mem_alu_y),
+        .done_o         (mem_done),
+
+        .wb_ack_i       (wbm0_ack_i),
+        .wb_dat_i       (wbm0_dat_i),
+        .wb_cyc_o       (wbm0_cyc_o),
+        .wb_stb_o       (wbm0_stb_o),
+        .wb_adr_o       (wbm0_adr_o),
+        .wb_dat_o       (wbm0_dat_o),
+        .wb_sel_o       (wbm0_sel_o),
+        .wb_we_o        (wbm0_we_o )
+    );
+
+
+
+    mem_stall_controller mem_stall_controller_inst(
+        .mem_stall_o    (mem_stall)
+    );
+
+    mem_bubble_controller mem_bubble_controller_inst(
+        .mem_operation_i(mem_mem_operation),
+        .mem_done_i     (mem_done),
+        .mem_bubble_o   (_mem_bubble)
+    );
+
+    mem_pipeline_regs mem_pipeline_regs_inst(
+        .clk_i              (clk),
+        .rst_i              (rst),
+
+        .bubble_i           (_mem_bubble),
+        .stall_i            (mem_stall),
+
+        .data_rd_i          (mem_data_rd),
+        .reg_rd_i           (mem_reg_rd),
+        .rf_write_enable_i  (mem_rf_write_enable),
+
+        .data_csr_i         (mem_new_data_csr),
+        .id_csr_i           (mem_id_csr),
+        .csr_write_enable_i (mem_csr_write_enable),
+
+        .data_rd_o          (wb_data_rd),
+        .reg_rd_o           (wb_reg_rd),
+        .rf_write_enable_o  (wb_rf_write_enable),
+
+        .data_csr_o         (wb_data_csr),
+        .id_csr_o           (wb_id_csr),
+        .csr_write_enable_o (wb_csr_write_enable)
+    );
+
+    /* =========== stage mem end =========== */
 
 
 

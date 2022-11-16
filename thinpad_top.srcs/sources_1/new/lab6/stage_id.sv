@@ -5,30 +5,32 @@ module id_instruction_decoder (
     input wire   [31:0] inst_i,
     input wire   [ 1:0] mode_i,
 
-    output wire  [ 4:0] reg_rd_o,
+    output logic        invalid_inst_o,
+    output wire         is_branch_o,
+    
     output wire  [ 4:0] reg_rs1_o,
     output wire  [ 4:0] reg_rs2_o,
+    output wire  [ 4:0] reg_rd_o,
+    output wire         rf_write_enable_o,
+    output logic [ 1:0] data_rd_mux_o, // 0: alu, 1: mem, 2: pc+4, 3: csr
+
     output logic [ 4:0] id_csr_o,
+    output wire         csr_write_enable_o,
 
     output logic [31:0] imm_o,
+    output logic [31:0] uimm_o,
 
     output logic [ 3:0] alu_op_o, // add/slt ...
+    output logic [ 1:0] alu_a_mux_o,
+    output logic [ 1:0] alu_b_mux_o,
+
     output wire  [ 2:0] cmp_op_o, // beq/bge ...
- 
+
     output logic [ 3:0] byte_sel_o, // lb/sw ...
-
-    output wire         is_branch_o,
-    output logic        invalid_inst_o,
-
     output wire         mem_operation_o,
     output wire         mem_write_enable_o,
-    output wire         mem_unsigned_ext_o,
-
-    output wire         rf_write_enable_o,
-
-    output wire  [ 1:0] alu_a_mux_o,
-    output wire  [ 1:0] alu_b_mux_o,
-    output logic [ 1:0] data_rd_mux_o // 0: alu, 1: mem, 2: pc+4, 3: csr
+    output wire         mem_unsigned_ext_o
+    
 );
 
     typedef enum logic [2:0] {
@@ -114,19 +116,26 @@ module id_instruction_decoder (
 
             `CSR_MCYCLE   : id_csr_o = `CSR_ID_MCYCLE   ;
             `CSR_MCYCLEH  : id_csr_o = `CSR_ID_MCYCLEH  ;
+
+            `CSR_PMPCFG0  : id_csr_o = `CSR_ID_PMPCFG0  ;
+            `CSR_PMPADDR0 : id_csr_o = `CSR_ID_PMPADDR0 ;
             default       : id_csr_o = `CSR_ID_UNKNOWN  ;
         endcase
     end
-
+    logic csr_inst;
     logic csr_read_only;
-    logic csr_rw;
+    logic csr_read;
+    logic csr_write;
     logic csr_priv_ok;
 
+    assign csr_inst = (opcode == 7'b1110011 && funct3!=3'b000);
+
     assign csr_read_only = (csr[11:10] == 2'b11);
-    assign csr_rw        = (rd != 5'b0);
-    assign csr_priv_ok   =  csr[9:8] <= mode && (!(csr_read_only && csr_rw)) && (csr_id_o != `CSR_ID_UNKNOWN);
+    assign csr_read      = !(!funct3[1] && rd == 5'b0); // csrrw{,i}
+    assign csr_write     = !(funct3[1] && rs1 == 5'b0); // csrr{s,c}{,i}
+    assign csr_priv_ok   =  (csr[9:8] <= mode) && (!(csr_read_only && csr_write)) && (id_csr_o != `CSR_ID_UNKNOWN);
 
-
+    assign csr_write_enable_o = csr_inst && csr_write && csr_priv_ok;
 
 
     // inst_type
@@ -179,6 +188,8 @@ module id_instruction_decoder (
         endcase
     end
 
+    assign uimm_o = {  27'b0, uimm[4:0] };
+
     assign is_branch_o = (inst_type == B_TYPE || inst_type == J_TYPE || opcode[6:0] == 7'b1100111); // branch, jal, jalr
 
     // alu_operation
@@ -193,6 +204,12 @@ module id_instruction_decoder (
         end else begin
             if (inst_type == R_TYPE && funct7[6:0] == 7'b0000101) begin // min
                 alu_op_o[3:0] = `ALU_MIN;
+            end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b01) begin // csrrw{,i}
+                alu_op_o[3:0] = `ALU_USE_A;
+            end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b10) begin // csrrs{,i}
+                alu_op_o[3:0] = `ALU_OR;
+            end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b11) begin // csrrc{,i}
+                alu_op_o[3:0] = `ALU_CLR;
             end else begin
                 alu_op_o[2:0] = funct3[2:0];
                 alu_op_o[3] = (inst_type == R_TYPE 
@@ -229,13 +246,6 @@ module id_instruction_decoder (
         endcase
     end
 
-    assign alu_a_use_pc_o = (  opcode == 7'b0010111 // auipc
-                            || opcode == 7'b1101111 // jal
-                            || inst_type == B_TYPE // branch
-                            );
-    assign alu_b_use_imm_o = !( inst_type == R_TYPE
-                            ||  opcode == 7'b1110011 && funct3[2] // csrr{w,s,c}i
-                             );
 
     assign mem_operation_o = (  opcode == 7'b0100011 // store
                              || opcode == 7'b0000011 // load
@@ -243,27 +253,59 @@ module id_instruction_decoder (
 
     assign mem_write_enable_o = ( opcode == 7'b0100011 // store
                                 );
-
-    assign rf_write_enable_o = ( inst_type == R_TYPE
-                              || (inst_type == I_TYPE 
-                                    && opcode != 7'b0001111 
-                                    && opcode != 7'b1110011 ) // fence & env & csr
-                              || inst_type == U_TYPE
-                              || inst_type == J_TYPE
-                                )  && reg_rd_o != 5'b00000; // x0 is not writable
     
     assign mem_unsigned_ext_o = funct3[2]; // lbu, lhu
 
+    assign rf_write_enable_o =  (   opcode == 7'b0110011 // arithmetic (reg)
+                                ||  opcode == 7'b0010011 // arithmetic (imm)
+                                ||  opcode == 7'b0000011 // load
+                                ||  opcode == 7'b1101111 // jal
+                                ||  opcode == 7'b1100111 // jalr
+                                ||  opcode == 7'b0110111 // lui
+                                ||  opcode == 7'b0010111 // auipc
+                                ||  csr_inst // csr
+                                ) && reg_rd_o != 5'b00000;
+
+
+    // alu_a_mux
+    always_comb begin
+        if  (   opcode == 7'b0010111 // auipc
+            ||  opcode == 7'b1101111 // jal
+            ||  inst_type == B_TYPE // branch
+        ) begin
+            alu_a_mux_o = `ALU_A_PC;
+        end else if (opcode == 7'b1110011 && funct3[2]) begin // csr{w,s,c}i
+            alu_a_mux_o = `ALU_A_UIMM;
+        end else begin
+            alu_a_mux_o = `ALU_A_RS1;
+        end
+    end
+
+    // alu_b_mux
+    always_comb begin
+        if (inst_type == R_TYPE) begin
+            alu_b_mux_o = `ALU_B_RS2;
+        end else if (opcode == 7'b1110011 && funct3 != 3'b0) // csr{w,s,c}{,i}
+            alu_b_mux_o = `ALU_B_CSR;
+        else begin
+            alu_b_mux_o = `ALU_B_IMM;
+        end
+    end
+
+    // data_rd_mux
     always_comb begin
         if (opcode == 7'b1101111 || opcode == 7'b1100111) begin // jal, jalr
             data_rd_mux_o = `DATA_RD_PC_NEXT;
         end else if (opcode == 7'b0000011) begin // load
             data_rd_mux_o = `DATA_RD_MEM;
+        end else if (opcode == 7'b1110011 && funct3 != 3'b0) begin // csr{w,s,c}{,i}
+            data_rd_mux_o = `DATA_RD_CSR;
         end else begin
             data_rd_mux_o = `DATA_RD_ALU;
         end
     end
     
+    // invalid instruction
     always_comb begin
         invalid_inst_o = 1'b1; // default invalid
 
@@ -379,7 +421,7 @@ module id_instruction_decoder (
                         ||  (funct3 == 3'b111 ) // csrrci
             ) begin
                 if (csr_priv_ok) begin
-                    invalid_inst_o = 1'b1; // TODO: implement csr
+                    invalid_inst_o = 1'b0; // TODO: implement csr
                 end
             end 
 
@@ -419,17 +461,16 @@ module id_register_file(
 
 endmodule
 
-module id_csr(
+module id_csr_file(
     input  wire         clk_i,
     input  wire         rst_i,
+
+    input  wire [ 4: 0] raddr_a_i,
+    output wire [31: 0] rdata_a_o,
     
     input  wire [ 4: 0] waddr_i,
     input  wire [31: 0] wdata_i,
     input  wire         we_i,
-    input  wire [ 4: 0] raddr_a_i,
-    //input  wire [ 4: 0] raddr_b_i,
-    output wire [31: 0] rdata_a_o,
-    //output wire [31: 0] rdata_b_o,
 
     // forward
     input  wire [ 4: 0] mem_waddr_i,
@@ -462,7 +503,6 @@ module id_csr(
     logic [31:0] forwarded_reg [0:31];
 
     assign rdata_a_o = forwarded_reg[raddr_a_i];
-    // assign rdata_b_o = forwarded_reg[raddr_b_i];
 
     assign sstatus_o = forwarded_reg[`CSR_ID_SSTATUS];
     assign sie_o     = forwarded_reg[`CSR_ID_SIE];
@@ -499,7 +539,10 @@ module id_csr(
         end else begin
             if (we_i) begin
                 reg_file[waddr_i] <= wdata_i;
-            end else begin
+            end 
+            
+            // not writing mcycle, then we increment it
+            if (!(we_i && waddr_i == `CSR_ID_MCYCLE)) begin
                 reg_file[`CSR_ID_MCYCLE] <= reg_file[`CSR_ID_MCYCLE] + 1;
                 if (reg_file[`CSR_ID_MCYCLE] == 32'hffffffff) begin
                     reg_file[`CSR_ID_MCYCLEH] <= reg_file[`CSR_ID_MCYCLEH] + 1;
@@ -529,6 +572,9 @@ module id_pipeline_regs (
     input wire        bubble_i,
     input wire        stall_i,
 
+    input wire [ 1:0] mode_i,
+    output reg [ 1:0] mode_o,
+
     input wire [ 3:0] alu_op_i,
     output reg [ 3:0] alu_op_o,
 
@@ -537,6 +583,9 @@ module id_pipeline_regs (
 
     input wire [31:0] imm_i,
     output reg [31:0] imm_o,
+
+    input wire [31:0] uimm_i,
+    output reg [31:0] uimm_o,
 
     input wire [31:0] data_rs1_i,
     output reg [31:0] data_rs1_o,
@@ -551,6 +600,9 @@ module id_pipeline_regs (
 
     input wire [31:0] data_csr_i,
     output reg [31:0] data_csr_o,
+
+    input wire        csr_write_enable_i,
+    output reg        csr_write_enable_o,
 
     input wire        is_branch_i,
     output reg        is_branch_o,
@@ -585,60 +637,93 @@ module id_pipeline_regs (
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
+            mode_o <= 2'b00;
+
             alu_op_o <= 4'b0;
             cmp_op_o <= 3'b0;
             imm_o <= 32'b0;
+            uimm_o <= 32'b0;
+
             data_rs1_o <= 32'b0;
             data_rs2_o <= 32'b0;
             reg_rd_o <= 5'b0;
+
+            id_csr_o <= 5'b0;
+            data_csr_o <= 32'b0;
+            csr_write_enable_o <= 1'b0;
+
             is_branch_o <= 1'b0;
             inst_pc_o <= 32'b0;
+
             mem_operation_o <= 1'b0;
             mem_write_enable_o <= 1'b0;
             mem_unsigned_ext_o <= 1'b0;
             rf_write_enable_o <= 1'b0;
+
             data_rd_mux_o <= 2'b0;
             byte_sel_o <= 4'b0;
-            alu_a_use_pc_o <= 1'b0;
-            alu_b_use_imm_o <= 1'b0;
+            alu_a_mux_o <= 2'b0;
+            alu_b_mux_o <= 2'b0;
 
         end else begin
             if (stall_i) begin
 
             end else if(bubble_i) begin
+                // mode_o <= 2'b00;
+
                 alu_op_o <= 4'b0;
                 cmp_op_o <= 3'b0;
                 imm_o <= 32'b0;
+                uimm_o <= 32'b0;
+
                 data_rs1_o <= 32'b0;
                 data_rs2_o <= 32'b0;
                 reg_rd_o <= 5'b0;
+
+                id_csr_o <= 5'b0;
+                data_csr_o <= 32'b0;
+                csr_write_enable_o <= 1'b0;
+
                 is_branch_o <= 1'b0;
                 inst_pc_o <= 32'b0;
+
                 mem_operation_o <= 1'b0;
                 mem_write_enable_o <= 1'b0;
                 mem_unsigned_ext_o <= 1'b0;
                 rf_write_enable_o <= 1'b0;
+
                 data_rd_mux_o <= 2'b0;
                 byte_sel_o <= 4'b0;
-                alu_a_use_pc_o <= 1'b0;
-                alu_b_use_imm_o <= 1'b0;
+                alu_a_mux_o <= 2'b0;
+                alu_b_mux_o <= 2'b0;
             end else begin
+                mode_o <= mode_i;
+
                 alu_op_o <= alu_op_i;
                 cmp_op_o <= cmp_op_i;
                 imm_o <= imm_i;
+                uimm_o <= uimm_i;
+
                 data_rs1_o <= data_rs1_i;
                 data_rs2_o <= data_rs2_i;
                 reg_rd_o <= reg_rd_i;
+
+                id_csr_o <= id_csr_i;
+                data_csr_o <= data_csr_i;
+                csr_write_enable_o <= csr_write_enable_i;
+
                 is_branch_o <= is_branch_i;
                 inst_pc_o <= inst_pc_i;
+
                 mem_operation_o <= mem_operation_i;
                 mem_write_enable_o <= mem_write_enable_i;
                 mem_unsigned_ext_o <= mem_unsigned_ext_i;
                 rf_write_enable_o <= rf_write_enable_i;
+
                 data_rd_mux_o <= data_rd_mux_i;
                 byte_sel_o <= byte_sel_i;
-                alu_a_use_pc_o <= alu_a_use_pc_i;
-                alu_b_use_imm_o <= alu_b_use_imm_i;
+                alu_a_mux_o <= alu_a_mux_i;
+                alu_b_mux_o <= alu_b_mux_i;
             end
         end
     end
@@ -665,32 +750,45 @@ module id_bubble_controller (
 endmodule
 
 module id_wait_reg_controller (
-    input wire [4:0] reg_rs1_i,
-    input wire [4:0] reg_rs2_i,
-
-    input wire [31:0] data_rs1_i,
-    input wire [31:0] data_rs2_i,
-
-    input wire [4:0]  id_reg_reg_rd_i,
-    input wire        id_reg_rf_write_enable_i,
-    input wire [31:0] exe_alu_y_i, // forward from exe (arithmetic instruction)
-    input wire        exe_load_data_i, // is data loaded from memory
-
-    input wire [4:0]  exe_reg_reg_rd_i,
-    input wire        exe_reg_rf_write_enable_i,
-    input wire [31:0] exe_reg_alu_y_i, // forward from mem (arithmetic instruction)
-    input wire        mem_load_data_i, // is data loaded from memory
-
-    input wire [31:0] mem_data_rd_i, // forward from mem (load instruction)
-    input wire        mem_done_i, // is memory operation done
+    input  wire  [ 4:0] reg_rs1_i,
+    input  wire  [ 4:0] reg_rs2_i,
+  
+    input  wire  [31:0] data_rs1_i,
+    input  wire  [31:0] data_rs2_i,
+  
+    // forward from exe
+    input  wire  [ 4:0] exe_reg_rd_i,
+    input  wire         exe_rf_write_enable_i,
+    input  wire  [31:0] exe_alu_y_i,       // (arithmetic instruction)
+    input  wire  [31:0] exe_data_csr_i,    // (csr instruction)
+    input  wire  [31:0] exe_pc_plus4_i,    // (jal/jalr instruction)
+    input  wire  [ 1:0] exe_data_rd_mux_i,
+  
+    // forward from mem 
+    input  wire  [ 4:0] mem_reg_rd_i,
+    input  wire         mem_rf_write_enable_i,
+    input  wire  [31:0] mem_data_rd_i,    // after mux
+    input  wire         mem_load_data_i,
+    input  wire         mem_done_i,       // is memory operation done
 
     output logic [31:0] data_rs1_o,
     output logic [31:0] data_rs2_o,
 
-    output logic wait_reg_o
+    output logic        wait_reg_o
 );
     logic wait_reg_rs1, wait_reg_rs2;
     assign wait_reg_o = wait_reg_rs1 | wait_reg_rs2;
+
+    logic [31:0] exe_data_rd;
+
+    mem_data_rd_mux exe_data_rd_mux_inst (
+        .pc_i           (exe_pc_plus4_i),
+        .alu_i          (exe_alu_y_i),
+        .mem_i          (32'b0),
+        .csr_i          (exe_data_csr_i),
+        .data_rd_mux_i  (exe_data_rd_mux_i),
+        .data_rd_o      (exe_data_rd)
+    );
 
     always_comb begin
         // default
@@ -700,280 +798,53 @@ module id_wait_reg_controller (
         wait_reg_rs2 = 1'b0;
 
         // forward from mem
-        if (exe_reg_rf_write_enable_i) begin
-            if(mem_load_data_i) begin
-                if (!mem_done_i) begin // wait reg (load instruction)
-                    if (exe_reg_reg_rd_i == reg_rs1_i) begin
-                        wait_reg_rs1 = 1'b1;
-                    end
-                    if (exe_reg_reg_rd_i == reg_rs2_i) begin
-                        wait_reg_rs2 = 1'b1;
-                    end
-                end else begin
-                    // memory operation done, forward data (load instruction)
-                    if (exe_reg_reg_rd_i == reg_rs1_i) begin
-                        data_rs1_o = mem_data_rd_i;
-                        wait_reg_rs1 = 1'b0;
-                    end
-                    if (exe_reg_reg_rd_i == reg_rs2_i) begin
-                        data_rs2_o = mem_data_rd_i;
-                        wait_reg_rs2 = 1'b0;
-                    end
+        if (mem_rf_write_enable_i) begin
+            if (mem_load_data_i && !mem_done_i) begin // wait reg (load instruction)
+                if (mem_reg_rd_i == reg_rs1_i) begin
+                    wait_reg_rs1 = 1'b1;
                 end
-                
+                if (mem_reg_rd_i == reg_rs2_i) begin
+                    wait_reg_rs2 = 1'b1;
+                end    
             end else begin
-                // forward rs1 from mem (arithmetic instruction)
-                if (exe_reg_reg_rd_i == reg_rs1_i) begin
-                    data_rs1_o = exe_reg_alu_y_i;
+                // forward rs1 from mem (after mux)
+                if (mem_reg_rd_i == reg_rs1_i) begin
+                    data_rs1_o = mem_data_rd_i;
                     wait_reg_rs1 = 1'b0;
                 end
-                // forward rs2 from mem (arithmetic instruction)
-                if (exe_reg_reg_rd_i == reg_rs2_i) begin
-                    data_rs2_o = exe_reg_alu_y_i;
+                // forward rs2 from mem (after mux)
+                if (mem_reg_rd_i == reg_rs2_i) begin
+                    data_rs2_o = mem_data_rd_i;
                     wait_reg_rs2 = 1'b0;
                 end
             end
         end
 
-        // nearest instruction has higher priority
-        if (id_reg_rf_write_enable_i) begin
-            if(exe_load_data_i) begin // wait reg (load instruction)
-                if (id_reg_reg_rd_i == reg_rs1_i) begin
+        // nearer instruction has higher priority
+        if (exe_rf_write_enable_i) begin
+            if(exe_data_rd_mux_i == `DATA_RD_MEM) begin // wait reg (load instruction)
+                if (exe_reg_rd_i == reg_rs1_i) begin
                     wait_reg_rs1 = 1'b1;
                 end
-                if (id_reg_reg_rd_i == reg_rs2_i) begin
+                if (exe_reg_rd_i == reg_rs2_i) begin
                     wait_reg_rs2 = 1'b1;
                 end
             end else begin
-                // forward rs1 from exe (arithmetic instruction)
-                if (id_reg_reg_rd_i == reg_rs1_i) begin
-                    data_rs1_o = exe_alu_y_i;
+                // forward rs1 from exe (after mux)
+                if (exe_reg_rd_i == reg_rs1_i) begin
+                    data_rs1_o = exe_data_rd;
                     wait_reg_rs1 = 1'b0;
                 end
-                // forward rs2 from exe (arithmetic instruction)
-                if (id_reg_reg_rd_i == reg_rs2_i) begin
-                    data_rs2_o = exe_alu_y_i;
+                // forward rs2 from exe (after mux)
+                if (exe_reg_rd_i == reg_rs2_i) begin
+                    data_rs2_o = exe_data_rd;
                     wait_reg_rs2 = 1'b0;
                 end
             end
         end
-
-    
 
     end
 
 endmodule
 
-module stage_id (
-    input  wire         clk_i,
-    input  wire         rst_i,
-
-    input  wire         exe_stall_i,
-    output wire         stall_o,
-    output wire         wait_reg_o,
-
-    input wire [4:0]    id_reg_reg_rd_i,
-    input wire          id_reg_rf_write_enable_i,
-    input wire [31:0]   exe_alu_y_i, // forward from exe
-    input wire          exe_load_data_i, // is data loaded from memory
-   
-    input wire [4:0]    exe_reg_reg_rd_i,
-    input wire          exe_reg_rf_write_enable_i,
-    input wire [31:0]   exe_reg_alu_y_i,
-    input wire          mem_load_data_i, // is data loaded from memory
-
-    input wire [31:0]   mem_data_rd_i, // forward from mem
-    input wire          mem_done_i, // is memory operation done
-
-    input wire [31:0]   mem_reg_data_rd_i,
-    input wire [ 4:0]   mem_reg_reg_rd_i,
-    input wire          mem_reg_rf_write_enable_i,
-
-    input wire [31:0]   if_reg_inst_i,
-    input wire [31:0]   if_reg_inst_pc_i,
-
-    output wire         is_branch_o,
-    // registers
-    output wire [ 3:0]  reg_alu_op_o,
-    output wire [ 2:0]  reg_cmp_op_o,
-    output wire [31:0]  reg_imm_o,
-    output wire [31:0]  reg_data_rs1_o,
-    output wire [31:0]  reg_data_rs2_o,
-    output wire [ 4:0]  reg_reg_rd_o,
-    output wire         reg_is_branch_o,
-    output wire [31:0]  reg_inst_pc_o,
-    output wire         reg_mem_operation_o,
-    output wire         reg_mem_write_enable_o,
-    output wire         reg_mem_unsigned_ext_o,
-    output wire         reg_rf_write_enable_o,
-    output wire [ 1:0]  reg_data_rd_mux_o,
-    output wire [ 3:0]  reg_byte_sel_o,
-    output wire         reg_alu_a_use_pc_o,
-    output wire         reg_alu_b_use_imm_o
-
-);
-
-
-  // internal wires
-
-  wire [4:0] _id_reg_rs1;
-  wire [4:0] _id_reg_rs2;
-  
-  wire [31:0] _id_data_rs1_old;
-  wire [31:0] _id_data_rs2_old;
-
-  wire [31:0] _id_data_rs1;
-  wire [31:0] _id_data_rs2;
-  
-  wire [31:0] _id_imm;
-  wire [3:0]  _id_alu_op;
-  wire [2:0]  _id_cmp_op;
-  wire [4:0]  _id_reg_rd;
-
-  wire        _id_mem_operation;
-  wire        _id_mem_write_enable;
-  wire        _id_mem_unsigned_ext;
-  wire        _id_rf_write_enable;
-  wire [1:0]  _id_data_rd_mux;
-  wire [3:0]  _id_byte_sel;
-  wire        _id_alu_a_use_pc;
-  wire        _id_alu_b_use_imm;
-
-  wire        _id_invalid_inst;
-  wire        _id_bubble;
-
-  // instruction decoder
-    id_instruction_decoder id_instruction_decoder_inst (
-        .inst_i(if_reg_inst_i),
-
-        .reg_rs1_o(_id_reg_rs1),
-        .reg_rs2_o(_id_reg_rs2),
-        .reg_rd_o(_id_reg_rd),
-
-        .imm_o(_id_imm),
-
-        .alu_op_o(_id_alu_op),
-        .cmp_op_o(_id_cmp_op),
-        
-        .is_branch_o(is_branch_o),
-        .invalid_inst_o(_id_invalid_inst),
-
-        .byte_sel_o(_id_byte_sel),
-        .alu_a_use_pc_o(_id_alu_a_use_pc),
-        .alu_b_use_imm_o(_id_alu_b_use_imm),
-        
-
-        .mem_operation_o(_id_mem_operation),
-        .mem_write_enable_o(_id_mem_write_enable),
-        .mem_unsigned_ext_o(_id_mem_unsigned_ext),
-        .rf_write_enable_o(_id_rf_write_enable),
-        .data_rd_mux_o(_id_data_rd_mux)
-    );
-
-    // register file
-    id_register_file id_register_file_inst (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .waddr_i(mem_reg_reg_rd_i),
-        .wdata_i(mem_reg_data_rd_i),
-        .we_i(mem_reg_rf_write_enable_i),
-        .raddr_a_i(_id_reg_rs1),
-        .raddr_b_i(_id_reg_rs2),
-        .rdata_a_o(_id_data_rs1_old),
-        .rdata_b_o(_id_data_rs2_old)
-    );
-
-    // stall controller
-    id_stall_controller id_stall_controller_inst (
-        .exe_stall_i(exe_stall_i),
-        .id_stall_o(stall_o)
-    );
-
-    // bubble controller
-    id_bubble_controller id_bubble_controller_inst (
-        .wait_reg_i(wait_reg_o),
-        .id_bubble_o(_id_bubble)
-    );
-
-    // wait register controller
-
-    id_wait_reg_controller id_wait_reg_controller_inst (
-        .reg_rs1_i(_id_reg_rs1),
-        .reg_rs2_i(_id_reg_rs2),
-        .data_rs1_i(_id_data_rs1_old),
-        .data_rs2_i(_id_data_rs2_old),
-
-        .id_reg_reg_rd_i(id_reg_reg_rd_i),
-        .id_reg_rf_write_enable_i(id_reg_rf_write_enable_i),
-        .exe_alu_y_i(exe_alu_y_i),
-        .exe_load_data_i(exe_load_data_i),
-
-        .exe_reg_reg_rd_i(exe_reg_reg_rd_i),
-        .exe_reg_rf_write_enable_i(exe_reg_rf_write_enable_i),
-        .exe_reg_alu_y_i(exe_reg_alu_y_i),
-        .mem_load_data_i(mem_load_data_i),
-
-        .mem_data_rd_i(mem_data_rd_i),
-        .mem_done_i(mem_done_i),
-
-        .data_rs1_o(_id_data_rs1),
-        .data_rs2_o(_id_data_rs2),
-        
-        .wait_reg_o(wait_reg_o)
-    );
-
-    // pipeline registers
-    id_pipeline_regs id_pipeline_regs_inst (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-
-        .bubble_i(_id_bubble),
-        .stall_i(stall_o),
-
-        .alu_op_i(_id_alu_op),
-        .cmp_op_i(_id_cmp_op),
-        .imm_i(_id_imm),
-        .data_rs1_i(_id_data_rs1),
-        .data_rs2_i(_id_data_rs2),
-
-        .reg_rd_i(_id_reg_rd),
-        .is_branch_i(is_branch_o),
-        .inst_pc_i(if_reg_inst_pc_i),
-
-        .mem_operation_i(_id_mem_operation),
-        .mem_write_enable_i(_id_mem_write_enable),
-        .mem_unsigned_ext_i(_id_mem_unsigned_ext),
-
-        .rf_write_enable_i(_id_rf_write_enable),
-        .data_rd_mux_i(_id_data_rd_mux),
-
-        .byte_sel_i(_id_byte_sel),
-        .alu_a_use_pc_i(_id_alu_a_use_pc),
-        .alu_b_use_imm_i(_id_alu_b_use_imm),
-        
-
-        .alu_op_o(reg_alu_op_o),
-        .cmp_op_o(reg_cmp_op_o),
-        .imm_o(reg_imm_o),
-        .data_rs1_o(reg_data_rs1_o),
-        .data_rs2_o(reg_data_rs2_o),
-
-        .reg_rd_o(reg_reg_rd_o),
-        .is_branch_o(reg_is_branch_o),
-        .inst_pc_o(reg_inst_pc_o),
-
-        .mem_operation_o(reg_mem_operation_o),
-        .mem_write_enable_o(reg_mem_write_enable_o),
-        .mem_unsigned_ext_o(reg_mem_unsigned_ext_o),
-
-        .rf_write_enable_o(reg_rf_write_enable_o),
-        .data_rd_mux_o(reg_data_rd_mux_o),
-
-        .byte_sel_o(reg_byte_sel_o),
-        .alu_a_use_pc_o(reg_alu_a_use_pc_o),
-        .alu_b_use_imm_o(reg_alu_b_use_imm_o)
-
-    );
-
-endmodule
 

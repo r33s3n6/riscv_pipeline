@@ -51,35 +51,39 @@ module adder4 #(
 
 endmodule
 
-module if_pipeline_regs #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32
-) (
-    input wire clk_i,
-    input wire rst_i,
+module if_pipeline_regs (
+    input wire        clk_i,
+    input wire        rst_i,
 
-    input wire [ADDR_WIDTH-1:0] inst_pc_i,
-    input wire [DATA_WIDTH-1:0] inst_i,
+    input wire [31:0] inst_pc_i,
+    input wire [31:0] inst_i,
+    input wire [ 1:0] mode_i,
 
-    input wire bubble_i,
-    input wire stall_i,
+    input wire        bubble_i,
+    input wire        stall_i,
 
-    output reg [ADDR_WIDTH-1:0] inst_pc_o,
-    output reg [DATA_WIDTH-1:0] inst_o
+    output reg [31:0] inst_pc_o,
+    output reg [31:0] inst_o,
+    output reg [ 1:0] mode_o
+
+
 );
 
     always @(posedge clk_i) begin
         if (rst_i) begin
-            inst_pc_o <= `BUBBLE_INST_PC;
-            inst_o <= `BUBBLE_INST;
+            inst_pc_o   <= `BUBBLE_INST_PC;
+            inst_o      <= `BUBBLE_INST;
+            mode_o      <= 2'b00; // user mode bubble
         end else if (stall_i) begin
             // do nothing
         end else if (bubble_i) begin
-            inst_pc_o <= `BUBBLE_INST_PC;
-            inst_o <= `BUBBLE_INST;
+            inst_pc_o   <= `BUBBLE_INST_PC;
+            inst_o      <= `BUBBLE_INST;
+            // mode_o      <= 2'b00; // user mode bubble
         end else begin
-            inst_pc_o <= inst_pc_i;
-            inst_o <= inst_i;
+            inst_pc_o   <= inst_pc_i;
+            inst_o      <= inst_i;
+            mode_o      <= mode_i;
         end
     end
 
@@ -260,139 +264,4 @@ module if_stall_controller #(
 endmodule
 
 
-module stage_if #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32
-) (
-    input wire clk_i,
-    input wire rst_i,
 
-    input wire id_is_branch_i,
-    input wire id_wait_reg_i,
-    input wire id_stall_i,
-
-    input wire exe_use_alu_pc_i,
-    input wire [31:0] exe_alu_y_i,
-
-    input wire mem_operation_i,
-
-    input wire id_reg_is_branch_i,
-
-    output wire                     wb_cyc_o,
-    output wire                     wb_stb_o,
-    input  wire                     wb_ack_i,
-    output wire  [ADDR_WIDTH-1:0]   wb_adr_o,
-    output wire  [DATA_WIDTH-1:0]   wb_dat_o,
-    input  wire  [DATA_WIDTH-1:0]   wb_dat_i,
-    output wire  [DATA_WIDTH/8-1:0] wb_sel_o,
-    output wire                     wb_we_o,
-
-    // output regs
-    output wire [ADDR_WIDTH-1:0] reg_inst_pc_o,
-    output wire [DATA_WIDTH-1:0] reg_inst_o
-);
-
-    // internal wires
-    wire [ADDR_WIDTH-1:0] _if_pc_plus4;
-    wire [ADDR_WIDTH-1:0] _if_next_pc;
-    wire [ADDR_WIDTH-1:0] _if_inst_pc;
-    wire                  _if_pc_stall;
-    wire                  _if_pc_valid;
-    wire [DATA_WIDTH-1:0] _if_inst;
-    wire [ADDR_WIDTH-1:0] _if_inst_addr;
-    wire                  _if_bubble;
-    wire                  _if_stall;
-
-
-
-    wire                  _if_do_branch;
-
-    // branch
-    assign _if_do_branch = id_reg_is_branch_i & exe_use_alu_pc_i;
-
-
-
-    // pc related
-    adder4 pc_adder (
-        .data_i(_if_inst_pc),
-        .data_plus4_o(_if_pc_plus4)
-    );
-
-    if_pc_reg if_pc_reg_inst (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .stall_i(_if_pc_stall),
-        .next_pc_i(_if_next_pc),
-        .pc_o(_if_inst_pc)
-    );
-
-    if_next_pc_mux if_next_pc_mux_inst (
-        .pc_plus4_i(_if_pc_plus4),
-        .pc_branch_target_i(exe_alu_y_i),
-        .do_branch_i(_if_do_branch),
-        .next_pc_o(_if_next_pc)
-    );
-
-    if_pc_controller if_pc_controller_inst (
-
-        .branch_last_i(id_is_branch_i),
-        .branch_take_i(_if_do_branch), // target address computed
-        .if_regs_stall_i(_if_stall),
-
-        .inst_addr_i(_if_inst_addr),
-        .inst_pc_i(_if_inst_pc),
-
-        .pc_stall_o(_if_pc_stall),
-        .pc_valid_o(_if_pc_valid)
-    );
-
-    // instruction memory controller
-    if_im_controller if_im_controller_inst (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-
-        .do_new_req_i(_if_pc_valid & ~mem_operation_i),
-        .addr_i(_if_inst_pc),
-
-        .wb_ack_i(wb_ack_i),
-        .wb_dat_i(wb_dat_i),
-        .wb_cyc_o(wb_cyc_o),
-        .wb_stb_o(wb_stb_o),
-        .wb_adr_o(wb_adr_o),
-        .wb_dat_o(wb_dat_o),
-        .wb_sel_o(wb_sel_o),
-        .wb_we_o(wb_we_o),
-
-        .data_addr_o(_if_inst_addr),
-        .data_o(_if_inst)
-    );
-
-    // stall controller
-    if_stall_controller if_stall_controller_inst(
-        .id_wait_reg_i(id_wait_reg_i),
-        .id_stall_i(id_stall_i),
-        .if_stall_o(_if_stall)
-    );
-
-    // bubble controller
-    if_bubble_controller if_bubble_controller_inst(
-        .inst_pc_i(_if_inst_pc),
-        .inst_addr_i(_if_inst_addr),
-        .if_bubble_o(_if_bubble)
-    );
-
-    if_pipeline_regs if_pipeline_regs_inst(
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-
-        .inst_pc_i(_if_inst_pc),
-        .inst_i(_if_inst),
-
-        .bubble_i(_if_bubble),
-        .stall_i(_if_stall),
-
-        .inst_pc_o(reg_inst_pc_o),
-        .inst_o(reg_inst_o)
-    );
-
-endmodule

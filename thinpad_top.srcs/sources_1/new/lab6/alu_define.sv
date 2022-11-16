@@ -1,19 +1,21 @@
 // alu operations
-`define ALU_ADD  4'b0000
-`define ALU_SUB  4'b1000
-`define ALU_SLL  4'b0001
-`define ALU_SLT  4'b0010
-`define ALU_SLTU 4'b0011
-`define ALU_XOR  4'b0100
-`define ALU_SRL  4'b0101
-`define ALU_SRA  4'b1101
-`define ALU_OR   4'b0110
-`define ALU_AND  4'b0111
-`define ALU_XNOR 4'b1100
+`define ALU_ADD   4'b0000
+`define ALU_SUB   4'b1000
+`define ALU_SLL   4'b0001
+`define ALU_SLT   4'b0010
+`define ALU_SLTU  4'b0011
+`define ALU_XOR   4'b0100
+`define ALU_SRL   4'b0101
+`define ALU_SRA   4'b1101
+`define ALU_OR    4'b0110
+`define ALU_AND   4'b0111
+`define ALU_XNOR  4'b1100
 
 // non-standard ALU operations
-`define ALU_CLZ  4'b1001
-`define ALU_MIN  4'b1010
+`define ALU_CLZ   4'b1001
+`define ALU_MIN   4'b1010
+`define ALU_CLR   4'b1011
+`define ALU_USE_A 4'b1110
 
 // comparator operations
 `define CMP_EQ   3'b000
@@ -76,6 +78,9 @@
 `define CSR_MCYCLE   12'hb00
 `define CSR_MCYCLEH  12'hb80
 
+`define CSR_PMPCFG0  12'h3a0
+`define CSR_PMPADDR0 12'h3b0
+
 // csr id(for register file)
 `define CSR_ID_CYCLE    5'd0 // read-only
 `define CSR_ID_TIME     5'd1 // read-only
@@ -110,5 +115,8 @@
 
 `define CSR_ID_MCYCLE   5'd24
 `define CSR_ID_MCYCLEH  5'd25
+
+`define CSR_ID_PMPCFG0  5'd26
+`define CSR_ID_PMPADDR0 5'd27
 
 `define CSR_ID_UNKNOWN  5'd31
