@@ -101,10 +101,13 @@ endmodule
 module mem_bubble_controller (
     input wire mem_operation_i,
     input wire mem_done_i,
+
+    input wire wb_prev_exception_i,
+
     output wire mem_bubble_o
 );
 
-    assign mem_bubble_o = mem_operation_i & ~mem_done_i;
+    assign mem_bubble_o = (mem_operation_i & ~mem_done_i) || wb_prev_exception_i;
 endmodule
 
 module mem_pipeline_regs (
@@ -113,6 +116,12 @@ module mem_pipeline_regs (
 
     input wire bubble_i,
     input wire stall_i,
+
+    input wire [ 1:0] mode_i,
+    output reg [ 1:0] mode_o,
+
+    input wire [31:0] inst_pc_i,
+    output reg [31:0] inst_pc_o,
 
     input wire [31:0] data_rd_i,
     output reg [31:0] data_rd_o,
@@ -130,34 +139,74 @@ module mem_pipeline_regs (
     output reg [ 4:0] id_csr_o,
 
     input wire        csr_write_enable_i,
-    output reg        csr_write_enable_o
+    output reg        csr_write_enable_o,
+
+    input wire        exception_i,
+    output reg        exception_o,
+
+    input wire [ 1:0] trap_mode_i,
+    output reg [ 1:0] trap_mode_o,
+
+    input wire [31:0] mcause_i,
+    output reg [31:0] mcause_o,
+
+    input wire [31:0] mtval_i,
+    output reg [31:0] mtval_o
 );
 
     always @(posedge clk_i) begin
         if (rst_i) begin
+            mode_o  <= 2'b0;
+            inst_pc_o <= 32'b0;
             data_rd_o <= 32'b0;
             reg_rd_o <= 32'b0;
             rf_write_enable_o <= 1'b0;
             data_csr_o <= 32'b0;
             id_csr_o <= 32'b0;
             csr_write_enable_o <= 1'b0;
+
+            exception_o <= 1'b0;
+            trap_mode_o <= 2'b0;
+            mcause_o    <= 32'b0;
+            mtval_o     <= 32'b0;
         end else begin
             if (stall_i) begin
 
             end else if (bubble_i) begin
+                inst_pc_o <= 32'b0;
                 data_rd_o <= 32'b0;
                 reg_rd_o <= 32'b0;
                 rf_write_enable_o <= 1'b0;
                 data_csr_o <= 32'b0;
                 id_csr_o <= 32'b0;
                 csr_write_enable_o <= 1'b0;
+
+                exception_o <= 1'b0;
+                trap_mode_o <= 2'b0;
+                mcause_o    <= 32'b0;
+                mtval_o     <= 32'b0;
             end else begin
+                mode_o <= mode_i;
+                inst_pc_o <= inst_pc_i;
                 data_rd_o <= data_rd_i;
                 reg_rd_o <= reg_rd_i;
                 rf_write_enable_o <= rf_write_enable_i;
                 data_csr_o <= data_csr_i;
                 id_csr_o <= id_csr_i;
                 csr_write_enable_o <= csr_write_enable_i;
+
+                if (!exception_i) begin
+                    csr_write_enable_o <= csr_write_enable_i;
+                    rf_write_enable_o <= rf_write_enable_i;
+                end else begin // disable side effects on exception
+                    csr_write_enable_o <= 1'b0;
+                    rf_write_enable_o <= 1'b0;
+                end
+
+                exception_o <= exception_i;
+                trap_mode_o <= trap_mode_i;
+                mcause_o    <= mcause_i;
+                mtval_o     <= mtval_i;
             end
         end
     end

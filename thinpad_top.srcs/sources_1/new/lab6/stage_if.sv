@@ -25,18 +25,20 @@ module if_pc_reg #(
 
 endmodule
 
-module if_next_pc_mux #(
-    parameter ADDR_WIDTH = 32
-) (
-    input wire [ADDR_WIDTH-1:0] pc_plus4_i,
-    input wire [ADDR_WIDTH-1:0] pc_branch_target_i,
+module if_next_pc_mux (
+    input wire [31:0] pc_plus4_i,
+    input wire [31:0] pc_branch_target_i,
+    input wire [31:0] pc_tvec_i,
 
     input wire do_branch_i,
+    input wire wb_prev_exception_i,
 
-    output wire [ADDR_WIDTH-1:0] next_pc_o
+    output wire [31:0] next_pc_o
 );
 
-    assign next_pc_o = do_branch_i ? pc_branch_target_i : pc_plus4_i;
+    assign next_pc_o = wb_prev_exception_i ? pc_tvec_i : 
+                              do_branch_i  ? pc_branch_target_i
+                                           : pc_plus4_i;
 
 endmodule
 
@@ -51,43 +53,7 @@ module adder4 #(
 
 endmodule
 
-module if_pipeline_regs (
-    input wire        clk_i,
-    input wire        rst_i,
 
-    input wire [31:0] inst_pc_i,
-    input wire [31:0] inst_i,
-    input wire [ 1:0] mode_i,
-
-    input wire        bubble_i,
-    input wire        stall_i,
-
-    output reg [31:0] inst_pc_o,
-    output reg [31:0] inst_o,
-    output reg [ 1:0] mode_o
-
-
-);
-
-    always @(posedge clk_i) begin
-        if (rst_i) begin
-            inst_pc_o   <= `BUBBLE_INST_PC;
-            inst_o      <= `BUBBLE_INST;
-            mode_o      <= 2'b00; // user mode bubble
-        end else if (stall_i) begin
-            // do nothing
-        end else if (bubble_i) begin
-            inst_pc_o   <= `BUBBLE_INST_PC;
-            inst_o      <= `BUBBLE_INST;
-            // mode_o      <= 2'b00; // user mode bubble
-        end else begin
-            inst_pc_o   <= inst_pc_i;
-            inst_o      <= inst_i;
-            mode_o      <= mode_i;
-        end
-    end
-
-endmodule
 
 module if_pc_controller #(
     parameter ADDR_WIDTH = 32,
@@ -95,25 +61,38 @@ module if_pc_controller #(
 
 ) (
 
-    input wire branch_last_i,
-    input wire branch_take_i,
-    input wire if_regs_stall_i,
+    input wire        branch_last_i,
+    input wire        branch_take_i,
+    input wire        if_regs_stall_i,
+
+    input wire        id_next_exception_i,
+    input wire        exe_next_exception_i,
+    input wire        mem_next_exception_i,
+    input wire        wb_prev_exception_i,
 
     input wire [31:0] inst_pc_i,
     input wire [31:0] inst_addr_i,
 
-    output wire pc_stall_o,
-    output wire pc_valid_o
+    output wire       pc_stall_o,
+    output wire       pc_valid_o
 
 );
-    assign pc_valid_o = !(branch_last_i | branch_take_i);
+    assign pc_valid_o = !(  branch_last_i 
+                        |   branch_take_i
+                        |   id_next_exception_i
+                        |   exe_next_exception_i
+                        |   mem_next_exception_i
+                        |   wb_prev_exception_i
+                        );
     
     logic pc_stall_o_comb;
     
     assign pc_stall_o = pc_stall_o_comb;
 
     always_comb begin
-        if (if_regs_stall_i) begin
+        if (wb_prev_exception_i) begin
+            pc_stall_o_comb = 1'b0;
+        end else if (if_regs_stall_i) begin
             pc_stall_o_comb = 1'b1;
         end else if (branch_last_i) begin
             pc_stall_o_comb = 1'b1;
@@ -233,17 +212,93 @@ module if_im_controller #(
 
 endmodule
 
-module if_bubble_controller #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32
-) (
-    input wire [ADDR_WIDTH-1:0] inst_pc_i,
-    input wire [ADDR_WIDTH-1:0] inst_addr_i,
+module if_pipeline_regs (
+    input wire        clk_i,
+    input wire        rst_i,
+
+    input wire        bubble_i,
+    input wire        stall_i,
+
+    input wire [ 1:0] mode_i,
+    output reg [ 1:0] mode_o,
+
+    input wire [31:0] inst_pc_i,
+    output reg [31:0] inst_pc_o,
+
+    input wire [31:0] inst_i,
+    output reg [31:0] inst_o,
+
+    input wire [31:0] pc_plus4_i,
+    output reg [31:0] pc_plus4_o,
+
+    input wire        exception_i,
+    output reg        exception_o,
+
+    input wire [ 1:0] trap_mode_i,
+    output reg [ 1:0] trap_mode_o,
+
+    input wire [31:0] mcause_i,
+    output reg [31:0] mcause_o,
+
+    input wire [31:0] mtval_i,
+    output reg [31:0] mtval_o
+
+
+
+);
+
+    always @(posedge clk_i) begin
+        if (rst_i) begin
+            inst_pc_o   <= `BUBBLE_INST_PC;
+            pc_plus4_o  <= `BUBBLE_INST_PC;
+            inst_o      <= `BUBBLE_INST;
+            mode_o      <= 2'b00; // user mode bubble
+            exception_o <= 1'b0;
+            trap_mode_o <= 2'b00;
+            mcause_o    <= 32'b0;
+            mtval_o     <= 32'b0;
+        end else if (stall_i) begin
+            // do nothing
+        end else if (bubble_i) begin
+            inst_pc_o   <= `BUBBLE_INST_PC;
+            pc_plus4_o  <= `BUBBLE_INST_PC;
+            inst_o      <= `BUBBLE_INST;
+            // mode_o      <= 2'b00; // user mode bubble
+            exception_o <= 1'b0;
+            trap_mode_o <= 2'b00;
+            mcause_o    <= 32'b0;
+            mtval_o     <= 32'b0;
+        end else begin
+            inst_pc_o   <= inst_pc_i;
+            pc_plus4_o  <= pc_plus4_i;
+            inst_o      <= inst_i;
+            mode_o      <= mode_i;
+            exception_o <= exception_i;
+            trap_mode_o <= trap_mode_i;
+            mcause_o    <= mcause_i;
+            mtval_o     <= mtval_i;
+        end
+    end
+
+endmodule
+
+module if_bubble_controller (
+    input wire [31:0] inst_pc_i,
+    input wire [31:0] inst_addr_i,
+
+    input wire        id_next_exception_i,
+    input wire        exe_next_exception_i,
+    input wire        mem_next_exception_i,
+    input wire        wb_prev_exception_i,
 
     output wire if_bubble_o
 );
 
-    assign if_bubble_o = (inst_pc_i != inst_addr_i);
+    assign if_bubble_o = (inst_pc_i != inst_addr_i) 
+                        || id_next_exception_i
+                        || exe_next_exception_i
+                        || mem_next_exception_i
+                        || wb_prev_exception_i;
 
 endmodule
 

@@ -8,51 +8,51 @@ module lab6_top (
     input wire clk_50M,     // 50MHz 时钟输入
     input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
 
-    input wire push_btn,  // BTN5 按钮�???????????关，带消抖电路，按下时为 1
-    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�??????????? 1
+    input wire push_btn,  // BTN5 按钮�????????????????关，带消抖电路，按下时为 1
+    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�???????????????? 1
 
     input  wire [ 3:0] touch_btn,  // BTN1~BTN4，按钮开关，按下时为 1
-    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�??????????? 1
-    output wire [15:0] leds,       // 16 �??????????? LED，输出时 1 点亮
+    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�???????????????? 1
+    output wire [15:0] leds,       // 16 �???????????????? LED，输出时 1 点亮
     output wire [ 7:0] dpy0,       // 数码管低位信号，包括小数点，输出 1 点亮
     output wire [ 7:0] dpy1,       // 数码管高位信号，包括小数点，输出 1 点亮
 
-    // CPLD 串口控制器信�???????????
-    output wire uart_rdn,        // 读串口信号，低有�???????????
-    output wire uart_wrn,        // 写串口信号，低有�???????????
-    input  wire uart_dataready,  // 串口数据准备�???????????
-    input  wire uart_tbre,       // 发�?�数据标�???????????
-    input  wire uart_tsre,       // 数据发�?�完毕标�???????????
+    // CPLD 串口控制器信�????????????????
+    output wire uart_rdn,        // 读串口信号，低有�????????????????
+    output wire uart_wrn,        // 写串口信号，低有�????????????????
+    input  wire uart_dataready,  // 串口数据准备�????????????????
+    input  wire uart_tbre,       // 发�?�数据标�????????????????
+    input  wire uart_tsre,       // 数据发�?�完毕标�????????????????
 
     // BaseRAM 信号
-    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�???????????
+    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�????????????????
     output wire [19:0] base_ram_addr,  // BaseRAM 地址
-    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????? 0
-    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�???????????
-    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�???????????
-    output wire base_ram_we_n,  // BaseRAM 写使能，低有�???????????
+    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????? 0
+    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�????????????????
+    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�????????????????
+    output wire base_ram_we_n,  // BaseRAM 写使能，低有�????????????????
 
     // ExtRAM 信号
     inout wire [31:0] ext_ram_data,  // ExtRAM 数据
     output wire [19:0] ext_ram_addr,  // ExtRAM 地址
-    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????? 0
-    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�???????????
-    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�???????????
-    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�???????????
+    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????? 0
+    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�????????????????
+    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�????????????????
+    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�????????????????
 
     // 直连串口信号
     output wire txd,  // 直连串口发�?�端
-    input  wire rxd,  // 直连串口接收�???????????
+    input  wire rxd,  // 直连串口接收�????????????????
 
     // Flash 存储器信号，参�?? JS28F640 芯片手册
-    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�???????????16bit 模式无意�???????????
+    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�????????????????16bit 模式无意�????????????????
     inout wire [15:0] flash_d,  // Flash 数据
     output wire flash_rp_n,  // Flash 复位信号，低有效
-    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�???????????
-    output wire flash_ce_n,  // Flash 片�?�信号，低有�???????????
-    output wire flash_oe_n,  // Flash 读使能信号，低有�???????????
-    output wire flash_we_n,  // Flash 写使能信号，低有�???????????
-    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �??????????? 16 位模式时请设�??????????? 1
+    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�????????????????
+    output wire flash_ce_n,  // Flash 片�?�信号，低有�????????????????
+    output wire flash_oe_n,  // Flash 读使能信号，低有�????????????????
+    output wire flash_we_n,  // Flash 写使能信号，低有�????????????????
+    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �???????????????? 16 位模式时请设�???????????????? 1
 
     // USB 控制器信号，参�?? SL811 芯片手册
     output wire sl811_a0,
@@ -75,13 +75,13 @@ module lab6_top (
     input wire dm9k_int,
 
     // 图像输出信号
-    output wire [2:0] video_red,    // 红色像素�???????????3 �???????????
-    output wire [2:0] video_green,  // 绿色像素�???????????3 �???????????
-    output wire [1:0] video_blue,   // 蓝色像素�???????????2 �???????????
-    output wire       video_hsync,  // 行同步（水平同步）信�???????????
-    output wire       video_vsync,  // 场同步（垂直同步）信�???????????
+    output wire [2:0] video_red,    // 红色像素�????????????????3 �????????????????
+    output wire [2:0] video_green,  // 绿色像素�????????????????3 �????????????????
+    output wire [1:0] video_blue,   // 蓝色像素�????????????????2 �????????????????
+    output wire       video_hsync,  // 行同步（水平同步）信�????????????????
+    output wire       video_vsync,  // 场同步（垂直同步）信�????????????????
     output wire       video_clk,    // 像素时钟输出
-    output wire       video_de      // 行数据有效信号，用于区分消隐�???????????
+    output wire       video_de      // 行数据有效信号，用于区分消隐�????????????????
 );
 
   /* =========== Demo code begin =========== */
@@ -92,11 +92,11 @@ module lab6_top (
       // Clock in ports
       .clk_in1(clk_50M),  // 外部时钟输入
       // Clock out ports
-      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�???????????
-      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�???????????
+      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�????????????????
+      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�????????????????
       // Status and control signals
       .reset(reset_btn),  // PLL 复位输入
-      .locked(locked)  // PLL 锁定指示输出�???????????"1"表示时钟稳定�???????????
+      .locked(locked)  // PLL 锁定指示输出�????????????????"1"表示时钟稳定�????????????????
                        // 后级电路复位信号应当由它生成（见下）
   );
 
@@ -343,8 +343,8 @@ module lab6_top (
       .sram_be_n(ext_ram_be_n)
   );
 
-  // 串口控制器模�???????????
-  // NOTE: 如果修改系统时钟频率，也�???????????要修改此处的时钟频率参数
+  // 串口控制器模�????????????????
+  // NOTE: 如果修改系统时钟频率，也�????????????????要修改此处的时钟频率参数
   uart_controller #(
       .CLK_FREQ(10_000_000),
       .BAUD    (115200)
@@ -379,20 +379,53 @@ module lab6_top (
 
     // stage if
     wire  [ 1:0] if_mode;
+    wire  [31:0] if_pc_plus4;
+
+    wire         if_exception;
+    wire  [ 1:0] if_trap_mode;
+    wire  [31:0] if_mcause;
+    wire  [31:0] if_mtval;
+
+    wire  [30:0] if_exp_exception_code;
 
     // if-id-registers
     wire  [ 1:0] id_mode;
-    wire  [31:0] id_inst_pc;
     wire  [31:0] id_inst;
+    wire  [31:0] id_inst_pc;
+    wire  [31:0] id_pc_plus4;
+
+    wire         id_prev_exception;
+    wire  [ 1:0] id_prev_trap_mode;
+    wire  [31:0] id_prev_mcause;
+    wire  [31:0] id_prev_mtval;
 
     // stage id
     wire         id_stall;
     wire         id_wait_reg;
     wire         id_is_branch;
 
+    wire         id_exception;
+    wire  [ 1:0] id_trap_mode;
+    wire  [31:0] id_mcause;
+    wire  [31:0] id_mtval;
+
+    wire         id_next_exception;
+    wire  [ 1:0] id_next_trap_mode;
+    wire  [31:0] id_next_mcause;
+    wire  [31:0] id_next_mtval;
+
+    wire  [ 1:0] id_int_trap_mode;
+    wire  [31:0] id_int_int;
+    
+    logic        id_exp_exception;
+    logic [ 1:0] id_exp_trap_mode;
+    logic [30:0] id_exp_exception_code;
+    logic [31:0] id_exp_mtval;
+
     // id-exe-registers
     wire  [ 1:0] exe_mode;
     wire  [31:0] exe_inst_pc;
+    wire  [31:0] exe_pc_plus4;
 
     wire  [ 1:0] exe_alu_a_mux;
     wire  [ 1:0] exe_alu_b_mux;
@@ -421,14 +454,39 @@ module lab6_top (
     wire  [31:0] exe_data_csr;
     wire         exe_csr_write_enable;
 
+
+    wire         exe_prev_exception;
+    wire  [ 1:0] exe_prev_trap_mode;
+    wire  [31:0] exe_prev_mcause;
+    wire  [31:0] exe_prev_mtval;
+
+    wire  [31:0] exe_medeleg;
+
     // stage exe
     wire         exe_stall;
     wire         exe_branch_take;
     wire  [31:0] exe_alu_y;
 
+   
+
+    wire         exe_exception;
+    wire  [ 1:0] exe_trap_mode;
+    wire  [31:0] exe_mcause;
+    wire  [31:0] exe_mtval;
+
+    wire  [30:0] exe_exp_exception_code;
+
+    wire         exe_next_exception;
+    wire  [ 1:0] exe_next_trap_mode;
+    wire  [31:0] exe_next_mcause;
+    wire  [31:0] exe_next_mtval;
+
+    
     // exe-mem-registers
     wire  [ 1:0] mem_mode;
-    // wire  [31:0] mem_inst_pc;
+    wire  [31:0] mem_inst_pc;
+    wire  [31:0] mem_pc_plus4;
+
     wire  [31:0] mem_data_rs2; // address
 
     wire  [ 3:0] mem_byte_sel; 
@@ -436,11 +494,9 @@ module lab6_top (
     wire         mem_mem_write_enable;
     wire         mem_mem_unsigned_ext;
     
-    
-
     wire  [31:0] mem_alu_y;
     wire  [31:0] mem_data_csr;
-    wire  [31:0] mem_pc_plus4;
+    
     
     wire  [ 4:0] mem_reg_rd;
     wire  [31:0] mem_data_rd;
@@ -451,9 +507,31 @@ module lab6_top (
     wire  [31:0] mem_new_data_csr;
     wire         mem_csr_write_enable;
 
+
+
+    wire         mem_prev_exception;
+    wire  [ 1:0] mem_prev_trap_mode;
+    wire  [31:0] mem_prev_mcause;
+    wire  [31:0] mem_prev_mtval;
+
+    wire  [31:0] mem_medeleg;
+    
+
     // stage mem
     wire         mem_stall;
     wire         mem_done;
+
+    wire         mem_exception;
+    wire  [ 1:0] mem_trap_mode;
+    wire  [31:0] mem_mcause;
+    wire  [31:0] mem_mtval;
+
+    wire  [30:0] mem_exp_exception_code;
+
+    wire         mem_next_exception;
+    wire  [ 1:0] mem_next_trap_mode;
+    wire  [31:0] mem_next_mcause;
+    wire  [31:0] mem_next_mtval;
 
     // mem-wb-registers
     // rf
@@ -466,12 +544,21 @@ module lab6_top (
     wire  [ 4:0] wb_id_csr;
     wire         wb_csr_write_enable;
 
+    wire  [ 1:0] wb_mode;
+    wire  [31:0] wb_inst_pc;
+    wire         wb_prev_exception;
+    wire  [ 1:0] wb_prev_trap_mode;
+    wire  [31:0] wb_prev_mcause;
+    wire  [31:0] wb_prev_mtval;
+
+    wire  [31:0] wb_tvec;
+
 
     /* =========== stage if begin =========== */
 
     // internal wires
 
-    wire  [31:0] _if_pc_plus4;
+    
     wire  [31:0] _if_next_pc;
     wire  [31:0] _if_inst_pc;
     wire         _if_pc_stall;
@@ -483,43 +570,97 @@ module lab6_top (
 
     wire         _if_branch_take;
 
+    wire         _if_pc_misaligned;
+
+    assign _if_pc_misaligned = (_if_inst_pc[1:0] != 2'b00);
+
+
+    wire [31:0] _if_temp_mcause;
+
+    exp_mcause_encoder if_eme(
+        .int_i(32'b0),
+        .exception_code_i(if_exp_exception_code),
+        .mcause_o(if_mcause)
+    );
+
+
+    exp_exception_encoder if_eee (
+        .mode_i             (if_mode),
+        .medeleg_i          (_id_medeleg), // TODO: may cause some incorrect behavior
+
+        .inst_addr_bp       (1'b0), // not implemented
+        .inst_access_fault  (1'b0), // not implemented: if stage
+        .inst_page_fault    (1'b0), // not implemented: if stage
+        .inst_illegal       (1'b0), // id stage
+        .inst_misaligned    (_if_pc_misaligned), // if stage
+        .ecall              (1'b0), // id stage
+        .ebreak             (1'b0), // id stage
+        .lsa_addr_bp        (1'b0), // not implemented, 
+        .load_misaligned    (1'b0), // exe stage
+        .sa_misaligned      (1'b0), // exe stage
+        .load_page_fault    (1'b0), // mem stage
+        .sa_page_fault      (1'b0), // mem stage
+        .load_access_fault  (1'b0), // mem stage
+        .sa_access_fault    (1'b0), // mem stage
+
+        .addr_i             (_if_inst_pc),
+        .inst_i             (_if_inst),
+
+        .exception_o        (if_exception),
+        .exception_code_o   (if_exp_exception_code),
+        .exp_mode_o         (if_trap_mode),
+        .mtval_o            (if_mtval)
+    );
+
     // branch
     assign _if_branch_take = exe_is_branch & exe_branch_take;
 
     // mode
-    assign if_mode = 2'b01; // TODO: always in supervisor mode
+    assign if_mode = 2'b11; // TODO: always in machine mode
 
     // pc related
     adder4 pc_adder (
-        .data_i(_if_inst_pc),
-        .data_plus4_o(_if_pc_plus4)
+        .data_i         (_if_inst_pc),
+        .data_plus4_o   (if_pc_plus4)
     );
 
     if_pc_reg if_pc_reg_inst (
-        .clk_i(clk),
-        .rst_i(rst),
-        .stall_i(_if_pc_stall),
-        .next_pc_i(_if_next_pc),
-        .pc_o(_if_inst_pc)
+        .clk_i      (clk),
+        .rst_i      (rst),
+        .stall_i    (_if_pc_stall),
+        .next_pc_i  (_if_next_pc),
+        .pc_o       (_if_inst_pc)
     );
 
     if_next_pc_mux if_next_pc_mux_inst (
-        .pc_plus4_i(_if_pc_plus4),
-        .pc_branch_target_i(exe_alu_y),
-        .do_branch_i(_if_branch_take),
-        .next_pc_o(_if_next_pc)
+        .pc_plus4_i          (if_pc_plus4),
+        .pc_branch_target_i  (exe_alu_y),
+        .pc_tvec_i           (wb_tvec),
+
+        .do_branch_i         (_if_branch_take),
+        .wb_prev_exception_i (wb_prev_exception),
+
+
+        .next_pc_o           (_if_next_pc)
     );
 
+
+
     if_pc_controller if_pc_controller_inst (
-        .branch_last_i(id_is_branch),
-        .branch_take_i(_if_branch_take), // target address computed
-        .if_regs_stall_i(_if_stall),
+        .branch_last_i          (id_is_branch),
+        .branch_take_i          (_if_branch_take), // target address computed
+        .if_regs_stall_i        (_if_stall),
 
-        .inst_addr_i(_if_inst_addr),
-        .inst_pc_i(_if_inst_pc),
+        .id_next_exception_i    (id_next_exception),
+        .exe_next_exception_i   (exe_next_exception),
+        .mem_next_exception_i   (mem_next_exception),
+        .wb_prev_exception_i    (wb_prev_exception),
 
-        .pc_stall_o(_if_pc_stall),
-        .pc_valid_o(_if_pc_valid)
+        .inst_addr_i            (_if_inst_addr),
+        .inst_pc_i              (_if_inst_pc),
+
+        .pc_stall_o             (_if_pc_stall),
+        .pc_valid_o             (_if_pc_valid)
     );
 
     // instruction memory controller
@@ -545,16 +686,22 @@ module lab6_top (
 
     // stall controller
     if_stall_controller if_stall_controller_inst(
-        .id_wait_reg_i(id_wait_reg),
-        .id_stall_i(id_stall),
-        .if_stall_o(_if_stall)
+        .id_wait_reg_i  (id_wait_reg),
+        .id_stall_i     (id_stall),
+        .if_stall_o     (_if_stall)
     );
 
     // bubble controller
     if_bubble_controller if_bubble_controller_inst(
-        .inst_pc_i(_if_inst_pc),
-        .inst_addr_i(_if_inst_addr),
-        .if_bubble_o(_if_bubble)
+        .inst_pc_i              (_if_inst_pc),
+        .inst_addr_i            (_if_inst_addr),
+
+        .id_next_exception_i    (id_next_exception),
+        .exe_next_exception_i   (exe_next_exception),
+        .mem_next_exception_i   (mem_next_exception),
+        .wb_prev_exception_i    (wb_prev_exception),
+
+        .if_bubble_o            (_if_bubble)
     );
 
     if_pipeline_regs if_pipeline_regs_inst(
@@ -567,11 +714,27 @@ module lab6_top (
         .mode_i(if_mode),
         .mode_o(id_mode),
 
+        .inst_i(_if_inst),
+        .inst_o(id_inst),
+
         .inst_pc_i(_if_inst_pc),
         .inst_pc_o(id_inst_pc),
 
-        .inst_i(_if_inst),
-        .inst_o(id_inst)
+        .pc_plus4_i(if_pc_plus4),
+        .pc_plus4_o(id_pc_plus4),
+
+        .exception_i(if_exception),
+        .exception_o(id_prev_exception),
+
+        .trap_mode_i(if_trap_mode),
+        .trap_mode_o(id_prev_trap_mode),
+
+        .mcause_i(if_mcause),
+        .mcause_o(id_prev_mcause),
+
+        .mtval_i(if_mtval),
+        .mtval_o(id_prev_mtval)
+
     );
 
     /* =========== stage if end =========== */
@@ -628,12 +791,121 @@ module lab6_top (
     wire [31:0] _id_mepc;
     wire [31:0] _id_mip;
 
+    wire [ 1:0] _id_mstatus_mpp;
+    wire [ 1:0] _id_mstatus_spp;
+
+    assign _id_mstatus_spp[1] = 1'b0;
+
+    exp_mstatus_decoder id_emd(
+        .mstatus(_id_mstatus),
+        .mpp(_id_mstatus_mpp),
+        .spp(_id_mstatus_spp[0])
+
+    );
+    
+
+    assign id_next_exception = id_prev_exception ? id_prev_exception : id_exception;
+    assign id_next_trap_mode = id_prev_trap_mode ? id_prev_trap_mode : id_trap_mode;
+    assign id_next_mcause    = id_prev_exception ? id_prev_mcause    : id_mcause;
+    assign id_next_mtval     = id_prev_exception ? id_prev_mtval     : id_mtval;
+
+    wire _id_int_exception;
+    assign _id_int_exception = (id_int_int != 32'b0);
+    
+    wire [31:0] _id_temp_mcause;
+
+    assign id_exception = _id_int_exception | id_exp_exception;
+    assign id_trap_mode = _id_int_exception ? id_int_trap_mode : id_exp_trap_mode;
+    assign id_mtval     =  id_exp_exception ? id_exp_mtval     : 32'b0;
+    assign id_mcause    =  id_exception     ? _id_temp_mcause  : 32'b0;
+
+    exp_mcause_encoder id_eme(
+        .int_i(id_int_int),
+        .exception_code_i(id_exp_exception_code),
+        .mcause_o(_id_temp_mcause)
+    );
+
+    wire _id_inst_decode_ecall;
+    wire _id_inst_decode_ebreak;
+    wire _id_inst_decode_mret;
+    wire _id_inst_decode_sret;
+
+    wire        _id_exp_normal_exception;
+    wire [30:0] _id_exp_normal_exception_code;
+    wire [ 1:0] _id_exp_normal_trap_mode;
+    // exception controller
+    // TODO: mret, sret
+    exp_exception_encoder id_eee (
+        .mode_i             (id_mode),
+        .medeleg_i          (_id_medeleg),
+
+        .inst_addr_bp       (1'b0), // not implemented
+        .inst_access_fault  (1'b0), // if stage
+        .inst_page_fault    (1'b0), // if stage
+        .inst_illegal       (_id_invalid_inst),
+        .inst_misaligned    (1'b0), // if stage
+        .ecall              (_id_inst_decode_ecall),
+        .ebreak             (_id_inst_decode_ebreak),
+        .lsa_addr_bp        (1'b0), // not implemented, 
+        .load_misaligned    (1'b0), // exe stage
+        .sa_misaligned      (1'b0), // exe stage
+        .load_page_fault    (1'b0), // mem stage
+        .sa_page_fault      (1'b0), // mem stage
+        .load_access_fault  (1'b0), // mem stage
+        .sa_access_fault    (1'b0), // mem stage
+
+        .addr_i             (id_inst_pc),
+        .inst_i             (id_inst),
+
+        .exception_o        (_id_exp_normal_exception),
+        .exception_code_o   (_id_exp_normal_exception_code),
+        .exp_mode_o         (_id_exp_normal_trap_mode),
+        .mtval_o            (id_exp_mtval)
+    );
+
+    // id_exp_exception_code
+    always_comb begin
+        if (_id_inst_decode_mret) begin
+            id_exp_exception        = 1'b1;
+            id_exp_exception_code   = `EXP_MRET;
+            id_exp_trap_mode        = _id_mstatus_mpp;
+        end else if (_id_inst_decode_sret) begin
+            id_exp_exception        = 1'b1;
+            id_exp_exception_code   = `EXP_SRET;
+            id_exp_trap_mode        = _id_mstatus_spp;
+        end else begin
+            id_exp_exception        = _id_exp_normal_exception;
+            id_exp_exception_code   = _id_exp_normal_exception_code;
+            id_exp_trap_mode        = _id_exp_normal_trap_mode;
+        end
+    end
+    // trap mode is useless
+
+    // interrupt controller
+    exp_interrupt_encoder id_eie (
+        .mode_i     (id_mode),
+
+        .mideleg_i  (_id_mideleg),
+        .mstatus_i  (_id_mstatus),
+        .mip_i      (_id_mip),
+        .mie_i      (_id_mie),
+
+        .int_o      (id_int_int),
+        .int_mode_o (id_int_trap_mode)
+    );
+
+
     // instruction decoder
     id_instruction_decoder id_instruction_decoder_inst (
         .inst_i             (id_inst),
         .mode_i             (id_mode),
 
         .invalid_inst_o     (_id_invalid_inst),
+        .ecall_o            (_id_inst_decode_ecall),
+        .ebreak_o           (_id_inst_decode_ebreak),
+        .mret_o             (_id_inst_decode_mret),
+        .sret_o             (_id_inst_decode_sret),
+
         .is_branch_o        (id_is_branch),
 
         .reg_rs1_o          (_id_reg_rs1),
@@ -720,6 +992,11 @@ module lab6_top (
     // bubble controller
     id_bubble_controller id_bubble_controller_inst (
         .wait_reg_i     (id_wait_reg),
+
+        .exe_next_exception_i   (exe_next_exception),
+        .mem_next_exception_i   (mem_next_exception),
+        .wb_prev_exception_i    (wb_prev_exception),
+
         .id_bubble_o    (_id_bubble)
     );
 
@@ -775,6 +1052,7 @@ module lab6_top (
 
         .is_branch_i            (id_is_branch),
         .inst_pc_i              (id_inst_pc),
+        .pc_plus4_i             (id_pc_plus4),
 
         .mem_operation_i        (_id_mem_operation),
         .mem_write_enable_i     (_id_mem_write_enable),
@@ -803,6 +1081,7 @@ module lab6_top (
 
         .is_branch_o            (exe_is_branch),
         .inst_pc_o              (exe_inst_pc),
+        .pc_plus4_o             (exe_pc_plus4),
 
         .mem_operation_o        (exe_mem_operation),
         .mem_write_enable_o     (exe_mem_write_enable),
@@ -813,7 +1092,23 @@ module lab6_top (
 
         .byte_sel_o             (exe_byte_sel),
         .alu_a_mux_o            (exe_alu_a_mux),
-        .alu_b_mux_o            (exe_alu_b_mux)
+        .alu_b_mux_o            (exe_alu_b_mux),
+
+        .exception_i            (id_next_exception),
+        .exception_o            (exe_prev_exception),
+
+        .trap_mode_i            (id_next_trap_mode),
+        .trap_mode_o            (exe_prev_trap_mode),
+
+        .mcause_i               (id_next_mcause),
+        .mcause_o               (exe_prev_mcause),
+
+        .mtval_i                (id_next_mtval),
+        .mtval_o                (exe_prev_mtval),
+
+        
+        .medeleg_i              (_id_medeleg),
+        .medeleg_o              (exe_medeleg)
 
     );
 
@@ -825,7 +1120,59 @@ module lab6_top (
     logic [31:0] _exe_alu_a;
     logic [31:0] _exe_alu_b;
     wire         _exe_bubble;
-    wire  [31:0] exe_pc_plus4;
+
+    assign exe_next_exception = exe_prev_exception ? exe_prev_exception : exe_exception;
+    assign exe_next_trap_mode = exe_prev_trap_mode ? exe_prev_trap_mode : exe_trap_mode;
+    assign exe_next_mcause    = exe_prev_exception ? exe_prev_mcause    : exe_mcause;
+    assign exe_next_mtval     = exe_prev_exception ? exe_prev_mtval     : exe_mtval;
+
+
+    wire exe_load_misaligned   ;  
+    wire exe_sa_misaligned     ;
+
+
+    wire exe_misaligned_addr  ;
+    assign exe_misaligned_addr = (exe_alu_y[1:0] != 2'b00);
+
+    assign exe_load_misaligned = exe_mem_operation && !exe_mem_write_enable && exe_byte_sel == 4'b1111  && exe_misaligned_addr;
+    assign exe_sa_misaligned   = exe_mem_operation && exe_mem_write_enable  && exe_byte_sel == 4'b1111  && exe_misaligned_addr;
+
+
+    exp_mcause_encoder exe_eme(
+        .int_i(32'b0),
+        .exception_code_i(exe_exp_exception_code),
+        .mcause_o(exe_mcause)
+    );
+
+
+    exp_exception_encoder exe_eee (
+        .mode_i             (exe_mode),
+        .medeleg_i          (exe_medeleg), 
+
+        .inst_addr_bp       (1'b0), // not implemented
+        .inst_access_fault  (1'b0), // not implemented: if stage
+        .inst_page_fault    (1'b0), // not implemented: if stage
+        .inst_illegal       (1'b0), // id stage
+        .inst_misaligned    (1'b0), // if stage
+        .ecall              (1'b0), // id stage
+        .ebreak             (1'b0), // id stage
+        .lsa_addr_bp        (1'b0), // not implemented, 
+        .load_misaligned    (exe_load_misaligned), // exe stage
+        .sa_misaligned      (exe_sa_misaligned), // exe stage
+        .load_page_fault    (1'b0), // mem stage
+        .sa_page_fault      (1'b0), // mem stage
+        .load_access_fault  (1'b0), // mem stage
+        .sa_access_fault    (1'b0), // mem stage
+
+        .addr_i             (exe_inst_pc),
+        .inst_i             (32'b0),
+
+        .exception_o        (exe_exception),
+        .exception_code_o   (exe_exp_exception_code),
+        .exp_mode_o         (exe_trap_mode),
+        .mtval_o            (exe_mtval)
+    );
+    
     
     // _exe_alu_a
     always_comb begin
@@ -860,11 +1207,6 @@ module lab6_top (
         .b  (exe_data_rs2),
         .y  (exe_branch_take)
     );
-
-    adder4 exe_pc_adder(
-        .data_i         (exe_inst_pc),
-        .data_plus4_o   (exe_pc_plus4)
-    );
     
     exe_stall_controller exe_stall_controller_inst (
         .mem_stall_i        (mem_stall),
@@ -874,6 +1216,8 @@ module lab6_top (
     );
     
     exe_bubble_controller exe_bubble_controller_inst (
+        .mem_next_exception_i   (mem_next_exception),
+        .wb_prev_exception_i    (wb_prev_exception),
         .exe_bubble_o(_exe_bubble)
     );
     
@@ -886,6 +1230,7 @@ module lab6_top (
         .bubble_i               (_exe_bubble),
 
         .mode_i                 (exe_mode),
+        .inst_pc_i              (exe_inst_pc),
         .pc_plus4_i             (exe_pc_plus4),
         .alu_y_i                (exe_alu_y),
         .mem_operation_i        (exe_mem_operation),
@@ -901,6 +1246,7 @@ module lab6_top (
         .csr_write_enable_i     (exe_csr_write_enable),
 
         .mode_o                 (mem_mode),
+        .inst_pc_o              (mem_inst_pc),
         .pc_plus4_o             (mem_pc_plus4),
         .alu_y_o                (mem_alu_y),
         .mem_operation_o        (mem_mem_operation),
@@ -913,7 +1259,22 @@ module lab6_top (
         .reg_rd_o               (mem_reg_rd),
         .id_csr_o               (mem_id_csr),
         .data_csr_o             (mem_data_csr),
-        .csr_write_enable_o     (mem_csr_write_enable)
+        .csr_write_enable_o     (mem_csr_write_enable),
+
+        .exception_i            (exe_next_exception),
+        .exception_o            (mem_prev_exception),
+
+        .trap_mode_i            (exe_next_trap_mode),
+        .trap_mode_o            (mem_prev_trap_mode),
+
+        .mcause_i               (exe_next_mcause),
+        .mcause_o               (mem_prev_mcause),
+
+        .mtval_i                (exe_next_mtval),
+        .mtval_o                (mem_prev_mtval),
+
+        .medeleg_i              (exe_medeleg),
+        .medeleg_o              (mem_medeleg)
     );
 
     /* =========== stage exe end =========== */
@@ -925,6 +1286,62 @@ module lab6_top (
     wire [31:0] _mem_data_read;
 
     wire        _mem_bubble;
+
+    assign mem_next_exception = mem_prev_exception ? mem_prev_exception : mem_exception;
+    assign mem_next_trap_mode = mem_prev_trap_mode ? mem_prev_trap_mode : mem_trap_mode;
+    assign mem_next_mcause    = mem_prev_exception ? mem_prev_mcause    : mem_mcause;
+    assign mem_next_mtval     = mem_prev_exception ? mem_prev_mtval     : mem_mtval;
+
+    wire mem_load_page_fault   ;  
+    wire mem_sa_page_fault     ;
+    wire mem_load_access_fault ;
+    wire mem_sa_access_fault   ;
+
+    
+
+
+    // TODO: implement page fault and access fault, 
+    // TODO: mem exception doesn't disable write right now
+    assign mem_load_page_fault = 1'b0;
+    assign mem_sa_page_fault   = 1'b0;
+    assign mem_load_access_fault = 1'b0;
+    assign mem_sa_access_fault   = 1'b0;
+
+
+    exp_mcause_encoder mem_eme(
+        .int_i(32'b0),
+        .exception_code_i(mem_exp_exception_code),
+        .mcause_o(mem_mcause)
+    );
+
+
+    exp_exception_encoder mem_eee (
+        .mode_i             (mem_mode),
+        .medeleg_i          (mem_medeleg), 
+
+        .inst_addr_bp       (1'b0), // not implemented
+        .inst_access_fault  (1'b0), // not implemented: if stage
+        .inst_page_fault    (1'b0), // not implemented: if stage
+        .inst_illegal       (1'b0), // id stage
+        .inst_misaligned    (1'b0), // if stage
+        .ecall              (1'b0), // id stage
+        .ebreak             (1'b0), // id stage
+        .lsa_addr_bp        (1'b0), // not implemented, 
+        .load_misaligned    (1'b0), // exe stage
+        .sa_misaligned      (1'b0), // exe stage
+        .load_page_fault    (mem_load_page_fault), // mem stage
+        .sa_page_fault      (mem_sa_page_fault), // mem stage
+        .load_access_fault  (mem_load_access_fault), // mem stage
+        .sa_access_fault    (mem_sa_access_fault), // mem stage
+
+        .addr_i             (mem_inst_pc),
+        .inst_i             (32'b0),
+
+        .exception_o        (mem_exception),
+        .exception_code_o   (mem_exp_exception_code),
+        .exp_mode_o         (mem_trap_mode),
+        .mtval_o            (mem_mtval)
+    );
     
     assign mem_new_data_csr = mem_alu_y;
 
@@ -972,6 +1389,9 @@ module lab6_top (
     mem_bubble_controller mem_bubble_controller_inst(
         .mem_operation_i(mem_mem_operation),
         .mem_done_i     (mem_done),
+
+        .wb_prev_exception_i    (wb_prev_exception),
+
         .mem_bubble_o   (_mem_bubble)
     );
 
@@ -996,7 +1416,25 @@ module lab6_top (
 
         .data_csr_o         (wb_data_csr),
         .id_csr_o           (wb_id_csr),
-        .csr_write_enable_o (wb_csr_write_enable)
+        .csr_write_enable_o (wb_csr_write_enable),
+
+        .mode_i             (mem_mode),
+        .mode_o             (wb_mode),
+
+        .inst_pc_i          (mem_inst_pc),
+        .inst_pc_o          (wb_inst_pc),
+
+        .exception_i        (mem_next_exception),
+        .exception_o        (wb_prev_exception),
+
+        .trap_mode_i        (mem_next_trap_mode),
+        .trap_mode_o        (wb_prev_trap_mode),
+
+        .mcause_i           (mem_next_mcause),
+        .mcause_o           (wb_prev_mcause),
+
+        .mtval_i            (mem_next_mtval),
+        .mtval_o            (wb_prev_mtval)
     );
 
     /* =========== stage mem end =========== */

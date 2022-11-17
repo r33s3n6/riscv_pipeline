@@ -6,6 +6,11 @@ module id_instruction_decoder (
     input wire   [ 1:0] mode_i,
 
     output logic        invalid_inst_o,
+    output logic        ecall_o,            
+    output logic        ebreak_o,           
+    output logic        mret_o,
+    output logic        sret_o,
+
     output wire         is_branch_o,
     
     output wire  [ 4:0] reg_rs1_o,
@@ -43,12 +48,6 @@ module id_instruction_decoder (
         UNKNOWN
     } inst_type_t;
 
-    typedef enum logic [1:0] {
-        M_MODE = 2'b11,
-        H_MODE = 2'b10,
-        S_MODE = 2'b01,
-        U_MODE = 2'b00
-    } mode_t;
 
     inst_type_t inst_type;
 
@@ -421,12 +420,47 @@ module id_instruction_decoder (
                         ||  (funct3 == 3'b111 ) // csrrci
             ) begin
                 if (csr_priv_ok) begin
-                    invalid_inst_o = 1'b0; // TODO: implement csr
+                    case (csr)
+                        `CSR_CYCLE    : invalid_inst_o = 1'b0;
+                        `CSR_TIME     : invalid_inst_o = 1'b0;
+                        `CSR_CYCLEH   : invalid_inst_o = 1'b0;
+                        `CSR_TIMEH    : invalid_inst_o = 1'b0;
+                        `CSR_SSTATUS  : invalid_inst_o = 1'b1;
+                        `CSR_SIE      : invalid_inst_o = 1'b1;
+                        `CSR_STVEC    : invalid_inst_o = 1'b1;
+                        `CSR_SSCRATCH : invalid_inst_o = 1'b0;
+                        `CSR_SEPC     : invalid_inst_o = 1'b1;
+                        `CSR_SCAUSE   : invalid_inst_o = 1'b1;
+                        `CSR_STVAL    : invalid_inst_o = 1'b1;
+                        `CSR_SIP      : invalid_inst_o = 1'b1;
+                        `CSR_SATP     : invalid_inst_o = 1'b1;
+                        `CSR_MHARTID  : invalid_inst_o = 1'b0;
+                        `CSR_MSTATUS  : invalid_inst_o = 1'b0;
+                        `CSR_MEDELEG  : invalid_inst_o = 1'b1;
+                        `CSR_MIDELEG  : invalid_inst_o = 1'b1;
+                        `CSR_MIE      : invalid_inst_o = 1'b1;
+                        `CSR_MTVEC    : invalid_inst_o = 1'b0;
+                        `CSR_MSCRATCH : invalid_inst_o = 1'b0;
+                        `CSR_MEPC     : invalid_inst_o = 1'b0;
+                        `CSR_MCAUSE   : invalid_inst_o = 1'b0;
+                        `CSR_MTVAL    : invalid_inst_o = 1'b0;
+                        `CSR_MIP      : invalid_inst_o = 1'b1;
+                        `CSR_MCYCLE   : invalid_inst_o = 1'b0;
+                        `CSR_MCYCLEH  : invalid_inst_o = 1'b0;
+                        `CSR_PMPCFG0  : invalid_inst_o = 1'b0;
+                        `CSR_PMPADDR0 : invalid_inst_o = 1'b0;
+                        default       : invalid_inst_o = 1'b1;
+                    endcase
                 end
             end 
 
         end
     end
+
+    assign ecall_o   = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0);
+    assign ebreak_o  = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1);
+    assign sret_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
+    assign mret_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
 
 
 endmodule
@@ -610,6 +644,9 @@ module id_pipeline_regs (
     input wire [31:0] inst_pc_i,
     output reg [31:0] inst_pc_o,
 
+    input wire [31:0] pc_plus4_i,
+    output reg [31:0] pc_plus4_o,
+
     input wire        mem_operation_i,
     output reg        mem_operation_o,
 
@@ -632,7 +669,22 @@ module id_pipeline_regs (
     output reg [ 1:0] alu_a_mux_o,
     
     input wire [ 1:0] alu_b_mux_i,
-    output reg [ 1:0] alu_b_mux_o
+    output reg [ 1:0] alu_b_mux_o,
+
+    input wire        exception_i,
+    output reg        exception_o,
+
+    input wire [ 1:0] trap_mode_i,
+    output reg [ 1:0] trap_mode_o,
+
+    input wire [31:0] mcause_i,
+    output reg [31:0] mcause_o,
+
+    input wire [31:0] mtval_i,
+    output reg [31:0] mtval_o,
+    
+    input wire [31:0] medeleg_i,
+    output reg [31:0] medeleg_o
 );
 
     always_ff @(posedge clk_i) begin
@@ -654,6 +706,7 @@ module id_pipeline_regs (
 
             is_branch_o <= 1'b0;
             inst_pc_o <= 32'b0;
+            pc_plus4_o <= 32'b0;
 
             mem_operation_o <= 1'b0;
             mem_write_enable_o <= 1'b0;
@@ -664,6 +717,13 @@ module id_pipeline_regs (
             byte_sel_o <= 4'b0;
             alu_a_mux_o <= 2'b0;
             alu_b_mux_o <= 2'b0;
+
+            exception_o <= 1'b0;
+            trap_mode_o <= 2'b0;
+            mcause_o    <= 32'b0;
+            mtval_o     <= 32'b0;
+
+            medeleg_o   <= 32'b0;
 
         end else begin
             if (stall_i) begin
@@ -686,6 +746,7 @@ module id_pipeline_regs (
 
                 is_branch_o <= 1'b0;
                 inst_pc_o <= 32'b0;
+                pc_plus4_o <= 32'b0;
 
                 mem_operation_o <= 1'b0;
                 mem_write_enable_o <= 1'b0;
@@ -696,6 +757,13 @@ module id_pipeline_regs (
                 byte_sel_o <= 4'b0;
                 alu_a_mux_o <= 2'b0;
                 alu_b_mux_o <= 2'b0;
+
+                exception_o <= 1'b0;
+                trap_mode_o <= 2'b0;
+                mcause_o    <= 32'b0;
+                mtval_o     <= 32'b0;
+
+                medeleg_o   <= 32'b0;
             end else begin
                 mode_o <= mode_i;
 
@@ -710,20 +778,36 @@ module id_pipeline_regs (
 
                 id_csr_o <= id_csr_i;
                 data_csr_o <= data_csr_i;
-                csr_write_enable_o <= csr_write_enable_i;
+                
 
                 is_branch_o <= is_branch_i;
                 inst_pc_o <= inst_pc_i;
+                pc_plus4_o <= pc_plus4_i;
 
                 mem_operation_o <= mem_operation_i;
-                mem_write_enable_o <= mem_write_enable_i;
                 mem_unsigned_ext_o <= mem_unsigned_ext_i;
-                rf_write_enable_o <= rf_write_enable_i;
+
+                if (!exception_i) begin
+                    mem_write_enable_o <= mem_write_enable_i;
+                    csr_write_enable_o <= csr_write_enable_i;
+                    rf_write_enable_o <= rf_write_enable_i;
+                end else begin // disable side effects on exception
+                    mem_write_enable_o <= 1'b0;
+                    csr_write_enable_o <= 1'b0;
+                    rf_write_enable_o <= 1'b0;
+                end
 
                 data_rd_mux_o <= data_rd_mux_i;
                 byte_sel_o <= byte_sel_i;
                 alu_a_mux_o <= alu_a_mux_i;
                 alu_b_mux_o <= alu_b_mux_i;
+
+                exception_o <= exception_i;
+                trap_mode_o <= trap_mode_i;
+                mcause_o    <= mcause_i;
+                mtval_o     <= mtval_i;
+
+                medeleg_o   <= medeleg_i;
             end
         end
     end
@@ -742,10 +826,18 @@ endmodule
 
 module id_bubble_controller (
     input wire wait_reg_i,
+
+    input wire        exe_next_exception_i,
+    input wire        mem_next_exception_i,
+    input wire        wb_prev_exception_i,
+
     output wire id_bubble_o
 );
 
-    assign id_bubble_o = wait_reg_i;
+    assign id_bubble_o = wait_reg_i
+                        || exe_next_exception_i
+                        || mem_next_exception_i
+                        || wb_prev_exception_i;
 
 endmodule
 

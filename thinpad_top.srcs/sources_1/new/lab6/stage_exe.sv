@@ -96,6 +96,9 @@ module exe_pipeline_regs (
     input wire [ 1:0] mode_i,
     output reg [ 1:0] mode_o,
 
+    input wire [31:0] inst_pc_i,
+    output reg [31:0] inst_pc_o,
+
     input wire [31:0] pc_plus4_i,
     output reg [31:0] pc_plus4_o,
 
@@ -133,12 +136,28 @@ module exe_pipeline_regs (
     output reg [31:0] data_csr_o,
 
     input wire        csr_write_enable_i,
-    output reg        csr_write_enable_o
+    output reg        csr_write_enable_o,
+
+    input wire        exception_i,
+    output reg        exception_o,
+
+    input wire [ 1:0] trap_mode_i,
+    output reg [ 1:0] trap_mode_o,
+
+    input wire [31:0] mcause_i,
+    output reg [31:0] mcause_o,
+
+    input wire [31:0] mtval_i,
+    output reg [31:0] mtval_o,
+
+    input wire [31:0] medeleg_i,
+    output reg [31:0] medeleg_o
 );
 
 always_ff @(posedge clk_i) begin
     if (rst_i) begin
         mode_o <= 2'b00;
+        inst_pc_o <= 32'b0;
         pc_plus4_o <= 32'b0;
         alu_y_o <= 32'b0;
         mem_operation_o <= 32'b0;
@@ -152,11 +171,19 @@ always_ff @(posedge clk_i) begin
         id_csr_o <= 5'b0;
         data_csr_o <= 32'b0;
         csr_write_enable_o <= 32'b0;
+
+        exception_o <= 1'b0;
+        trap_mode_o <= 2'b0;
+        mcause_o    <= 32'b0;
+        mtval_o     <= 32'b0;
+        medeleg_o   <= 32'b0;
+
     end else begin
         if (stall_i) begin
 
         end else if (bubble_i) begin
             // mode_o <= 2'b00;
+            inst_pc_o <= 32'b0;
             pc_plus4_o <= 32'b0;
             alu_y_o <= 32'b0;
             mem_operation_o <= 32'b0;
@@ -170,21 +197,45 @@ always_ff @(posedge clk_i) begin
             id_csr_o <= 5'b0;
             data_csr_o <= 32'b0;
             csr_write_enable_o <= 32'b0;
+
+            exception_o <= 1'b0;
+            trap_mode_o <= 2'b0;
+            mcause_o    <= 32'b0;
+            mtval_o     <= 32'b0;
+            medeleg_o   <= 32'b0;
+
         end else begin
             mode_o <= mode_i;
+            inst_pc_o <= inst_pc_i;
             pc_plus4_o <= pc_plus4_i;
             alu_y_o <= alu_y_i;
             mem_operation_o <= mem_operation_i;
-            mem_write_enable_o <= mem_write_enable_i;
+
             mem_unsigned_ext_o <= mem_unsigned_ext_i;
-            rf_write_enable_o <= rf_write_enable_i;
+
             data_rd_mux_o <= data_rd_mux_i;
             byte_sel_o <= byte_sel_i;
             data_rs2_o <= data_rs2_i;
             reg_rd_o <= reg_rd_i;
             id_csr_o <= id_csr_i;
             data_csr_o <= data_csr_i;
-            csr_write_enable_o <= csr_write_enable_i;
+
+            if (!exception_i) begin
+                mem_write_enable_o <= mem_write_enable_i;
+                csr_write_enable_o <= csr_write_enable_i;
+                rf_write_enable_o <= rf_write_enable_i;
+            end else begin // disable side effects on exception
+                mem_write_enable_o <= 1'b0;
+                csr_write_enable_o <= 1'b0;
+                rf_write_enable_o <= 1'b0;
+            end
+
+
+            exception_o <= exception_i;
+            trap_mode_o <= trap_mode_i;
+            mcause_o    <= mcause_i;
+            mtval_o     <= mtval_i;
+            medeleg_o   <= medeleg_i;
         end
     end
 end
@@ -204,10 +255,14 @@ module exe_stall_controller (
 endmodule
 
 module exe_bubble_controller (
-    output wire exe_bubble_o
+    input wire        mem_next_exception_i,
+    input wire        wb_prev_exception_i,
+
+    output wire       exe_bubble_o
 );
 
-    assign exe_bubble_o = 1'b0;
+    assign exe_bubble_o = mem_next_exception_i
+                        || wb_prev_exception_i;
 
 endmodule
 

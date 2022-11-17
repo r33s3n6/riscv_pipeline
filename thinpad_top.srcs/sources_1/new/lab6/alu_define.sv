@@ -87,15 +87,15 @@
 `define CSR_ID_CYCLEH   5'd2 // read-only
 `define CSR_ID_TIMEH    5'd3 // read-only
 
-`define CSR_ID_SSTATUS  5'd4
-`define CSR_ID_SIE      5'd5
+`define CSR_ID_SSTATUS  5'd4 // should not exist actually
+`define CSR_ID_SIE      5'd5 // should not exist actually
 `define CSR_ID_STVEC    5'd6
 
 `define CSR_ID_SSCRATCH 5'd7
 `define CSR_ID_SEPC     5'd8
 `define CSR_ID_SCAUSE   5'd9
 `define CSR_ID_STVAL    5'd10
-`define CSR_ID_SIP      5'd11
+`define CSR_ID_SIP      5'd11 // should not exist actually
 
 `define CSR_ID_SATP     5'd12
 
@@ -120,3 +120,18 @@
 `define CSR_ID_PMPADDR0 5'd27
 
 `define CSR_ID_UNKNOWN  5'd31
+
+`ifndef MODE_T_DEFINE
+`define MODE_T_DEFINE
+
+typedef enum logic [1:0] {
+    M_MODE = 2'b11,
+    H_MODE = 2'b10,
+    S_MODE = 2'b01,
+    U_MODE = 2'b00
+} mode_t;
+
+`endif
+
+`define EXP_MRET        32'd24
+`define EXP_SRET        32'd25
