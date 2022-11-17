@@ -495,6 +495,8 @@ module id_register_file(
 
 endmodule
 
+// TODO: mstatus/sstatus, mip/sip, mie/sie should be implemented as one register
+// TODO: mip.MTIP should be set when timer interrupt is pending
 module id_csr_file(
     input  wire         clk_i,
     input  wire         rst_i,
@@ -514,6 +516,17 @@ module id_csr_file(
     input  wire [ 4: 0] exe_waddr_i,
     input  wire [31: 0] exe_wdata_i,
     input  wire         exe_we_i,
+
+    input  wire         wb_exception_i,
+    input  wire  [31:0] mstatus_i,
+
+    input  wire  [31:0] mepc_i,
+    input  wire  [31:0] mcause_i,
+    input  wire  [31:0] mtval_i,
+
+    input  wire  [31:0] sepc_i,
+    input  wire  [31:0] scause_i,
+    input  wire  [31:0] stval_i,
 
     // important status registers
     output wire [31: 0] sstatus_o,
@@ -571,9 +584,22 @@ module id_csr_file(
         if (rst_i) begin
             reg_file <= '{default: '0};
         end else begin
-            if (we_i) begin
+            if (wb_exception_i) begin
+                reg_file[`CSR_ID_MSTATUS] <= mstatus_i;
+
+                reg_file[`CSR_ID_MEPC]    <= mepc_i;
+                reg_file[`CSR_ID_MCAUSE]  <= mcause_i;
+                reg_file[`CSR_ID_MTVAL]   <= mtval_i;
+
+                reg_file[`CSR_ID_SEPC]    <= sepc_i;
+                reg_file[`CSR_ID_SCAUSE]  <= scause_i;
+                reg_file[`CSR_ID_STVAL]   <= stval_i;
+
+
+            end
+            else if (we_i) begin
                 reg_file[waddr_i] <= wdata_i;
-            end 
+            end
             
             // not writing mcycle, then we increment it
             if (!(we_i && waddr_i == `CSR_ID_MCYCLE)) begin

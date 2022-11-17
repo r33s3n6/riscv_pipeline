@@ -135,3 +135,12 @@ typedef enum logic [1:0] {
 
 `define EXP_MRET        32'd24
 `define EXP_SRET        32'd25
+
+
+`define MSTATUS_SIE    5'd1
+`define MSTATUS_SPIE   5'd5
+`define MSTATUS_MIE    5'd3
+`define MSTATUS_MPIE   5'd7
+`define MSTATUS_SPP    5'd8
+`define MSTATUS_MPP_H  5'd12
+`define MSTATUS_MPP_L  5'd11

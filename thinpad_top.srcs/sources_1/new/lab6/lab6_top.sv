@@ -551,7 +551,17 @@ module lab6_top (
     wire  [31:0] wb_prev_mcause;
     wire  [31:0] wb_prev_mtval;
 
-    wire  [31:0] wb_tvec;
+    logic [31:0] wb_tvec;
+
+    logic [31:0] wb_mstatus;
+
+    logic [31:0] wb_mepc;
+    logic [31:0] wb_mtval;
+    logic [31:0] wb_mcause;
+
+    logic [31:0] wb_sepc;
+    logic [31:0] wb_stval;
+    logic [31:0] wb_scause;
 
 
     /* =========== stage if begin =========== */
@@ -966,6 +976,18 @@ module lab6_top (
         .exe_waddr_i     (exe_id_csr             ),
         .exe_wdata_i     (exe_data_csr           ),
         .exe_we_i        (exe_csr_write_enable   ),
+
+        .wb_exception_i  (wb_prev_exception      ),
+
+        .mstatus_i       (wb_mstatus             ),
+
+        .mepc_i          (wb_mepc                ),
+        .mtval_i         (wb_mtval               ),
+        .mcause_i        (wb_mcause              ),
+
+        .sepc_i          (wb_sepc                ),
+        .stval_i         (wb_stval               ),
+        .scause_i        (wb_scause              ),
 
         .sstatus_o       (_id_sstatus  ),
         .sie_o           (_id_sie      ),
@@ -1439,6 +1461,106 @@ module lab6_top (
 
     /* =========== stage mem end =========== */
 
+    /* =========== stage wb begin =========== */
+    // basically exception handling
+
+    wire  [31:0] wb_old_mstatus;
+    assign wb_old_mstatus = _id_mstatus;
+
+    logic [31:0] wb_new_mstatus;
+
+    // internal wires
+    wire wb_old_mstatus_mie;
+    wire wb_old_mstatus_sie;
+    wire wb_old_mstatus_mpie;
+    wire wb_old_mstatus_spie;
+    wire wb_old_mstatus_mpp;
+    wire wb_old_mstatus_spp;
+
+    wire wb_new_mstatus_mie;
+    wire wb_new_mstatus_sie;
+    wire wb_new_mstatus_mpie;
+    wire wb_new_mstatus_spie;
+
+    wire wb_new_mstatus_mpp;
+    wire wb_new_mstatus_spp;
+
+    exp_mstatus_decoder wb_emd(
+        .mstatus            (wb_old_mstatus),
+        .mie                (wb_old_mstatus_mie),
+        .sie                (wb_old_mstatus_sie),
+        .mpie               (wb_old_mstatus_mpie),
+        .spie               (wb_old_mstatus_spie),
+        .mpp                (wb_old_mstatus_mpp),
+        .spp                (wb_old_mstatus_spp)
+    );
+
+    always_comb begin
+        wb_new_mstatus = wb_old_mstatus;
+
+        wb_new_mstatus[`MSTATUS_MIE]  = wb_new_mstatus_mie;
+        wb_new_mstatus[`MSTATUS_SIE]  = wb_new_mstatus_sie;
+        wb_new_mstatus[`MSTATUS_MPIE] = wb_new_mstatus_mpie;
+        wb_new_mstatus[`MSTATUS_SPIE] = wb_new_mstatus_spie;
+        wb_new_mstatus[`MSTATUS_MPP]  = wb_new_mstatus_mpp;
+        wb_new_mstatus[`MSTATUS_SPP]  = wb_new_mstatus_spp;
+    end
+
+    // set tvec as pc 
+    always_comb begin
+        // default
+
+        wb_mstatus  = wb_new_mstatus;
+
+        wb_mepc     = _id_mepc;
+        wb_mtval    = _id_mtval;
+        wb_mcause   = _id_mcause;
+
+        wb_sepc     = _id_sepc;
+        wb_stval    = _id_stval;
+        wb_scause   = _id_scause;
+
+        wb_new_mstatus_mie  = wb_old_mstatus_mie;
+        wb_new_mstatus_sie  = wb_old_mstatus_sie;
+        wb_new_mstatus_mpie = wb_old_mstatus_mpie;
+        wb_new_mstatus_spie = wb_old_mstatus_spie;
+        wb_new_mstatus_mpp  = wb_old_mstatus_mpp;
+        wb_new_mstatus_spp  = wb_old_mstatus_spp;
+
+        if (wb_prev_exception == `EXP_MRET) begin
+            wb_tvec = _id_mepc;
+            wb_new_mstatus_mie  = wb_old_mstatus_mpie;
+            wb_new_mstatus_mpie = 1'b1;
+            wb_new_mstatus_mpp  = 2'b00;
+        end else if (wb_prev_exception == `EXP_SRET) begin
+            wb_tvec = _id_sepc;
+            wb_new_mstatus_sie  = wb_old_mstatus_spie;
+            wb_new_mstatus_spie = 1'b1;
+            wb_new_mstatus_spp  = 1'b0;
+        end else begin
+            if (wb_prev_trap_mode == M_MODE) begin
+                wb_tvec = _id_mtvec;
+                wb_new_mstatus_mie  = 1'b0;
+                wb_new_mstatus_mpie = wb_old_mstatus_mie;
+                wb_new_mstatus_mpp  = wb_mode;
+
+                wb_mepc = wb_inst_pc;
+                wb_mtval = wb_prev_mtval;
+                wb_mcause = wb_prev_mcause;
+            end else if (wb_prev_trap_mode == S_MODE) begin
+                wb_tvec = _id_stvec;
+                wb_new_mstatus_sie  = 1'b0;
+                wb_new_mstatus_spie = wb_old_mstatus_sie;
+                wb_new_mstatus_spp  = wb_mode;
+
+                wb_sepc = wb_inst_pc;
+                wb_stval = wb_prev_mtval;
+                wb_scause = wb_prev_mcause;
+            end
+        end
+    end
+
+    /* =========== stage wb end =========== */
 
 
 endmodule
