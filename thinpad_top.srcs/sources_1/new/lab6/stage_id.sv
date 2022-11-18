@@ -439,7 +439,7 @@ module id_instruction_decoder (
                         `CSR_SCAUSE   : invalid_inst_o = 1'b0;
                         `CSR_STVAL    : invalid_inst_o = 1'b0;
                         `CSR_SIP      : invalid_inst_o = 1'b0;
-                        `CSR_SATP     : invalid_inst_o = 1'b1; // TODO: implement SATP
+                        `CSR_SATP     : invalid_inst_o = 1'b0;
                         `CSR_MHARTID  : invalid_inst_o = 1'b0;
                         `CSR_MSTATUS  : invalid_inst_o = 1'b0;
                         `CSR_MEDELEG  : invalid_inst_o = 1'b0;
@@ -501,7 +501,7 @@ module id_register_file(
 
 endmodule
 
-// TODO: mstatus/sstatus, mip/sip, mie/sie should be implemented as one register
+
 module id_csr_file(
     input  wire         clk_i,
     input  wire         rst_i,

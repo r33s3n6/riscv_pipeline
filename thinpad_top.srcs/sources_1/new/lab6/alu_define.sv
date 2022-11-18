@@ -1,4 +1,5 @@
 // alu operations
+
 `define ALU_ADD   4'b0000
 `define ALU_SUB   4'b1000
 `define ALU_SLL   4'b0001

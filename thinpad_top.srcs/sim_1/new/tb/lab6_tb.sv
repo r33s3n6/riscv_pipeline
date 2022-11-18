@@ -59,13 +59,13 @@ module lab6_tb;
     //   uart.pc_send_byte(8'h30 + i); // ASCII '0' ~ '9'
     //   // PC 接收到数据后，会在仿真窗口中打印出数�?
     // end
-    #4000000;
-    uart.pc_send_byte(8'h47); // G
+    //#4000000;
+    //uart.pc_send_byte(8'h47); // G
     // address
-    uart.pc_send_byte(8'h78); // 
-    uart.pc_send_byte(8'h11); // 
-    uart.pc_send_byte(8'h00); // 
-    uart.pc_send_byte(8'h80); // 
+    //uart.pc_send_byte(8'h78); // 
+    //uart.pc_send_byte(8'h11); // 
+    //uart.pc_send_byte(8'h00); // 
+    //uart.pc_send_byte(8'h80); // 
     // num
     //uart.pc_send_byte(8'h04); 
     //uart.pc_send_byte(8'h00);
@@ -77,7 +77,7 @@ module lab6_tb;
     //uart.pc_send_byte(8'h56);
     //uart.pc_send_byte(8'h78);
     // 等待�?段时间，结束仿真
-    #100000 $finish;
+    #1000 $finish;
   end
 
   // 待测试用户设�?
