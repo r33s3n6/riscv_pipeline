@@ -219,6 +219,8 @@ module if_pipeline_regs (
     input wire        bubble_i,
     input wire        stall_i,
 
+    output reg        nop_o,
+
     input wire [ 1:0] mode_i,
     output reg [ 1:0] mode_o,
 
@@ -247,6 +249,8 @@ module if_pipeline_regs (
 
 );
 
+    
+
     always @(posedge clk_i) begin
         if (rst_i) begin
             inst_pc_o   <= `BUBBLE_INST_PC;
@@ -257,6 +261,7 @@ module if_pipeline_regs (
             trap_mode_o <= 2'b00;
             mcause_o    <= 32'b0;
             mtval_o     <= 32'b0;
+            nop_o       <= 1'b1;
         end else if (stall_i) begin
             // do nothing
         end else if (bubble_i) begin
@@ -268,6 +273,7 @@ module if_pipeline_regs (
             trap_mode_o <= 2'b00;
             mcause_o    <= 32'b0;
             mtval_o     <= 32'b0;
+            nop_o       <= 1'b1;
         end else begin
             inst_pc_o   <= inst_pc_i;
             pc_plus4_o  <= pc_plus4_i;
@@ -277,6 +283,7 @@ module if_pipeline_regs (
             trap_mode_o <= trap_mode_i;
             mcause_o    <= mcause_i;
             mtval_o     <= mtval_i;
+            nop_o       <= 1'b0;
         end
     end
 

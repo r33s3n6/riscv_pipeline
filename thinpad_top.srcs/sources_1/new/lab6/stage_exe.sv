@@ -80,7 +80,7 @@ module exe_comparator (
         `CMP_LTU: y = (unsigned'(a)< unsigned'(b));
         `CMP_GEU: y = (unsigned'(a)>=unsigned'(b));
         `CMP_NONE: y = 1'b1;
-         default: y = 1'bx;
+         default: y = 1'bx; // for id may yield invalid op, don't use this value
     endcase
   end
 
@@ -92,6 +92,8 @@ module exe_pipeline_regs (
 
     input wire        bubble_i,
     input wire        stall_i,
+
+    output reg        nop_o,
 
     input wire [ 1:0] mode_i,
     output reg [ 1:0] mode_o,
@@ -154,6 +156,8 @@ module exe_pipeline_regs (
     output reg [31:0] medeleg_o
 );
 
+
+
 always_ff @(posedge clk_i) begin
     if (rst_i) begin
         mode_o <= 2'b00;
@@ -177,6 +181,7 @@ always_ff @(posedge clk_i) begin
         mcause_o    <= 32'b0;
         mtval_o     <= 32'b0;
         medeleg_o   <= 32'b0;
+        nop_o       <= 1'b0;
 
     end else begin
         if (stall_i) begin
@@ -203,6 +208,8 @@ always_ff @(posedge clk_i) begin
             mcause_o    <= 32'b0;
             mtval_o     <= 32'b0;
             medeleg_o   <= 32'b0;
+
+            nop_o       <= 1'b1;
 
         end else begin
             mode_o <= mode_i;
@@ -236,6 +243,8 @@ always_ff @(posedge clk_i) begin
             mcause_o    <= mcause_i;
             mtval_o     <= mtval_i;
             medeleg_o   <= medeleg_i;
+
+            nop_o       <= 1'b0;
         end
     end
 end

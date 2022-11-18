@@ -297,8 +297,8 @@ module exp_interrupt_encoder (
 
     wire machine_interrupt;
     wire supervisor_interrupt;
-    assign machine_interrupt = real_mie | m_mei | m_msi | m_mti | m_sei | m_ssi | m_sti;
-    assign supervisor_interrupt = real_sie | s_sei | s_ssi | s_sti;
+    assign machine_interrupt = real_mie && (m_mei | m_msi | m_mti | m_sei | m_ssi | m_sti);
+    assign supervisor_interrupt = real_sie &&  (s_sei | s_ssi | s_sti);
 
     wire [31:0] real_int;
     wire [ 1:0] int_mode;

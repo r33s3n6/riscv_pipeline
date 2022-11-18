@@ -390,20 +390,20 @@ module id_instruction_decoder (
             if  (funct3 == 3'b000) begin// ecall, ebreak, {m,s}ret, wfi
                 if (funct7 == 7'b0000000) begin // ecall, ebreak
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0) begin // ecall
-                        invalid_inst_o = 1'b1; // TODO: implement ecall
+                        invalid_inst_o = 1'b0; 
                     end else if (rs1 == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1) begin // ebreak
-                        invalid_inst_o = 1'b1; // TODO: implement ebreak
+                        invalid_inst_o = 1'b0; 
                     end
                 end else if (funct7 == 7'b0001000) begin // sret
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010) begin
-                        if (mode == S_MODE) begin
+                        if (mode >= S_MODE) begin
                             invalid_inst_o = 1'b1; // TODO: implement sret
                         end
                     end
                 end else if (funct7 == 7'b0011000) begin // mret
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010) begin
                         if (mode == M_MODE) begin
-                            invalid_inst_o = 1'b1; // TODO: implement mret
+                            invalid_inst_o = 1'b0;
                         end
                     end
                 end else if (funct7 == 7'b0001000) begin // wfi
@@ -427,24 +427,24 @@ module id_instruction_decoder (
                         `CSR_TIMEH    : invalid_inst_o = 1'b0;
                         `CSR_SSTATUS  : invalid_inst_o = 1'b1;
                         `CSR_SIE      : invalid_inst_o = 1'b1;
-                        `CSR_STVEC    : invalid_inst_o = 1'b1;
+                        `CSR_STVEC    : invalid_inst_o = 1'b0;
                         `CSR_SSCRATCH : invalid_inst_o = 1'b0;
-                        `CSR_SEPC     : invalid_inst_o = 1'b1;
-                        `CSR_SCAUSE   : invalid_inst_o = 1'b1;
-                        `CSR_STVAL    : invalid_inst_o = 1'b1;
+                        `CSR_SEPC     : invalid_inst_o = 1'b0;
+                        `CSR_SCAUSE   : invalid_inst_o = 1'b0;
+                        `CSR_STVAL    : invalid_inst_o = 1'b0;
                         `CSR_SIP      : invalid_inst_o = 1'b1;
                         `CSR_SATP     : invalid_inst_o = 1'b1;
                         `CSR_MHARTID  : invalid_inst_o = 1'b0;
                         `CSR_MSTATUS  : invalid_inst_o = 1'b0;
-                        `CSR_MEDELEG  : invalid_inst_o = 1'b1;
-                        `CSR_MIDELEG  : invalid_inst_o = 1'b1;
-                        `CSR_MIE      : invalid_inst_o = 1'b1;
+                        `CSR_MEDELEG  : invalid_inst_o = 1'b0;
+                        `CSR_MIDELEG  : invalid_inst_o = 1'b0;
+                        `CSR_MIE      : invalid_inst_o = 1'b0;
                         `CSR_MTVEC    : invalid_inst_o = 1'b0;
                         `CSR_MSCRATCH : invalid_inst_o = 1'b0;
                         `CSR_MEPC     : invalid_inst_o = 1'b0;
                         `CSR_MCAUSE   : invalid_inst_o = 1'b0;
                         `CSR_MTVAL    : invalid_inst_o = 1'b0;
-                        `CSR_MIP      : invalid_inst_o = 1'b1;
+                        `CSR_MIP      : invalid_inst_o = 1'b0;
                         `CSR_MCYCLE   : invalid_inst_o = 1'b0;
                         `CSR_MCYCLEH  : invalid_inst_o = 1'b0;
                         `CSR_PMPCFG0  : invalid_inst_o = 1'b0;
@@ -517,6 +517,10 @@ module id_csr_file(
     input  wire [31: 0] exe_wdata_i,
     input  wire         exe_we_i,
 
+    // irq
+    input  wire         core_time_irq_i,
+
+    // exception
     input  wire         wb_exception_i,
     input  wire  [31:0] mstatus_i,
 
@@ -535,6 +539,8 @@ module id_csr_file(
     output wire [31: 0] sepc_o,
     output wire [31: 0] sip_o,
     output wire [31: 0] satp_o,
+    output wire [31: 0] scause_o,
+    output wire [31: 0] stval_o,
 
     output wire [31: 0] mstatus_o,
     output wire [31: 0] medeleg_o,
@@ -542,7 +548,11 @@ module id_csr_file(
     output wire [31: 0] mie_o,
     output wire [31: 0] mtvec_o,
     output wire [31: 0] mepc_o,
-    output wire [31: 0] mip_o
+    output wire [31: 0] mip_o,
+    output wire [31: 0] mcause_o,
+    output wire [31: 0] mtval_o,
+
+    output wire [31: 0] old_mstatus_o // no forwarding //TODO: remove this(no use)
 );
     // real registers
     reg   [31:0] reg_file [0:31];
@@ -557,6 +567,8 @@ module id_csr_file(
     assign sepc_o    = forwarded_reg[`CSR_ID_SEPC];
     assign sip_o     = forwarded_reg[`CSR_ID_SIP];
     assign satp_o    = forwarded_reg[`CSR_ID_SATP];
+    assign scause_o  = forwarded_reg[`CSR_ID_SCAUSE];
+    assign stval_o   = forwarded_reg[`CSR_ID_STVAL];
 
     assign mstatus_o = forwarded_reg[`CSR_ID_MSTATUS];
     assign medeleg_o = forwarded_reg[`CSR_ID_MEDELEG];
@@ -565,6 +577,10 @@ module id_csr_file(
     assign mtvec_o   = forwarded_reg[`CSR_ID_MTVEC];
     assign mepc_o    = forwarded_reg[`CSR_ID_MEPC];
     assign mip_o     = forwarded_reg[`CSR_ID_MIP];
+    assign mcause_o  = forwarded_reg[`CSR_ID_MCAUSE];
+    assign mtval_o   = forwarded_reg[`CSR_ID_MTVAL];
+
+    assign old_mstatus_o = reg_file[`CSR_ID_MSTATUS];
 
     // forward registers
     always_comb begin
@@ -595,11 +611,15 @@ module id_csr_file(
                 reg_file[`CSR_ID_SCAUSE]  <= scause_i;
                 reg_file[`CSR_ID_STVAL]   <= stval_i;
 
-
             end
             else if (we_i) begin
                 reg_file[waddr_i] <= wdata_i;
-            end
+            end 
+
+
+            reg_file[`CSR_ID_MIP][7] <= core_time_irq_i;
+
+
             
             // not writing mcycle, then we increment it
             if (!(we_i && waddr_i == `CSR_ID_MCYCLE)) begin
@@ -631,6 +651,8 @@ module id_pipeline_regs (
 
     input wire        bubble_i,
     input wire        stall_i,
+
+    output reg        nop_o,
 
     input wire [ 1:0] mode_i,
     output reg [ 1:0] mode_o,
@@ -713,6 +735,7 @@ module id_pipeline_regs (
     output reg [31:0] medeleg_o
 );
 
+
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             mode_o <= 2'b00;
@@ -750,6 +773,7 @@ module id_pipeline_regs (
             mtval_o     <= 32'b0;
 
             medeleg_o   <= 32'b0;
+            nop_o       <= 1'b0;
 
         end else begin
             if (stall_i) begin
@@ -790,6 +814,7 @@ module id_pipeline_regs (
                 mtval_o     <= 32'b0;
 
                 medeleg_o   <= 32'b0;
+                nop_o       <= 1'b1;
             end else begin
                 mode_o <= mode_i;
 
@@ -834,6 +859,7 @@ module id_pipeline_regs (
                 mtval_o     <= mtval_i;
 
                 medeleg_o   <= medeleg_i;
+                nop_o       <= 1'b0;
             end
         end
     end

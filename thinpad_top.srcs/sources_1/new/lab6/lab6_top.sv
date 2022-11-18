@@ -8,51 +8,51 @@ module lab6_top (
     input wire clk_50M,     // 50MHz 时钟输入
     input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
 
-    input wire push_btn,  // BTN5 按钮�????????????????关，带消抖电路，按下时为 1
-    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�???????????????? 1
+    input wire push_btn,  // BTN5 按钮�???????????????????关，带消抖电路，按下时为 1
+    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�??????????????????? 1
 
     input  wire [ 3:0] touch_btn,  // BTN1~BTN4，按钮开关，按下时为 1
-    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�???????????????? 1
-    output wire [15:0] leds,       // 16 �???????????????? LED，输出时 1 点亮
+    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�??????????????????? 1
+    output wire [15:0] leds,       // 16 �??????????????????? LED，输出时 1 点亮
     output wire [ 7:0] dpy0,       // 数码管低位信号，包括小数点，输出 1 点亮
     output wire [ 7:0] dpy1,       // 数码管高位信号，包括小数点，输出 1 点亮
 
-    // CPLD 串口控制器信�????????????????
-    output wire uart_rdn,        // 读串口信号，低有�????????????????
-    output wire uart_wrn,        // 写串口信号，低有�????????????????
-    input  wire uart_dataready,  // 串口数据准备�????????????????
-    input  wire uart_tbre,       // 发�?�数据标�????????????????
-    input  wire uart_tsre,       // 数据发�?�完毕标�????????????????
+    // CPLD 串口控制器信�???????????????????
+    output wire uart_rdn,        // 读串口信号，低有�???????????????????
+    output wire uart_wrn,        // 写串口信号，低有�???????????????????
+    input  wire uart_dataready,  // 串口数据准备�???????????????????
+    input  wire uart_tbre,       // 发�?�数据标�???????????????????
+    input  wire uart_tsre,       // 数据发�?�完毕标�???????????????????
 
     // BaseRAM 信号
-    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�????????????????
+    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�???????????????????
     output wire [19:0] base_ram_addr,  // BaseRAM 地址
-    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????? 0
-    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�????????????????
-    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�????????????????
-    output wire base_ram_we_n,  // BaseRAM 写使能，低有�????????????????
+    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????????????? 0
+    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�???????????????????
+    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�???????????????????
+    output wire base_ram_we_n,  // BaseRAM 写使能，低有�???????????????????
 
     // ExtRAM 信号
     inout wire [31:0] ext_ram_data,  // ExtRAM 数据
     output wire [19:0] ext_ram_addr,  // ExtRAM 地址
-    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????? 0
-    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�????????????????
-    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�????????????????
-    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�????????????????
+    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�??????????????????? 0
+    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�???????????????????
+    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�???????????????????
+    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�???????????????????
 
     // 直连串口信号
     output wire txd,  // 直连串口发�?�端
-    input  wire rxd,  // 直连串口接收�????????????????
+    input  wire rxd,  // 直连串口接收�???????????????????
 
     // Flash 存储器信号，参�?? JS28F640 芯片手册
-    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�????????????????16bit 模式无意�????????????????
+    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�???????????????????16bit 模式无意�???????????????????
     inout wire [15:0] flash_d,  // Flash 数据
     output wire flash_rp_n,  // Flash 复位信号，低有效
-    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�????????????????
-    output wire flash_ce_n,  // Flash 片�?�信号，低有�????????????????
-    output wire flash_oe_n,  // Flash 读使能信号，低有�????????????????
-    output wire flash_we_n,  // Flash 写使能信号，低有�????????????????
-    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �???????????????? 16 位模式时请设�???????????????? 1
+    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�???????????????????
+    output wire flash_ce_n,  // Flash 片�?�信号，低有�???????????????????
+    output wire flash_oe_n,  // Flash 读使能信号，低有�???????????????????
+    output wire flash_we_n,  // Flash 写使能信号，低有�???????????????????
+    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �??????????????????? 16 位模式时请设�??????????????????? 1
 
     // USB 控制器信号，参�?? SL811 芯片手册
     output wire sl811_a0,
@@ -75,310 +75,356 @@ module lab6_top (
     input wire dm9k_int,
 
     // 图像输出信号
-    output wire [2:0] video_red,    // 红色像素�????????????????3 �????????????????
-    output wire [2:0] video_green,  // 绿色像素�????????????????3 �????????????????
-    output wire [1:0] video_blue,   // 蓝色像素�????????????????2 �????????????????
-    output wire       video_hsync,  // 行同步（水平同步）信�????????????????
-    output wire       video_vsync,  // 场同步（垂直同步）信�????????????????
+    output wire [2:0] video_red,    // 红色像素�???????????????????3 �???????????????????
+    output wire [2:0] video_green,  // 绿色像素�???????????????????3 �???????????????????
+    output wire [1:0] video_blue,   // 蓝色像素�???????????????????2 �???????????????????
+    output wire       video_hsync,  // 行同步（水平同步）信�???????????????????
+    output wire       video_vsync,  // 场同步（垂直同步）信�???????????????????
     output wire       video_clk,    // 像素时钟输出
-    output wire       video_de      // 行数据有效信号，用于区分消隐�????????????????
+    output wire       video_de      // 行数据有效信号，用于区分消隐�???????????????????
 );
 
-  /* =========== Demo code begin =========== */
+    /* =========== Demo code begin =========== */
 
-  // PLL 分频示例
-  logic locked, clk_10M, clk_60M;
-  pll_example clock_gen (
-      // Clock in ports
-      .clk_in1(clk_50M),  // 外部时钟输入
-      // Clock out ports
-      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�????????????????
-      .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�????????????????
-      // Status and control signals
-      .reset(reset_btn),  // PLL 复位输入
-      .locked(locked)  // PLL 锁定指示输出�????????????????"1"表示时钟稳定�????????????????
-                       // 后级电路复位信号应当由它生成（见下）
-  );
+    // PLL 分频示例
+    logic locked, clk_10M, clk_60M;
+    pll_example clock_gen (
+        // Clock in ports
+        .clk_in1(clk_50M),  // 外部时钟输入
+        // Clock out ports
+        .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�???????????????????
+        .clk_out2(clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�???????????????????
+        // Status and control signals
+        .reset(reset_btn),  // PLL 复位输入
+        .locked(locked)  // PLL 锁定指示输出�???????????????????"1"表示时钟稳定�???????????????????
+                         // 后级电路复位信号应当由它生成（见下）
+    );
 
-  logic reset_of_clk10M;
-  always_ff @(posedge clk_10M or negedge locked) begin
-    if (~locked) reset_of_clk10M <= 1'b1;
-    else reset_of_clk10M <= 1'b0;
-  end
+    logic reset_of_clk10M;
+    always_ff @(posedge clk_10M or negedge locked) begin
+        if (~locked) reset_of_clk10M <= 1'b1;
+        else reset_of_clk10M <= 1'b0;
+    end
 
-  logic reset_of_clk60M;
-  always_ff @(posedge clk_60M or negedge locked) begin
-    if (~locked) reset_of_clk60M <= 1'b1;
-    else reset_of_clk60M <= 1'b0;
-  end
+    logic reset_of_clk60M;
+    always_ff @(posedge clk_60M or negedge locked) begin
+        if (~locked) reset_of_clk60M <= 1'b1;
+        else reset_of_clk60M <= 1'b0;
+    end
 
-  /* =========== Demo code end =========== */
+    /* =========== Demo code end =========== */
 
-  logic sys_clk;
-  logic sys_rst;
+    logic sys_clk;
+    logic sys_rst;
 
-  assign sys_clk = clk_10M;
-  assign sys_rst = reset_of_clk10M;
+    assign sys_clk = clk_10M;
+    assign sys_rst = reset_of_clk10M;
 
-  // 本实验不使用 CPLD 串口，禁用防止�?�线冲突
-  assign uart_rdn = 1'b1;
-  assign uart_wrn = 1'b1;
+    // 本实验不使用 CPLD 串口，禁用防止�?�线冲突
+    assign uart_rdn = 1'b1;
+    assign uart_wrn = 1'b1;
 
-  /* =========== Wishbone Arbiter begin =========== */
-  logic        wbm0_cyc_o;
-  logic        wbm0_stb_o;
-  logic        wbm0_ack_i;
-  logic [31:0] wbm0_adr_o;
-  logic [31:0] wbm0_dat_o;
-  logic [31:0] wbm0_dat_i;
-  logic [ 3:0] wbm0_sel_o;
-  logic        wbm0_we_o;
+    logic core_time_irq;
 
-  logic        wbm1_cyc_o;
-  logic        wbm1_stb_o;
-  logic        wbm1_ack_i;
-  logic [31:0] wbm1_adr_o;
-  logic [31:0] wbm1_dat_o;
-  logic [31:0] wbm1_dat_i;
-  logic [ 3:0] wbm1_sel_o;
-  logic        wbm1_we_o;
+    /* =========== Wishbone Arbiter begin =========== */
+    logic        wbm0_cyc_o;
+    logic        wbm0_stb_o;
+    logic        wbm0_ack_i;
+    logic [31:0] wbm0_adr_o;
+    logic [31:0] wbm0_dat_o;
+    logic [31:0] wbm0_dat_i;
+    logic [ 3:0] wbm0_sel_o;
+    logic        wbm0_we_o;
 
-  logic        wbs_cyc_o;
-  logic        wbs_stb_o;
-  logic        wbs_ack_i;
-  logic [31:0] wbs_adr_o;
-  logic [31:0] wbs_dat_o;
-  logic [31:0] wbs_dat_i;
-  logic [ 3:0] wbs_sel_o;
-  logic        wbs_we_o;
+    logic        wbm1_cyc_o;
+    logic        wbm1_stb_o;
+    logic        wbm1_ack_i;
+    logic [31:0] wbm1_adr_o;
+    logic [31:0] wbm1_dat_o;
+    logic [31:0] wbm1_dat_i;
+    logic [ 3:0] wbm1_sel_o;
+    logic        wbm1_we_o;
 
-
-  wb_arbiter_2 wb_arbiter (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    .wbm0_adr_i(wbm0_adr_o),    
-    .wbm0_dat_i(wbm0_dat_o),    
-    .wbm0_dat_o(wbm0_dat_i),    
-    .wbm0_we_i (wbm0_we_o ),    
-    .wbm0_sel_i(wbm0_sel_o),    
-    .wbm0_stb_i(wbm0_stb_o),    
-    .wbm0_ack_o(wbm0_ack_i),    
-    .wbm0_err_o(),    
-    .wbm0_rty_o(),    
-    .wbm0_cyc_i(wbm0_cyc_o),    
-
-    .wbm1_adr_i(wbm1_adr_o),    
-    .wbm1_dat_i(wbm1_dat_o),    
-    .wbm1_dat_o(wbm1_dat_i),    
-    .wbm1_we_i (wbm1_we_o ),    
-    .wbm1_sel_i(wbm1_sel_o),    
-    .wbm1_stb_i(wbm1_stb_o),    
-    .wbm1_ack_o(wbm1_ack_i),    
-    .wbm1_err_o(),    
-    .wbm1_rty_o(),    
-    .wbm1_cyc_i(wbm1_cyc_o),   
-
-    .wbs_adr_o(wbs_adr_o),
-    .wbs_dat_i(wbs_dat_i),
-    .wbs_dat_o(wbs_dat_o),
-    .wbs_we_o (wbs_we_o ), 
-    .wbs_sel_o(wbs_sel_o),
-    .wbs_stb_o(wbs_stb_o),
-    .wbs_ack_i(wbs_ack_i),
-    .wbs_err_i('0),
-    .wbs_rty_i('0),
-    .wbs_cyc_o(wbs_cyc_o) 
-
-  );
-  /* =========== Wishbone Arbiter end =========== */
+    logic        wbs_cyc_o;
+    logic        wbs_stb_o;
+    logic        wbs_ack_i;
+    logic [31:0] wbs_adr_o;
+    logic [31:0] wbs_dat_o;
+    logic [31:0] wbs_dat_i;
+    logic [ 3:0] wbs_sel_o;
+    logic        wbs_we_o;
 
 
-  /* =========== Wishbone MUX begin =========== */
-  // Wishbone MUX (Masters) => bus slaves
-  logic wbs0_cyc_o;
-  logic wbs0_stb_o;
-  logic wbs0_ack_i;
-  logic [31:0] wbs0_adr_o;
-  logic [31:0] wbs0_dat_o;
-  logic [31:0] wbs0_dat_i;
-  logic [3:0] wbs0_sel_o;
-  logic wbs0_we_o;
+    wb_arbiter_2 wb_arbiter (
+        .clk(sys_clk),
+        .rst(sys_rst),
 
-  logic wbs1_cyc_o;
-  logic wbs1_stb_o;
-  logic wbs1_ack_i;
-  logic [31:0] wbs1_adr_o;
-  logic [31:0] wbs1_dat_o;
-  logic [31:0] wbs1_dat_i;
-  logic [3:0] wbs1_sel_o;
-  logic wbs1_we_o;
+        .wbm0_adr_i(wbm0_adr_o),    
+        .wbm0_dat_i(wbm0_dat_o),    
+        .wbm0_dat_o(wbm0_dat_i),    
+        .wbm0_we_i (wbm0_we_o ),    
+        .wbm0_sel_i(wbm0_sel_o),    
+        .wbm0_stb_i(wbm0_stb_o),    
+        .wbm0_ack_o(wbm0_ack_i),    
+        .wbm0_err_o(),    
+        .wbm0_rty_o(),    
+        .wbm0_cyc_i(wbm0_cyc_o),    
 
-  logic wbs2_cyc_o;
-  logic wbs2_stb_o;
-  logic wbs2_ack_i;
-  logic [31:0] wbs2_adr_o;
-  logic [31:0] wbs2_dat_o;
-  logic [31:0] wbs2_dat_i;
-  logic [3:0] wbs2_sel_o;
-  logic wbs2_we_o;
+        .wbm1_adr_i(wbm1_adr_o),    
+        .wbm1_dat_i(wbm1_dat_o),    
+        .wbm1_dat_o(wbm1_dat_i),    
+        .wbm1_we_i (wbm1_we_o ),    
+        .wbm1_sel_i(wbm1_sel_o),    
+        .wbm1_stb_i(wbm1_stb_o),    
+        .wbm1_ack_o(wbm1_ack_i),    
+        .wbm1_err_o(),    
+        .wbm1_rty_o(),    
+        .wbm1_cyc_i(wbm1_cyc_o),   
 
-  wb_mux_3 wb_mux (
-      .clk(sys_clk),
-      .rst(sys_rst),
+        .wbs_adr_o(wbs_adr_o),
+        .wbs_dat_i(wbs_dat_i),
+        .wbs_dat_o(wbs_dat_o),
+        .wbs_we_o (wbs_we_o ), 
+        .wbs_sel_o(wbs_sel_o),
+        .wbs_stb_o(wbs_stb_o),
+        .wbs_ack_i(wbs_ack_i),
+        .wbs_err_i('0),
+        .wbs_rty_i('0),
+        .wbs_cyc_o(wbs_cyc_o) 
 
-      // Master interface (to Arbiter)
-      .wbm_adr_i(wbs_adr_o),
-      .wbm_dat_i(wbs_dat_o),
-      .wbm_dat_o(wbs_dat_i),
-      .wbm_we_i (wbs_we_o),
-      .wbm_sel_i(wbs_sel_o),
-      .wbm_stb_i(wbs_stb_o),
-      .wbm_ack_o(wbs_ack_i),
-      .wbm_err_o(),
-      .wbm_rty_o(),
-      .wbm_cyc_i(wbs_cyc_o),
+    );
+    /* =========== Wishbone Arbiter end =========== */
 
-      // Slave interface 0 (to BaseRAM controller)
-      // Address range: 0x8000_0000 ~ 0x803F_FFFF
-      .wbs0_addr    (32'h8000_0000),
-      .wbs0_addr_msk(32'hFFC0_0000),
 
-      .wbs0_adr_o(wbs0_adr_o),
-      .wbs0_dat_i(wbs0_dat_i),
-      .wbs0_dat_o(wbs0_dat_o),
-      .wbs0_we_o (wbs0_we_o),
-      .wbs0_sel_o(wbs0_sel_o),
-      .wbs0_stb_o(wbs0_stb_o),
-      .wbs0_ack_i(wbs0_ack_i),
-      .wbs0_err_i('0),
-      .wbs0_rty_i('0),
-      .wbs0_cyc_o(wbs0_cyc_o),
+    /* =========== Wishbone MUX begin =========== */
+    // Wishbone MUX (Masters) => bus slaves
+    logic        wbs0_cyc_o;
+    logic        wbs0_stb_o;
+    logic        wbs0_ack_i;
+    logic [31:0] wbs0_adr_o;
+    logic [31:0] wbs0_dat_o;
+    logic [31:0] wbs0_dat_i;
+    logic [ 3:0] wbs0_sel_o;
+    logic        wbs0_we_o;
 
-      // Slave interface 1 (to ExtRAM controller)
-      // Address range: 0x8040_0000 ~ 0x807F_FFFF
-      .wbs1_addr    (32'h8040_0000),
-      .wbs1_addr_msk(32'hFFC0_0000),
+    logic        wbs1_cyc_o;
+    logic        wbs1_stb_o;
+    logic        wbs1_ack_i;
+    logic [31:0] wbs1_adr_o;
+    logic [31:0] wbs1_dat_o;
+    logic [31:0] wbs1_dat_i;
+    logic [ 3:0] wbs1_sel_o;
+    logic        wbs1_we_o;
 
-      .wbs1_adr_o(wbs1_adr_o),
-      .wbs1_dat_i(wbs1_dat_i),
-      .wbs1_dat_o(wbs1_dat_o),
-      .wbs1_we_o (wbs1_we_o),
-      .wbs1_sel_o(wbs1_sel_o),
-      .wbs1_stb_o(wbs1_stb_o),
-      .wbs1_ack_i(wbs1_ack_i),
-      .wbs1_err_i('0),
-      .wbs1_rty_i('0),
-      .wbs1_cyc_o(wbs1_cyc_o),
+    logic        wbs2_cyc_o;
+    logic        wbs2_stb_o;
+    logic        wbs2_ack_i;
+    logic [31:0] wbs2_adr_o;
+    logic [31:0] wbs2_dat_o;
+    logic [31:0] wbs2_dat_i;
+    logic [ 3:0] wbs2_sel_o;
+    logic        wbs2_we_o;
 
-      // Slave interface 2 (to UART controller)
-      // Address range: 0x1000_0000 ~ 0x1000_FFFF
-      .wbs2_addr    (32'h1000_0000),
-      .wbs2_addr_msk(32'hFFFF_0000),
+    logic        wbs3_cyc_o;
+    logic        wbs3_stb_o;
+    logic        wbs3_ack_i;
+    logic [31:0] wbs3_adr_o;
+    logic [31:0] wbs3_dat_o;
+    logic [31:0] wbs3_dat_i;
+    logic [ 3:0] wbs3_sel_o;
+    logic        wbs3_we_o;
 
-      .wbs2_adr_o(wbs2_adr_o),
-      .wbs2_dat_i(wbs2_dat_i),
-      .wbs2_dat_o(wbs2_dat_o),
-      .wbs2_we_o (wbs2_we_o),
-      .wbs2_sel_o(wbs2_sel_o),
-      .wbs2_stb_o(wbs2_stb_o),
-      .wbs2_ack_i(wbs2_ack_i),
-      .wbs2_err_i('0),
-      .wbs2_rty_i('0),
-      .wbs2_cyc_o(wbs2_cyc_o)
-  );
+    wb_mux_4 wb_mux (
+        .clk(sys_clk),
+        .rst(sys_rst),
 
-  /* =========== Wishbone MUX end =========== */
+        // Master interface (to Arbiter)
+        .wbm_adr_i(wbs_adr_o),
+        .wbm_dat_i(wbs_dat_o),
+        .wbm_dat_o(wbs_dat_i),
+        .wbm_we_i (wbs_we_o),
+        .wbm_sel_i(wbs_sel_o),
+        .wbm_stb_i(wbs_stb_o),
+        .wbm_ack_o(wbs_ack_i),
+        .wbm_err_o(),
+        .wbm_rty_o(),
+        .wbm_cyc_i(wbs_cyc_o),
 
-  /* =========== Wishbone Slaves begin =========== */
-  sram_controller #(
-      .SRAM_ADDR_WIDTH(20),
-      .SRAM_DATA_WIDTH(32)
-  ) sram_controller_base (
-      .clk_i(sys_clk),
-      .rst_i(sys_rst),
+        // Slave interface 0 (to BaseRAM controller)
+        // Address range: 0x8000_0000 ~ 0x803F_FFFF
+        .wbs0_addr    (32'h8000_0000),
+        .wbs0_addr_msk(32'hFFC0_0000),
 
-      // Wishbone slave (to MUX)
-      .wb_cyc_i(wbs0_cyc_o),
-      .wb_stb_i(wbs0_stb_o),
-      .wb_ack_o(wbs0_ack_i),
-      .wb_adr_i(wbs0_adr_o),
-      .wb_dat_i(wbs0_dat_o),
-      .wb_dat_o(wbs0_dat_i),
-      .wb_sel_i(wbs0_sel_o),
-      .wb_we_i (wbs0_we_o),
+        .wbs0_adr_o(wbs0_adr_o),
+        .wbs0_dat_i(wbs0_dat_i),
+        .wbs0_dat_o(wbs0_dat_o),
+        .wbs0_we_o (wbs0_we_o),
+        .wbs0_sel_o(wbs0_sel_o),
+        .wbs0_stb_o(wbs0_stb_o),
+        .wbs0_ack_i(wbs0_ack_i),
+        .wbs0_err_i('0),
+        .wbs0_rty_i('0),
+        .wbs0_cyc_o(wbs0_cyc_o),
 
-      // To SRAM chip
-      .sram_addr(base_ram_addr),
-      .sram_data(base_ram_data),
-      .sram_ce_n(base_ram_ce_n),
-      .sram_oe_n(base_ram_oe_n),
-      .sram_we_n(base_ram_we_n),
-      .sram_be_n(base_ram_be_n)
-  );
+        // Slave interface 1 (to ExtRAM controller)
+        // Address range: 0x8040_0000 ~ 0x807F_FFFF
+        .wbs1_addr    (32'h8040_0000),
+        .wbs1_addr_msk(32'hFFC0_0000),
 
-  sram_controller #(
-      .SRAM_ADDR_WIDTH(20),
-      .SRAM_DATA_WIDTH(32)
-  ) sram_controller_ext (
-      .clk_i(sys_clk),
-      .rst_i(sys_rst),
+        .wbs1_adr_o(wbs1_adr_o),
+        .wbs1_dat_i(wbs1_dat_i),
+        .wbs1_dat_o(wbs1_dat_o),
+        .wbs1_we_o (wbs1_we_o),
+        .wbs1_sel_o(wbs1_sel_o),
+        .wbs1_stb_o(wbs1_stb_o),
+        .wbs1_ack_i(wbs1_ack_i),
+        .wbs1_err_i('0),
+        .wbs1_rty_i('0),
+        .wbs1_cyc_o(wbs1_cyc_o),
 
-      // Wishbone slave (to MUX)
-      .wb_cyc_i(wbs1_cyc_o),
-      .wb_stb_i(wbs1_stb_o),
-      .wb_ack_o(wbs1_ack_i),
-      .wb_adr_i(wbs1_adr_o),
-      .wb_dat_i(wbs1_dat_o),
-      .wb_dat_o(wbs1_dat_i),
-      .wb_sel_i(wbs1_sel_o),
-      .wb_we_i (wbs1_we_o),
+        // Slave interface 2 (to UART controller)
+        // Address range: 0x1000_0000 ~ 0x1000_FFFF
+        .wbs2_addr    (32'h1000_0000),
+        .wbs2_addr_msk(32'hFFFF_0000),
 
-      // To SRAM chip
-      .sram_addr(ext_ram_addr),
-      .sram_data(ext_ram_data),
-      .sram_ce_n(ext_ram_ce_n),
-      .sram_oe_n(ext_ram_oe_n),
-      .sram_we_n(ext_ram_we_n),
-      .sram_be_n(ext_ram_be_n)
-  );
+        .wbs2_adr_o(wbs2_adr_o),
+        .wbs2_dat_i(wbs2_dat_i),
+        .wbs2_dat_o(wbs2_dat_o),
+        .wbs2_we_o (wbs2_we_o),
+        .wbs2_sel_o(wbs2_sel_o),
+        .wbs2_stb_o(wbs2_stb_o),
+        .wbs2_ack_i(wbs2_ack_i),
+        .wbs2_err_i('0),
+        .wbs2_rty_i('0),
+        .wbs2_cyc_o(wbs2_cyc_o),
 
-  // 串口控制器模�????????????????
-  // NOTE: 如果修改系统时钟频率，也�????????????????要修改此处的时钟频率参数
-  uart_controller #(
-      .CLK_FREQ(10_000_000),
-      .BAUD    (115200)
-  ) uart_controller (
-      .clk_i(sys_clk),
-      .rst_i(sys_rst),
+        // Slave interface 3 (to CLINT device)
+        // Address range: 0x0200_0000 ~ 0x0200_FFFF
+        .wbs3_addr    (32'h0200_0000),
+        .wbs3_addr_msk(32'hFFFF_0000),
 
-      .wb_cyc_i(wbs2_cyc_o),
-      .wb_stb_i(wbs2_stb_o),
-      .wb_ack_o(wbs2_ack_i),
-      .wb_adr_i(wbs2_adr_o),
-      .wb_dat_i(wbs2_dat_o),
-      .wb_dat_o(wbs2_dat_i),
-      .wb_sel_i(wbs2_sel_o),
-      .wb_we_i (wbs2_we_o),
+        .wbs3_adr_o(wbs3_adr_o),
+        .wbs3_dat_i(wbs3_dat_i),
+        .wbs3_dat_o(wbs3_dat_o),
+        .wbs3_we_o (wbs3_we_o),
+        .wbs3_sel_o(wbs3_sel_o),
+        .wbs3_stb_o(wbs3_stb_o),
+        .wbs3_ack_i(wbs3_ack_i),
+        .wbs3_err_i('0),
+        .wbs3_rty_i('0),
+        .wbs3_cyc_o(wbs3_cyc_o)
 
-      // to UART pins
-      .uart_txd_o(txd),
-      .uart_rxd_i(rxd)
-  );
+    );
 
-  /* =========== Wishbone Slaves end =========== */
+    /* =========== Wishbone MUX end =========== */
+
+    /* =========== Wishbone Slaves begin =========== */
+    sram_controller #(
+        .SRAM_ADDR_WIDTH(20),
+        .SRAM_DATA_WIDTH(32)
+    ) sram_controller_base (
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
+
+        // Wishbone slave (to MUX)
+        .wb_cyc_i(wbs0_cyc_o),
+        .wb_stb_i(wbs0_stb_o),
+        .wb_ack_o(wbs0_ack_i),
+        .wb_adr_i(wbs0_adr_o),
+        .wb_dat_i(wbs0_dat_o),
+        .wb_dat_o(wbs0_dat_i),
+        .wb_sel_i(wbs0_sel_o),
+        .wb_we_i (wbs0_we_o),
+
+        // To SRAM chip
+        .sram_addr(base_ram_addr),
+        .sram_data(base_ram_data),
+        .sram_ce_n(base_ram_ce_n),
+        .sram_oe_n(base_ram_oe_n),
+        .sram_we_n(base_ram_we_n),
+        .sram_be_n(base_ram_be_n)
+    );
+
+    sram_controller #(
+        .SRAM_ADDR_WIDTH(20),
+        .SRAM_DATA_WIDTH(32)
+    ) sram_controller_ext (
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
+
+        // Wishbone slave (to MUX)
+        .wb_cyc_i(wbs1_cyc_o),
+        .wb_stb_i(wbs1_stb_o),
+        .wb_ack_o(wbs1_ack_i),
+        .wb_adr_i(wbs1_adr_o),
+        .wb_dat_i(wbs1_dat_o),
+        .wb_dat_o(wbs1_dat_i),
+        .wb_sel_i(wbs1_sel_o),
+        .wb_we_i (wbs1_we_o),
+
+        // To SRAM chip
+        .sram_addr(ext_ram_addr),
+        .sram_data(ext_ram_data),
+        .sram_ce_n(ext_ram_ce_n),
+        .sram_oe_n(ext_ram_oe_n),
+        .sram_we_n(ext_ram_we_n),
+        .sram_be_n(ext_ram_be_n)
+    );
+
+    // 串口控制器模�???????????????????
+    // NOTE: 如果修改系统时钟频率，也�???????????????????要修改此处的时钟频率参数
+    uart_controller #(
+        .CLK_FREQ(10_000_000),
+        .BAUD    (115200)
+    ) uart_controller (
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
+
+        .wb_cyc_i(wbs2_cyc_o),
+        .wb_stb_i(wbs2_stb_o),
+        .wb_ack_o(wbs2_ack_i),
+        .wb_adr_i(wbs2_adr_o),
+        .wb_dat_i(wbs2_dat_o),
+        .wb_dat_o(wbs2_dat_i),
+        .wb_sel_i(wbs2_sel_o),
+        .wb_we_i (wbs2_we_o),
+
+        // to UART pins
+        .uart_txd_o(txd),
+        .uart_rxd_i(rxd)
+    );
+
+    // CLINT控制器模�???????????????????
+    clint_device clint_device (
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
+
+        .wb_cyc_i(wbs3_cyc_o),
+        .wb_stb_i(wbs3_stb_o),
+        .wb_ack_o(wbs3_ack_i),
+        .wb_adr_i(wbs3_adr_o),
+        .wb_dat_i(wbs3_dat_o),
+        .wb_dat_o(wbs3_dat_i),
+        .wb_sel_i(wbs3_sel_o),
+        .wb_we_i (wbs3_we_o),
+
+        // to CPU
+        .irq_o (core_time_irq)
+    );
+
+    /* =========== Wishbone Slaves end =========== */
 
     wire clk;
     wire rst;
 
     assign clk = sys_clk;
     assign rst = sys_rst;
-  /* =========== pipeline begin =========== */
+    /* =========== pipeline begin =========== */
 
     /* shared wires */
 
     // stage if
-    wire  [ 1:0] if_mode;
+    logic [ 1:0] if_mode;
     wire  [31:0] if_pc_plus4;
 
     wire         if_exception;
@@ -393,6 +439,7 @@ module lab6_top (
     wire  [31:0] id_inst;
     wire  [31:0] id_inst_pc;
     wire  [31:0] id_pc_plus4;
+    wire         id_nop;
 
     wire         id_prev_exception;
     wire  [ 1:0] id_prev_trap_mode;
@@ -426,6 +473,7 @@ module lab6_top (
     wire  [ 1:0] exe_mode;
     wire  [31:0] exe_inst_pc;
     wire  [31:0] exe_pc_plus4;
+    wire         exe_nop;
 
     wire  [ 1:0] exe_alu_a_mux;
     wire  [ 1:0] exe_alu_b_mux;
@@ -486,6 +534,7 @@ module lab6_top (
     wire  [ 1:0] mem_mode;
     wire  [31:0] mem_inst_pc;
     wire  [31:0] mem_pc_plus4;
+    wire         mem_nop;
 
     wire  [31:0] mem_data_rs2; // address
 
@@ -626,7 +675,13 @@ module lab6_top (
     assign _if_branch_take = exe_is_branch & exe_branch_take;
 
     // mode
-    assign if_mode = 2'b11; // TODO: always in machine mode
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            if_mode <= M_MODE;
+        end else if (wb_prev_exception) begin
+            if_mode <= wb_prev_trap_mode;
+        end
+    end
 
     // pc related
     adder4 pc_adder (
@@ -721,6 +776,8 @@ module lab6_top (
         .bubble_i(_if_bubble),
         .stall_i(_if_stall),
 
+        .nop_o(id_nop),
+
         .mode_i(if_mode),
         .mode_o(id_mode),
 
@@ -792,6 +849,8 @@ module lab6_top (
     wire [31:0] _id_sepc;
     wire [31:0] _id_sip;
     wire [31:0] _id_satp;
+    wire [31:0] _id_scause;
+    wire [31:0] _id_stval;
 
     wire [31:0] _id_mstatus;
     wire [31:0] _id_medeleg;
@@ -800,9 +859,15 @@ module lab6_top (
     wire [31:0] _id_mtvec;
     wire [31:0] _id_mepc;
     wire [31:0] _id_mip;
+    wire [31:0] _id_mcause;
+    wire [31:0] _id_mtval;
+
+    wire [31:0] _id_old_mstatus;
 
     wire [ 1:0] _id_mstatus_mpp;
     wire [ 1:0] _id_mstatus_spp;
+
+    
 
     assign _id_mstatus_spp[1] = 1'b0;
 
@@ -815,7 +880,7 @@ module lab6_top (
     
 
     assign id_next_exception = id_prev_exception ? id_prev_exception : id_exception;
-    assign id_next_trap_mode = id_prev_trap_mode ? id_prev_trap_mode : id_trap_mode;
+    assign id_next_trap_mode = id_prev_exception ? id_prev_trap_mode : id_trap_mode;
     assign id_next_mcause    = id_prev_exception ? id_prev_mcause    : id_mcause;
     assign id_next_mtval     = id_prev_exception ? id_prev_mtval     : id_mtval;
 
@@ -824,7 +889,8 @@ module lab6_top (
     
     wire [31:0] _id_temp_mcause;
 
-    assign id_exception = _id_int_exception | id_exp_exception;
+    // bubble is not waiting for interrupt
+    assign id_exception = ~id_nop & (_id_int_exception | id_exp_exception);
     assign id_trap_mode = _id_int_exception ? id_int_trap_mode : id_exp_trap_mode;
     assign id_mtval     =  id_exp_exception ? id_exp_mtval     : 32'b0;
     assign id_mcause    =  id_exception     ? _id_temp_mcause  : 32'b0;
@@ -875,7 +941,12 @@ module lab6_top (
 
     // id_exp_exception_code
     always_comb begin
-        if (_id_inst_decode_mret) begin
+        // exception occurs before actually execute mret/sret
+        if (_id_exp_normal_exception) begin
+            id_exp_exception        = _id_exp_normal_exception;
+            id_exp_exception_code   = _id_exp_normal_exception_code;
+            id_exp_trap_mode        = _id_exp_normal_trap_mode;
+        end else if (_id_inst_decode_mret) begin
             id_exp_exception        = 1'b1;
             id_exp_exception_code   = `EXP_MRET;
             id_exp_trap_mode        = _id_mstatus_mpp;
@@ -884,9 +955,9 @@ module lab6_top (
             id_exp_exception_code   = `EXP_SRET;
             id_exp_trap_mode        = _id_mstatus_spp;
         end else begin
-            id_exp_exception        = _id_exp_normal_exception;
-            id_exp_exception_code   = _id_exp_normal_exception_code;
-            id_exp_trap_mode        = _id_exp_normal_trap_mode;
+            id_exp_exception        = 1'b0;
+            id_exp_exception_code   = 31'b0;
+            id_exp_trap_mode        = 2'b0;
         end
     end
     // trap mode is useless
@@ -977,6 +1048,8 @@ module lab6_top (
         .exe_wdata_i     (exe_data_csr           ),
         .exe_we_i        (exe_csr_write_enable   ),
 
+        .core_time_irq_i (core_time_irq          ),
+
         .wb_exception_i  (wb_prev_exception      ),
 
         .mstatus_i       (wb_mstatus             ),
@@ -995,6 +1068,8 @@ module lab6_top (
         .sepc_o          (_id_sepc     ),
         .sip_o           (_id_sip      ),
         .satp_o          (_id_satp     ),
+        .scause_o        (_id_scause   ),
+        .stval_o         (_id_stval    ),
 
         .mstatus_o       (_id_mstatus  ),
         .medeleg_o       (_id_medeleg  ),
@@ -1002,7 +1077,11 @@ module lab6_top (
         .mie_o           (_id_mie      ),
         .mtvec_o         (_id_mtvec    ),
         .mepc_o          (_id_mepc     ),
-        .mip_o           (_id_mip      )
+        .mip_o           (_id_mip      ),
+        .mcause_o        (_id_mcause   ),
+        .mtval_o         (_id_mtval    ),
+
+        .old_mstatus_o   (_id_old_mstatus)
     );
 
     // stall controller
@@ -1057,6 +1136,8 @@ module lab6_top (
 
         .bubble_i               (_id_bubble),
         .stall_i                (id_stall),
+
+        .nop_o                  (exe_nop),
 
         .mode_i                 (id_mode),
 
@@ -1144,7 +1225,7 @@ module lab6_top (
     wire         _exe_bubble;
 
     assign exe_next_exception = exe_prev_exception ? exe_prev_exception : exe_exception;
-    assign exe_next_trap_mode = exe_prev_trap_mode ? exe_prev_trap_mode : exe_trap_mode;
+    assign exe_next_trap_mode = exe_prev_exception ? exe_prev_trap_mode : exe_trap_mode;
     assign exe_next_mcause    = exe_prev_exception ? exe_prev_mcause    : exe_mcause;
     assign exe_next_mtval     = exe_prev_exception ? exe_prev_mtval     : exe_mtval;
 
@@ -1250,6 +1331,7 @@ module lab6_top (
     
         .stall_i                (exe_stall),
         .bubble_i               (_exe_bubble),
+        .nop_o                  (mem_nop),
 
         .mode_i                 (exe_mode),
         .inst_pc_i              (exe_inst_pc),
@@ -1310,7 +1392,7 @@ module lab6_top (
     wire        _mem_bubble;
 
     assign mem_next_exception = mem_prev_exception ? mem_prev_exception : mem_exception;
-    assign mem_next_trap_mode = mem_prev_trap_mode ? mem_prev_trap_mode : mem_trap_mode;
+    assign mem_next_trap_mode = mem_prev_exception ? mem_prev_trap_mode : mem_trap_mode;
     assign mem_next_mcause    = mem_prev_exception ? mem_prev_mcause    : mem_mcause;
     assign mem_next_mtval     = mem_prev_exception ? mem_prev_mtval     : mem_mtval;
 
@@ -1465,7 +1547,7 @@ module lab6_top (
     // basically exception handling
 
     wire  [31:0] wb_old_mstatus;
-    assign wb_old_mstatus = _id_mstatus;
+    assign wb_old_mstatus = _id_old_mstatus; // don't use forwarded value
 
     logic [31:0] wb_new_mstatus;
 
@@ -1474,16 +1556,16 @@ module lab6_top (
     wire wb_old_mstatus_sie;
     wire wb_old_mstatus_mpie;
     wire wb_old_mstatus_spie;
-    wire wb_old_mstatus_mpp;
+    wire [1:0] wb_old_mstatus_mpp;
     wire wb_old_mstatus_spp;
 
-    wire wb_new_mstatus_mie;
-    wire wb_new_mstatus_sie;
-    wire wb_new_mstatus_mpie;
-    wire wb_new_mstatus_spie;
+    logic wb_new_mstatus_mie;
+    logic wb_new_mstatus_sie;
+    logic wb_new_mstatus_mpie;
+    logic wb_new_mstatus_spie;
 
-    wire wb_new_mstatus_mpp;
-    wire wb_new_mstatus_spp;
+    logic [1:0] wb_new_mstatus_mpp;
+    logic wb_new_mstatus_spp;
 
     exp_mstatus_decoder wb_emd(
         .mstatus            (wb_old_mstatus),
@@ -1495,22 +1577,11 @@ module lab6_top (
         .spp                (wb_old_mstatus_spp)
     );
 
-    always_comb begin
-        wb_new_mstatus = wb_old_mstatus;
-
-        wb_new_mstatus[`MSTATUS_MIE]  = wb_new_mstatus_mie;
-        wb_new_mstatus[`MSTATUS_SIE]  = wb_new_mstatus_sie;
-        wb_new_mstatus[`MSTATUS_MPIE] = wb_new_mstatus_mpie;
-        wb_new_mstatus[`MSTATUS_SPIE] = wb_new_mstatus_spie;
-        wb_new_mstatus[`MSTATUS_MPP]  = wb_new_mstatus_mpp;
-        wb_new_mstatus[`MSTATUS_SPP]  = wb_new_mstatus_spp;
-    end
-
     // set tvec as pc 
     always_comb begin
         // default
-
-        wb_mstatus  = wb_new_mstatus;
+        wb_tvec = 32'b0;
+        
 
         wb_mepc     = _id_mepc;
         wb_mtval    = _id_mtval;
@@ -1526,39 +1597,54 @@ module lab6_top (
         wb_new_mstatus_spie = wb_old_mstatus_spie;
         wb_new_mstatus_mpp  = wb_old_mstatus_mpp;
         wb_new_mstatus_spp  = wb_old_mstatus_spp;
+        if (wb_prev_exception) begin
+            if (wb_prev_mcause == `EXP_MRET) begin
+                wb_tvec = _id_mepc;
+                wb_new_mstatus_mie  = wb_old_mstatus_mpie;
+                wb_new_mstatus_mpie = 1'b1;
+                wb_new_mstatus_mpp  = 2'b00;
+            end else if (wb_prev_mcause == `EXP_SRET) begin
+                wb_tvec = _id_sepc;
+                wb_new_mstatus_sie  = wb_old_mstatus_spie;
+                wb_new_mstatus_spie = 1'b1;
+                wb_new_mstatus_spp  = 1'b0;
+            end else begin
+                if (wb_prev_trap_mode == M_MODE) begin
+                    wb_tvec = _id_mtvec;
+                    wb_new_mstatus_mie  = 1'b0;
+                    wb_new_mstatus_mpie = wb_old_mstatus_mie;
+                    wb_new_mstatus_mpp  = wb_mode;
 
-        if (wb_prev_exception == `EXP_MRET) begin
-            wb_tvec = _id_mepc;
-            wb_new_mstatus_mie  = wb_old_mstatus_mpie;
-            wb_new_mstatus_mpie = 1'b1;
-            wb_new_mstatus_mpp  = 2'b00;
-        end else if (wb_prev_exception == `EXP_SRET) begin
-            wb_tvec = _id_sepc;
-            wb_new_mstatus_sie  = wb_old_mstatus_spie;
-            wb_new_mstatus_spie = 1'b1;
-            wb_new_mstatus_spp  = 1'b0;
-        end else begin
-            if (wb_prev_trap_mode == M_MODE) begin
-                wb_tvec = _id_mtvec;
-                wb_new_mstatus_mie  = 1'b0;
-                wb_new_mstatus_mpie = wb_old_mstatus_mie;
-                wb_new_mstatus_mpp  = wb_mode;
+                    wb_mepc = wb_inst_pc;
+                    wb_mtval = wb_prev_mtval;
+                    wb_mcause = wb_prev_mcause;
+                end else if (wb_prev_trap_mode == S_MODE) begin
+                    wb_tvec = _id_stvec;
+                    wb_new_mstatus_sie  = 1'b0;
+                    wb_new_mstatus_spie = wb_old_mstatus_sie;
+                    wb_new_mstatus_spp  = wb_mode;
 
-                wb_mepc = wb_inst_pc;
-                wb_mtval = wb_prev_mtval;
-                wb_mcause = wb_prev_mcause;
-            end else if (wb_prev_trap_mode == S_MODE) begin
-                wb_tvec = _id_stvec;
-                wb_new_mstatus_sie  = 1'b0;
-                wb_new_mstatus_spie = wb_old_mstatus_sie;
-                wb_new_mstatus_spp  = wb_mode;
-
-                wb_sepc = wb_inst_pc;
-                wb_stval = wb_prev_mtval;
-                wb_scause = wb_prev_mcause;
+                    wb_sepc = wb_inst_pc;
+                    wb_stval = wb_prev_mtval;
+                    wb_scause = wb_prev_mcause;
+                end
             end
         end
     end
+
+    always_comb begin
+        wb_new_mstatus = wb_old_mstatus;
+
+        wb_new_mstatus[`MSTATUS_MIE]  = wb_new_mstatus_mie;
+        wb_new_mstatus[`MSTATUS_SIE]  = wb_new_mstatus_sie;
+        wb_new_mstatus[`MSTATUS_MPIE] = wb_new_mstatus_mpie;
+        wb_new_mstatus[`MSTATUS_SPIE] = wb_new_mstatus_spie;
+        wb_new_mstatus[`MSTATUS_MPP_H:`MSTATUS_MPP_L]  = wb_new_mstatus_mpp;
+        wb_new_mstatus[`MSTATUS_SPP]  = wb_new_mstatus_spp;
+    end
+
+
+    assign wb_mstatus  = wb_new_mstatus;
 
     /* =========== stage wb end =========== */
 
