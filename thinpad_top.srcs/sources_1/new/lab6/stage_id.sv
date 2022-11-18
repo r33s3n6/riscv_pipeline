@@ -386,7 +386,7 @@ module id_instruction_decoder (
                 invalid_inst_o = 1'b1; // TODO: implement fence and fence.i
             end
 
-        end else if (opcode == 7'b1110011) begin // env & csr
+        end else if (opcode == 7'b1110011) begin // system
             if  (funct3 == 3'b000) begin// ecall, ebreak, {m,s}ret, wfi
                 if (funct7 == 7'b0000000) begin // ecall, ebreak
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0) begin // ecall
@@ -397,7 +397,7 @@ module id_instruction_decoder (
                 end else if (funct7 == 7'b0001000) begin // sret
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010) begin
                         if (mode >= S_MODE) begin
-                            invalid_inst_o = 1'b1; // TODO: implement sret
+                            invalid_inst_o = 1'b0; 
                         end
                     end
                 end else if (funct7 == 7'b0011000) begin // mret
@@ -409,6 +409,12 @@ module id_instruction_decoder (
                 end else if (funct7 == 7'b0001000) begin // wfi
                     if (rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00101) begin
                         invalid_inst_o = 1'b1; // TODO: implement wfi
+                    end
+                end else if (funct7 == 7'b0001001) begin // sfence.vma
+                    if (rd == 5'b0) begin
+                        if (mode >= S_MODE) begin
+                            invalid_inst_o = 1'b0; // TODO: implement sfence.vma (we have no tlb)
+                        end
                     end
                 end
 
@@ -425,15 +431,15 @@ module id_instruction_decoder (
                         `CSR_TIME     : invalid_inst_o = 1'b0;
                         `CSR_CYCLEH   : invalid_inst_o = 1'b0;
                         `CSR_TIMEH    : invalid_inst_o = 1'b0;
-                        `CSR_SSTATUS  : invalid_inst_o = 1'b1;
-                        `CSR_SIE      : invalid_inst_o = 1'b1;
+                        `CSR_SSTATUS  : invalid_inst_o = 1'b0;
+                        `CSR_SIE      : invalid_inst_o = 1'b0;
                         `CSR_STVEC    : invalid_inst_o = 1'b0;
                         `CSR_SSCRATCH : invalid_inst_o = 1'b0;
                         `CSR_SEPC     : invalid_inst_o = 1'b0;
                         `CSR_SCAUSE   : invalid_inst_o = 1'b0;
                         `CSR_STVAL    : invalid_inst_o = 1'b0;
-                        `CSR_SIP      : invalid_inst_o = 1'b1;
-                        `CSR_SATP     : invalid_inst_o = 1'b1;
+                        `CSR_SIP      : invalid_inst_o = 1'b0;
+                        `CSR_SATP     : invalid_inst_o = 1'b1; // TODO: implement SATP
                         `CSR_MHARTID  : invalid_inst_o = 1'b0;
                         `CSR_MSTATUS  : invalid_inst_o = 1'b0;
                         `CSR_MEDELEG  : invalid_inst_o = 1'b0;
@@ -518,6 +524,7 @@ module id_csr_file(
 
     // irq
     input  wire         core_time_irq_i,
+    input  wire [63: 0] core_time_i,
 
     // exception
     input  wire         wb_exception_i,
@@ -553,8 +560,10 @@ module id_csr_file(
 
     output wire [31: 0] old_mstatus_o // no forwarding //TODO: remove this(no use)
 );
+
+
     // real registers
-    reg   [31:0] reg_file [0:31];
+    logic [31:0] reg_file [0:31];
     // forward
     logic [31:0] forwarded_reg [0:31];
 
@@ -581,23 +590,94 @@ module id_csr_file(
 
     assign old_mstatus_o = reg_file[`CSR_ID_MSTATUS];
 
+    logic [31:0] exe_forwarded_data;
+    logic [31:0] mem_forwarded_data;
+    logic [31:0] wb_forwarded_data;
+
+    csr_shadow_register_forward exe_csrf(
+        .addr_i(exe_waddr_i),
+        .data_i(exe_wdata_i),
+        .data_o(exe_forwarded_data)
+    );
+
+    csr_shadow_register_forward mem_csrf(
+        .addr_i(mem_waddr_i),
+        .data_i(mem_wdata_i),
+        .data_o(mem_forwarded_data)
+    );
+
+    csr_shadow_register_forward wb_csrf(
+        .addr_i(waddr_i),
+        .data_i(wdata_i),
+        .data_o(wb_forwarded_data)
+    );
+
     // forward registers
     always_comb begin
         forwarded_reg = reg_file;
+
         if (we_i) begin
-            forwarded_reg[waddr_i] = wdata_i;
+            forwarded_reg[waddr_i] = wb_forwarded_data;
         end
         if (mem_we_i) begin
-            forwarded_reg[mem_waddr_i] = mem_wdata_i;
+            forwarded_reg[mem_waddr_i] = mem_forwarded_data;
         end
         if (exe_we_i) begin
-            forwarded_reg[exe_waddr_i] = exe_wdata_i;
+            forwarded_reg[exe_waddr_i] = exe_forwarded_data;
+        end
+
+        forwarded_reg[`CSR_ID_CYCLE]   = forwarded_reg[`CSR_ID_MCYCLE];
+        forwarded_reg[`CSR_ID_CYCLEH]  = forwarded_reg[`CSR_ID_MCYCLEH];
+
+    end
+
+
+    // read from shadow register
+    always_comb begin
+        reg_file[`CSR_ID_SIP]     = `CSR_SHADOW_SIP_MASK     & reg_file[`CSR_ID_MIP];
+        reg_file[`CSR_ID_SIE]     = `CSR_SHADOW_SIE_MASK     & reg_file[`CSR_ID_MIE];
+        reg_file[`CSR_ID_SSTATUS] = `CSR_SHADOW_SSTATUS_MASK & reg_file[`CSR_ID_MSTATUS];
+    end
+
+    // read from shadow register (fake mmio)
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            reg_file[`CSR_ID_TIME    ] <= 32'b0;
+            reg_file[`CSR_ID_TIMEH   ] <= 32'b0;
+        end else begin
+            // time
+            reg_file[`CSR_ID_TIME]  <= core_time_i[31:0];
+            reg_file[`CSR_ID_TIMEH] <= core_time_i[63:32];
         end
     end
   
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            reg_file <= '{default: '0};
+            reg_file[`CSR_ID_STVEC   ] <= 32'b0;
+            reg_file[`CSR_ID_SSCRATCH] <= 32'b0;
+            reg_file[`CSR_ID_SEPC    ] <= 32'b0;
+            reg_file[`CSR_ID_SCAUSE  ] <= 32'b0;
+            reg_file[`CSR_ID_STVAL   ] <= 32'b0;
+            reg_file[`CSR_ID_SATP    ] <= 32'b0;
+
+            reg_file[`CSR_ID_MHARTID ] <= 32'b0;
+            reg_file[`CSR_ID_MSTATUS ] <= 32'b0;
+            reg_file[`CSR_ID_MEDELEG ] <= 32'b0;
+            reg_file[`CSR_ID_MIDELEG ] <= 32'b0;
+            reg_file[`CSR_ID_MIE     ] <= 32'b0;
+            reg_file[`CSR_ID_MTVEC   ] <= 32'b0;
+            reg_file[`CSR_ID_MSCRATCH] <= 32'b0;
+            reg_file[`CSR_ID_MEPC    ] <= 32'b0;
+            reg_file[`CSR_ID_MCAUSE  ] <= 32'b0;
+            reg_file[`CSR_ID_MTVAL   ] <= 32'b0;
+            reg_file[`CSR_ID_MIP     ] <= 32'b0;
+
+            reg_file[`CSR_ID_MCYCLE  ] <= 32'b0;
+            reg_file[`CSR_ID_MCYCLEH ] <= 32'b0;
+            reg_file[`CSR_ID_PMPCFG0 ] <= 32'b0;
+            reg_file[`CSR_ID_PMPADDR0] <= 32'b0;
+
+
         end else begin
             if (wb_exception_i) begin
                 reg_file[`CSR_ID_MSTATUS] <= mstatus_i;
@@ -612,12 +692,89 @@ module id_csr_file(
 
             end
             else if (we_i) begin
-                reg_file[waddr_i] <= wdata_i;
+                case (waddr_i)
+                    `CSR_ID_STVEC: begin
+                        reg_file[`CSR_ID_STVEC] <= wdata_i;
+                    end
+                    `CSR_ID_SSCRATCH: begin
+                        reg_file[`CSR_ID_SSCRATCH] <= wdata_i;
+                    end
+                    `CSR_ID_SEPC: begin
+                        reg_file[`CSR_ID_SEPC] <= wdata_i;
+                    end
+                    `CSR_ID_SCAUSE: begin
+                        reg_file[`CSR_ID_SCAUSE] <= wdata_i;
+                    end
+                    `CSR_ID_STVAL: begin
+                        reg_file[`CSR_ID_STVAL] <= wdata_i;
+                    end
+                    `CSR_ID_SATP: begin
+                        reg_file[`CSR_ID_SATP] <= wdata_i;
+                    end
+                    `CSR_ID_MSTATUS: begin
+                        reg_file[`CSR_ID_MSTATUS] <= wdata_i;
+                    end
+                    `CSR_ID_MEDELEG: begin
+                        reg_file[`CSR_ID_MEDELEG] <= wdata_i;
+                    end
+                    `CSR_ID_MIDELEG: begin
+                        reg_file[`CSR_ID_MIDELEG] <= wdata_i;
+                    end
+                    `CSR_ID_MIE: begin
+                        reg_file[`CSR_ID_MIE] <= wdata_i;
+                    end
+                    `CSR_ID_MTVEC: begin
+                        reg_file[`CSR_ID_MTVEC] <= wdata_i;
+                    end
+                    `CSR_ID_MSCRATCH: begin
+                        reg_file[`CSR_ID_MSCRATCH] <= wdata_i;
+                    end
+                    `CSR_ID_MEPC: begin
+                        reg_file[`CSR_ID_MEPC] <= wdata_i;
+                    end
+                    `CSR_ID_MCAUSE: begin
+                        reg_file[`CSR_ID_MCAUSE] <= wdata_i;
+                    end
+                    `CSR_ID_MTVAL: begin
+                        reg_file[`CSR_ID_MTVAL] <= wdata_i;
+                    end
+                    `CSR_ID_MIP: begin
+                        reg_file[`CSR_ID_MIP] <= (wdata_i & ~`CSR_MTIP_MASK) | core_time_irq_i;
+                    end
+                    `CSR_ID_MCYCLE: begin
+                        reg_file[`CSR_ID_MCYCLE] <= wdata_i;
+                    end
+                    `CSR_ID_MCYCLEH: begin
+                        reg_file[`CSR_ID_MCYCLEH] <= wdata_i;
+                    end
+                    `CSR_ID_PMPCFG0: begin
+                        reg_file[`CSR_ID_PMPCFG0] <= wdata_i;
+                    end
+                    `CSR_ID_PMPADDR0: begin
+                        reg_file[`CSR_ID_PMPADDR0] <= wdata_i;
+                    end
+                    // shadow registers write
+                    `CSR_ID_SIP: begin
+                        reg_file[`CSR_ID_MIP] <= ((reg_file[`CSR_ID_MIP] & ~`CSR_SHADOW_SIP_MASK) | (wdata_i & `CSR_SHADOW_SIP_MASK));
+                    end
+                    `CSR_ID_SIE: begin
+                        reg_file[`CSR_ID_MIE] <= ((reg_file[`CSR_ID_MIE] & ~`CSR_SHADOW_SIE_MASK) | (wdata_i & `CSR_SHADOW_SIE_MASK));
+                    end
+                    `CSR_ID_SSTATUS: begin
+                        reg_file[`CSR_ID_MSTATUS] <= ((reg_file[`CSR_ID_MSTATUS] & ~`CSR_SHADOW_SSTATUS_MASK) | (wdata_i & `CSR_SHADOW_SSTATUS_MASK));
+                    end
+                    default: begin
+                        // do nothing
+
+                    end
+                endcase
+                // reg_file[waddr_i] <= wdata_i;
             end 
 
-
-            reg_file[`CSR_ID_MIP][7] <= core_time_irq_i;
-
+            
+            if (!(we_i && waddr_i == `CSR_ID_MIP)) begin
+                reg_file[`CSR_ID_MIP][7] <= core_time_irq_i;
+            end
 
             
             // not writing mcycle, then we increment it
@@ -627,16 +784,8 @@ module id_csr_file(
                     reg_file[`CSR_ID_MCYCLEH] <= reg_file[`CSR_ID_MCYCLEH] + 1;
                 end
             end
-            // cycle
-            reg_file[`CSR_ID_CYCLE] <= reg_file[`CSR_ID_CYCLE] + 1;
-            if (reg_file[`CSR_ID_CYCLE] == 32'hffffffff) begin
-                reg_file[`CSR_ID_CYCLEH] <= reg_file[`CSR_ID_CYCLEH] + 1;
-            end
-            // time
-            reg_file[`CSR_ID_TIME] <= reg_file[`CSR_ID_TIME] + 1;
-            if (reg_file[`CSR_ID_TIME] == 32'hffffffff) begin
-                reg_file[`CSR_ID_TIMEH] <= reg_file[`CSR_ID_TIMEH] + 1;
-            end
+
+
         end
     end
 

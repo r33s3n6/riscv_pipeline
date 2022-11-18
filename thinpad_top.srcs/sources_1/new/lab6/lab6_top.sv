@@ -124,7 +124,8 @@ module lab6_top (
     assign uart_rdn = 1'b1;
     assign uart_wrn = 1'b1;
 
-    logic core_time_irq;
+    logic        core_time_irq;
+    logic [63:0] core_time;
 
     /* =========== Wishbone Arbiter begin =========== */
     logic        wbm0_cyc_o;
@@ -409,7 +410,8 @@ module lab6_top (
         .wb_we_i (wbs3_we_o),
 
         // to CPU
-        .irq_o (core_time_irq)
+        .irq_o (core_time_irq),
+        .time_o(core_time)
     );
 
     /* =========== Wishbone Slaves end =========== */
@@ -1048,6 +1050,7 @@ module lab6_top (
         .exe_we_i        (exe_csr_write_enable   ),
 
         .core_time_irq_i (core_time_irq          ),
+        .core_time_i     (core_time              ),
 
         .wb_exception_i  (wb_prev_exception      ),
 
