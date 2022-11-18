@@ -645,7 +645,7 @@ module lab6_top (
 
     exp_exception_encoder if_eee (
         .mode_i             (if_mode),
-        .medeleg_i          (_id_medeleg), // TODO: may cause some incorrect behavior
+        .medeleg_i          (_id_medeleg), 
 
         .inst_addr_bp       (1'b0), // not implemented
         .inst_access_fault  (1'b0), // not implemented: if stage
@@ -910,7 +910,6 @@ module lab6_top (
     wire [30:0] _id_exp_normal_exception_code;
     wire [ 1:0] _id_exp_normal_trap_mode;
     // exception controller
-    // TODO: mret, sret
     exp_exception_encoder id_eee (
         .mode_i             (id_mode),
         .medeleg_i          (_id_medeleg),
@@ -1405,7 +1404,7 @@ module lab6_top (
 
 
     // TODO: implement page fault and access fault, 
-    // TODO: mem exception doesn't disable write right now
+    // TODO: exception from mem doesn't disable write right now
     assign mem_load_page_fault = 1'b0;
     assign mem_sa_page_fault   = 1'b0;
     assign mem_load_access_fault = 1'b0;

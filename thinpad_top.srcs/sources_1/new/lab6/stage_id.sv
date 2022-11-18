@@ -496,7 +496,6 @@ module id_register_file(
 endmodule
 
 // TODO: mstatus/sstatus, mip/sip, mie/sie should be implemented as one register
-// TODO: mip.MTIP should be set when timer interrupt is pending
 module id_csr_file(
     input  wire         clk_i,
     input  wire         rst_i,

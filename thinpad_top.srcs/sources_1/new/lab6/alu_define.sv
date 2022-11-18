@@ -82,20 +82,20 @@
 `define CSR_PMPADDR0 12'h3b0
 
 // csr id(for register file)
-`define CSR_ID_CYCLE    5'd0 // read-only
-`define CSR_ID_TIME     5'd1 // read-only
-`define CSR_ID_CYCLEH   5'd2 // read-only
-`define CSR_ID_TIMEH    5'd3 // read-only
+`define CSR_ID_CYCLE    5'd0 // TODO: should not exist actually (shadow of mcycle)      // read only
+`define CSR_ID_TIME     5'd1 // TODO: should not exist actually (shadow of mmio-mtime)  // read only
+`define CSR_ID_CYCLEH   5'd2 // TODO: should not exist actually (shadow of mcycleh)     // read only
+`define CSR_ID_TIMEH    5'd3 // TODO: should not exist actually (shadow of mmio-mtimeH) // read only
 
-`define CSR_ID_SSTATUS  5'd4 // should not exist actually
-`define CSR_ID_SIE      5'd5 // should not exist actually
+`define CSR_ID_SSTATUS  5'd4 // TODO: should not exist actually (shadow of mstatus)
+`define CSR_ID_SIE      5'd5 // TODO: should not exist actually (shadow of mie)
 `define CSR_ID_STVEC    5'd6
 
 `define CSR_ID_SSCRATCH 5'd7
 `define CSR_ID_SEPC     5'd8
 `define CSR_ID_SCAUSE   5'd9
 `define CSR_ID_STVAL    5'd10
-`define CSR_ID_SIP      5'd11 // should not exist actually
+`define CSR_ID_SIP      5'd11 // TODO: should not exist actually (shadow of mip)
 
 `define CSR_ID_SATP     5'd12
 
