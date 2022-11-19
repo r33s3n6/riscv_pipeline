@@ -18,7 +18,8 @@ module clint_device #(
     input  wire                    wb_we_i,
 
     output wire                    irq_o,
-    output wire [            63:0] time_o
+    output wire [            63:0] time_o,
+    output wire [            63:0] timecmp_o
 );
 
     localparam MTIME_ADDR     = 16'hBFF8;
@@ -30,6 +31,7 @@ module clint_device #(
     logic [63:0] mtimecmp;
 
     assign time_o = mtime;
+    assign timecmp_o = mtimecmp;
 
     assign wb_ack_o = wb_stb_i & wb_cyc_i; // always ready
 

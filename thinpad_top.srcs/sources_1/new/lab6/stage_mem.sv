@@ -20,16 +20,16 @@ module mem_dm_controller(
     output wire           wb_we_o
 );
 
-assign wb_cyc_o = operation_i;
-assign wb_stb_o = operation_i;
+    assign wb_cyc_o = operation_i;
+    assign wb_stb_o = operation_i;
 
-assign wb_adr_o = addr_i;
-assign wb_dat_o = data_write_i << (addr_i[1:0] * 8); // not aligned
-assign wb_sel_o = byte_sel_i << addr_i[1:0]; // not aligned
-assign wb_we_o  = write_enable_i;
+    assign wb_adr_o = addr_i;
+    assign wb_dat_o = write_enable_i ? data_write_i << (addr_i[1:0] * 8) : 32'b0; // not aligned
+    assign wb_sel_o = byte_sel_i << addr_i[1:0]; // not aligned
+    assign wb_we_o  = write_enable_i;
 
-assign data_read_o = wb_dat_i >> (addr_i[1:0] * 8); // not aligned
-assign done_o      = wb_ack_i;
+    assign data_read_o = wb_dat_i >> (addr_i[1:0] * 8); // not aligned
+    assign done_o      = wb_ack_i;
 
 endmodule
 
@@ -43,27 +43,27 @@ module mem_imm_gen(
 
 
 always_comb begin
-  if (unsigned_ext_i) begin
-    if (byte_sel_i[3]) begin
-      imm_o = imm_i;
-    end else if (byte_sel_i[1]) begin
-      imm_o = {16'b0, imm_i[15:0]};
-    end else if (byte_sel_i[0]) begin
-      imm_o = {24'b0, imm_i[7:0]};
+    if (unsigned_ext_i) begin
+        if (byte_sel_i[3]) begin
+            imm_o = imm_i;
+        end else if (byte_sel_i[1]) begin
+            imm_o = {16'b0, imm_i[15:0]};
+        end else if (byte_sel_i[0]) begin
+            imm_o = {24'b0, imm_i[7:0]};
+        end else begin
+            imm_o = {32'b0};
+        end
     end else begin
-      imm_o = {32'b0};
+        if (byte_sel_i[3]) begin
+            imm_o = imm_i;
+        end else if (byte_sel_i[1]) begin
+            imm_o = {{16{imm_i[15]}}, imm_i[15:0]};
+        end else if (byte_sel_i[0]) begin
+            imm_o = {{24{imm_i[7]}}, imm_i[7:0]};
+        end else begin
+            imm_o = {32'b0};
+        end
     end
-  end else begin
-    if (byte_sel_i[3]) begin
-      imm_o = imm_i;
-    end else if (byte_sel_i[1]) begin
-      imm_o = {{16{imm_i[15]}}, imm_i[15:0]};
-    end else if (byte_sel_i[0]) begin
-      imm_o = {{24{imm_i[7]}}, imm_i[7:0]};
-    end else begin
-      imm_o = {32'b0};
-    end
-  end
 end
 
 

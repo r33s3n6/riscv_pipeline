@@ -8,51 +8,51 @@ module lab6_top (
     input wire clk_50M,     // 50MHz 时钟输入
     input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
 
-    input wire push_btn,  // BTN5 按钮�????????????????????关，带消抖电路，按下时为 1
-    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�???????????????????? 1
+    input wire push_btn,  // BTN5 按钮�??????????????????????关，带消抖电路，按下时为 1
+    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时�?????????????????????? 1
 
     input  wire [ 3:0] touch_btn,  // BTN1~BTN4，按钮开关，按下时为 1
-    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�???????????????????? 1
-    output wire [15:0] leds,       // 16 �???????????????????? LED，输出时 1 点亮
+    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时�?????????????????????? 1
+    output wire [15:0] leds,       // 16 �?????????????????????? LED，输出时 1 点亮
     output wire [ 7:0] dpy0,       // 数码管低位信号，包括小数点，输出 1 点亮
     output wire [ 7:0] dpy1,       // 数码管高位信号，包括小数点，输出 1 点亮
 
-    // CPLD 串口控制器信�????????????????????
-    output wire uart_rdn,        // 读串口信号，低有�????????????????????
-    output wire uart_wrn,        // 写串口信号，低有�????????????????????
-    input  wire uart_dataready,  // 串口数据准备�????????????????????
-    input  wire uart_tbre,       // 发�?�数据标�????????????????????
-    input  wire uart_tsre,       // 数据发�?�完毕标�????????????????????
+    // CPLD 串口控制器信�??????????????????????
+    output wire uart_rdn,        // 读串口信号，低有�??????????????????????
+    output wire uart_wrn,        // 写串口信号，低有�??????????????????????
+    input  wire uart_dataready,  // 串口数据准备�??????????????????????
+    input  wire uart_tbre,       // 发�?�数据标�??????????????????????
+    input  wire uart_tsre,       // 数据发�?�完毕标�??????????????????????
 
     // BaseRAM 信号
-    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�????????????????????
+    inout  wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共�??????????????????????
     output wire [19:0] base_ram_addr,  // BaseRAM 地址
-    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????????? 0
-    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�????????????????????
-    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�????????????????????
-    output wire base_ram_we_n,  // BaseRAM 写使能，低有�????????????????????
+    output wire [ 3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持�?????????????????????? 0
+    output wire base_ram_ce_n,  // BaseRAM 片�?�，低有�??????????????????????
+    output wire base_ram_oe_n,  // BaseRAM 读使能，低有�??????????????????????
+    output wire base_ram_we_n,  // BaseRAM 写使能，低有�??????????????????????
 
     // ExtRAM 信号
-    inout wire [31:0] ext_ram_data,  // ExtRAM 数据
+    inout  wire [31:0] ext_ram_data,  // ExtRAM 数据
     output wire [19:0] ext_ram_addr,  // ExtRAM 地址
-    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�???????????????????? 0
-    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�????????????????????
-    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�????????????????????
-    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�????????????????????
+    output wire [ 3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持�?????????????????????? 0
+    output wire ext_ram_ce_n,  // ExtRAM 片�?�，低有�??????????????????????
+    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有�??????????????????????
+    output wire ext_ram_we_n,  // ExtRAM 写使能，低有�??????????????????????
 
     // 直连串口信号
     output wire txd,  // 直连串口发�?�端
-    input  wire rxd,  // 直连串口接收�????????????????????
+    input  wire rxd,  // 直连串口接收�??????????????????????
 
     // Flash 存储器信号，参�?? JS28F640 芯片手册
-    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�????????????????????16bit 模式无意�????????????????????
+    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效�??????????????????????16bit 模式无意�??????????????????????
     inout wire [15:0] flash_d,  // Flash 数据
     output wire flash_rp_n,  // Flash 复位信号，低有效
-    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�????????????????????
-    output wire flash_ce_n,  // Flash 片�?�信号，低有�????????????????????
-    output wire flash_oe_n,  // Flash 读使能信号，低有�????????????????????
-    output wire flash_we_n,  // Flash 写使能信号，低有�????????????????????
-    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �???????????????????? 16 位模式时请设�???????????????????? 1
+    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧�??????????????????????
+    output wire flash_ce_n,  // Flash 片�?�信号，低有�??????????????????????
+    output wire flash_oe_n,  // Flash 读使能信号，低有�??????????????????????
+    output wire flash_we_n,  // Flash 写使能信号，低有�??????????????????????
+    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash �?????????????????????? 16 位模式时请设�?????????????????????? 1
 
     // USB 控制器信号，参�?? SL811 芯片手册
     output wire sl811_a0,
@@ -75,28 +75,28 @@ module lab6_top (
     input  wire dm9k_int,
 
     // 图像输出信号
-    output wire [2:0] video_red,    // 红色像素�????????????????????3 �????????????????????
-    output wire [2:0] video_green,  // 绿色像素�????????????????????3 �????????????????????
-    output wire [1:0] video_blue,   // 蓝色像素�????????????????????2 �????????????????????
-    output wire       video_hsync,  // 行同步（水平同步）信�????????????????????
-    output wire       video_vsync,  // 场同步（垂直同步）信�????????????????????
+    output wire [2:0] video_red,    // 红色像素�??????????????????????3 �??????????????????????
+    output wire [2:0] video_green,  // 绿色像素�??????????????????????3 �??????????????????????
+    output wire [1:0] video_blue,   // 蓝色像素�??????????????????????2 �??????????????????????
+    output wire       video_hsync,  // 行同步（水平同步）信�??????????????????????
+    output wire       video_vsync,  // 场同步（垂直同步）信�??????????????????????
     output wire       video_clk,    // 像素时钟输出
-    output wire       video_de      // 行数据有效信号，用于区分消隐�????????????????????
+    output wire       video_de      // 行数据有效信号，用于区分消隐�??????????????????????
 );
 
     /* =========== Demo code begin =========== */
 
     // PLL 分频示例
-    logic locked, clk_10M, clk_60M;
+    logic locked, clk_10M, clk_70M;
     pll_example clock_gen (
         // Clock in ports
         .clk_in1    (clk_50M),  // 外部时钟输入
         // Clock out ports
-        .clk_out1   (clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�????????????????????
-        .clk_out2   (clk_60M),  // 时钟输出 2，频率在 IP 配置界面中设�????????????????????
+        .clk_out1   (clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设�??????????????????????
+        .clk_out2   (clk_70M),  // 时钟输出 2，频率在 IP 配置界面中设�??????????????????????
         // Status and control signals
         .reset      (reset_btn),  // PLL 复位输入
-        .locked     (locked)  // PLL 锁定指示输出�????????????????????"1"表示时钟稳定�????????????????????
+        .locked     (locked)  // PLL 锁定指示输出�??????????????????????"1"表示时钟稳定�??????????????????????
                          // 后级电路复位信号应当由它生成（见下）
     );
 
@@ -106,10 +106,10 @@ module lab6_top (
         else reset_of_clk10M <= 1'b0;
     end
 
-    logic reset_of_clk60M;
-    always_ff @(posedge clk_60M or negedge locked) begin
-        if (~locked) reset_of_clk60M <= 1'b1;
-        else reset_of_clk60M <= 1'b0;
+    logic reset_of_clk70M;
+    always_ff @(posedge clk_70M or negedge locked) begin
+        if (~locked) reset_of_clk70M <= 1'b1;
+        else reset_of_clk70M <= 1'b0;
     end
 
     /* =========== Demo code end =========== */
@@ -117,20 +117,22 @@ module lab6_top (
     logic sys_clk;
     logic sys_rst;
 
-    assign sys_clk = clk_10M;
-    assign sys_rst = reset_of_clk10M;
+    assign sys_clk = clk_70M;
+    assign sys_rst = reset_of_clk70M;
 
     // 本实验不使用 CPLD 串口，禁用防止�?�线冲突
     assign uart_rdn = 1'b1;
     assign uart_wrn = 1'b1;
 
     // shared with bus
-    logic        core_time_irq;
-    logic [63:0] core_time;
+    (* MARK_DEBUG = "TRUE" *) logic        core_time_irq;
+    (* MARK_DEBUG = "TRUE" *) logic [63:0] core_time;
+    (* MARK_DEBUG = "TRUE" *) logic [63:0] core_timecmp;
 
-    logic [ 1:0] core_mode;
-    logic        core_page_fault;
-    logic [31:0] core_satp;
+    (* MARK_DEBUG = "TRUE" *) logic [ 1:0] core_mode;
+    (* MARK_DEBUG = "TRUE" *) logic        core_page_fault;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] core_satp;
+    (* MARK_DEBUG = "TRUE" *) logic        core_sum;
 
     /* =========== Wishbone Arbiter begin =========== */
     logic        wbm0_cyc_o;
@@ -156,7 +158,7 @@ module lab6_top (
     logic        im_wbs_cyc_o;
     logic        im_wbs_stb_o;
     logic        im_wbs_ack_i;
-    logic [31:0] im_wbs_adr_o;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] im_wbs_adr_o;
     logic [31:0] im_wbs_dat_o;
     logic [31:0] im_wbs_dat_i;
     logic [ 3:0] im_wbs_sel_o;
@@ -205,20 +207,25 @@ module lab6_top (
 
 
     // shared bus
-    logic        wbs_cyc_o;
-    logic        wbs_stb_o;
-    logic        wbs_ack_i;
-    logic [31:0] wbs_adr_o;
-    logic [31:0] wbs_dat_o;
-    logic [31:0] wbs_dat_i;
-    logic [ 3:0] wbs_sel_o;
-    logic        wbs_we_o;
+    (* MARK_DEBUG = "TRUE" *) logic        wbs_cyc_o;
+    (* MARK_DEBUG = "TRUE" *) logic        wbs_stb_o;
+    (* MARK_DEBUG = "TRUE" *) logic        wbs_ack_i;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs_adr_o;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs_dat_o;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs_dat_i;
+    (* MARK_DEBUG = "TRUE" *) logic [ 3:0] wbs_sel_o;
+    (* MARK_DEBUG = "TRUE" *) logic        wbs_we_o;
+
+    (* MARK_DEBUG = "TRUE" *) logic [ 1:0] debug_mmu_state;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] debug_mmu_pf_pte;
+    (* MARK_DEBUG = "TRUE" *) logic [ 3:0] debug_mmu_pf_cause;
 
     mmu_sv32 mmu_sv32_inst(
         .clk_i        (clk),
         .rst_i        (rst),
 
         .satp_i       (core_satp),
+        .sum_i        (core_sum),
         .mode_i       (core_mode),
         .page_fault_o (core_page_fault),
 
@@ -238,7 +245,11 @@ module lab6_top (
         .wbm_dat_o    (wbs_dat_o),
         .wbm_dat_i    (wbs_dat_i),
         .wbm_sel_o    (wbs_sel_o),
-        .wbm_we_o     (wbs_we_o )
+        .wbm_we_o     (wbs_we_o ),
+
+        .debug_mmu_state_o    (debug_mmu_state),
+        .debug_mmu_pf_pte_o   (debug_mmu_pf_pte),
+        .debug_mmu_pf_cause_o (debug_mmu_pf_cause)
     );
 
 
@@ -418,10 +429,10 @@ module lab6_top (
         .sram_be_n(ext_ram_be_n)
     );
 
-    // 串口控制器模�????????????????????
-    // NOTE: 如果修改系统时钟频率，也�????????????????????要修改此处的时钟频率参数
+    // 串口控制器模�??????????????????????
+    // NOTE: 如果修改系统时钟频率，也�??????????????????????要修改此处的时钟频率参数
     uart_controller #(
-        .CLK_FREQ(10_000_000),
+        .CLK_FREQ(20_000_000),
         .BAUD    (115200)
     ) uart_controller (
         .clk_i(sys_clk),
@@ -441,23 +452,24 @@ module lab6_top (
         .uart_rxd_i(rxd)
     );
 
-    // CLINT控制器模�????????????????????
+    // CLINT控制器模�??????????????????????
     clint_device clint_device (
-        .clk_i(sys_clk),
-        .rst_i(sys_rst),
+        .clk_i     (sys_clk),
+        .rst_i     (sys_rst),
 
-        .wb_cyc_i(wbs3_cyc_o),
-        .wb_stb_i(wbs3_stb_o),
-        .wb_ack_o(wbs3_ack_i),
-        .wb_adr_i(wbs3_adr_o),
-        .wb_dat_i(wbs3_dat_o),
-        .wb_dat_o(wbs3_dat_i),
-        .wb_sel_i(wbs3_sel_o),
-        .wb_we_i (wbs3_we_o),
+        .wb_cyc_i  (wbs3_cyc_o),
+        .wb_stb_i  (wbs3_stb_o),
+        .wb_ack_o  (wbs3_ack_i),
+        .wb_adr_i  (wbs3_adr_o),
+        .wb_dat_i  (wbs3_dat_o),
+        .wb_dat_o  (wbs3_dat_i),
+        .wb_sel_i  (wbs3_sel_o),
+        .wb_we_i   (wbs3_we_o),
 
         // to CPU
-        .irq_o (core_time_irq),
-        .time_o(core_time)
+        .irq_o     (core_time_irq),
+        .time_o    (core_time),
+        .timecmp_o (core_timecmp)
     );
 
     /* =========== Wishbone Slaves end =========== */
@@ -482,10 +494,12 @@ module lab6_top (
 
     wire  [30:0] if_exp_exception_code;
 
+
+
     // if-id-registers
     wire  [ 1:0] id_mode;
     wire  [31:0] id_inst;
-    wire  [31:0] id_inst_pc;
+    (* MARK_DEBUG = "TRUE" *) wire  [31:0] id_inst_pc;
     wire  [31:0] id_pc_plus4;
     wire         id_nop;
 
@@ -518,6 +532,7 @@ module lab6_top (
     logic [31:0] id_exp_mtval;
 
     wire  [31:0] id_satp;
+    wire         id_mstatus_sum;
 
     // id-exe-registers
     wire  [ 1:0] exe_mode;
@@ -551,6 +566,7 @@ module lab6_top (
     wire  [ 4:0] exe_id_csr;
     wire  [31:0] exe_data_csr;
     wire         exe_csr_write_enable;
+    wire  [31:0] exe_csr_mask;
 
 
     wire         exe_prev_exception;
@@ -663,20 +679,20 @@ module lab6_top (
     logic [31:0] wb_scause;
 
     // global wires
-    assign core_mode = if_mode;
-    assign core_satp = id_satp;
-
+    // assign core_mode = if_mode;
+    // assign core_satp = if_satp_buffer;
+    // assign core_sum  = id_mstatus_sum; 
     /* =========== stage if begin =========== */
 
     // internal wires
 
     
     wire  [31:0] _if_next_pc;
-    wire  [31:0] _if_inst_pc;
+    (* MARK_DEBUG = "TRUE" *) wire  [31:0] _if_inst_pc;
     wire         _if_pc_stall;
     wire         _if_pc_valid;
     wire  [31:0] _if_inst;
-    wire  [31:0] _if_inst_addr;
+    (* MARK_DEBUG = "TRUE" *) wire  [31:0] _if_inst_addr;
     wire         _if_bubble;
     wire         _if_stall;
 
@@ -687,7 +703,9 @@ module lab6_top (
     wire         _if_pagefault;
 
     assign _if_pc_misaligned = (_if_inst_pc[1:0] != 2'b00);
-    assign _if_do_req = _if_pc_valid & ~mem_mem_operation;
+
+    // TODO: this may cause bug (unstable signal)
+    assign _if_do_req = _if_pc_valid & ~mem_mem_operation & ~_if_pc_misaligned;
 
     assign _if_pagefault = _if_do_req  // we are doing a request
                         & (_if_inst_addr == _if_inst_pc) // request is done
@@ -789,6 +807,7 @@ module lab6_top (
         .pc_valid_o             (_if_pc_valid)
     );
 
+    // TODO: buffer logic may should be moved to other place
     // instruction memory controller
     if_im_controller if_im_controller_inst (
         .clk_i          (clk),
@@ -796,6 +815,9 @@ module lab6_top (
 
         .do_new_req_i   (_if_do_req),
         .addr_i         (_if_inst_pc),
+        .satp_i         (id_satp),
+        .mode_i         (if_mode),
+        .sum_i          (id_mstatus_sum),
 
         .wb_ack_i       (wbm1_ack_i),
         .wb_dat_i       (wbm1_dat_i),
@@ -806,8 +828,13 @@ module lab6_top (
         .wb_sel_o       (wbm1_sel_o),
         .wb_we_o        (wbm1_we_o ),
 
+        .satp_o         (core_satp),  // Note: if_im_controller control the core_satp, it updates after request is done
+        .mode_o         (core_mode),  // Note: if_im_controller control the core_mode, it updates after request is done
+        .sum_o          (core_sum),
+
         .data_addr_o    (_if_inst_addr),
         .data_o         (_if_inst)
+
     );
 
     // stall controller
@@ -904,21 +931,20 @@ module lab6_top (
 
 
     // important csr
-    wire [31:0] _id_sstatus;
-    wire [31:0] _id_sie;
+
     wire [31:0] _id_stvec;
     wire [31:0] _id_sepc;
-    wire [31:0] _id_sip;
+
     wire [31:0] _id_scause;
     wire [31:0] _id_stval;
 
-    wire [31:0] _id_mstatus;
-    wire [31:0] _id_medeleg;
-    wire [31:0] _id_mideleg;
-    wire [31:0] _id_mie;
+    (* MARK_DEBUG = "TRUE" *) wire [31:0] _id_mstatus;
+    (* MARK_DEBUG = "TRUE" *) wire [31:0] _id_medeleg;
+    (* MARK_DEBUG = "TRUE" *) wire [31:0] _id_mideleg;
+    (* MARK_DEBUG = "TRUE" *) wire [31:0] _id_mie;
     wire [31:0] _id_mtvec;
     wire [31:0] _id_mepc;
-    wire [31:0] _id_mip;
+    (* MARK_DEBUG = "TRUE" *) wire [31:0] _id_mip;
     wire [31:0] _id_mcause;
     wire [31:0] _id_mtval;
 
@@ -927,6 +953,8 @@ module lab6_top (
     wire [ 1:0] _id_mstatus_mpp;
     wire [ 1:0] _id_mstatus_spp;
 
+    wire [31:0] _id_csr_mask;
+
     
 
     assign _id_mstatus_spp[1] = 1'b0;
@@ -934,7 +962,8 @@ module lab6_top (
     exp_mstatus_decoder id_emd(
         .mstatus(_id_mstatus),
         .mpp(_id_mstatus_mpp),
-        .spp(_id_mstatus_spp[0])
+        .spp(_id_mstatus_spp[0]),
+        .sum(id_mstatus_sum)
 
     );
     
@@ -1056,6 +1085,7 @@ module lab6_top (
 
         .id_csr_o           (_id_id_csr),
         .csr_write_enable_o (_id_csr_write_enable),
+        .csr_mask_o         (_id_csr_mask),
 
         .imm_o              (_id_imm),
         .uimm_o             (_id_uimm),
@@ -1104,7 +1134,7 @@ module lab6_top (
         .mem_we_i        (mem_csr_write_enable   ),
 
         .exe_waddr_i     (exe_id_csr             ),
-        .exe_wdata_i     (exe_data_csr           ),
+        .exe_wdata_i     (exe_alu_y              ),
         .exe_we_i        (exe_csr_write_enable   ),
 
         .core_time_irq_i (core_time_irq          ),
@@ -1122,11 +1152,11 @@ module lab6_top (
         .stval_i         (wb_stval               ),
         .scause_i        (wb_scause              ),
 
-        .sstatus_o       (_id_sstatus  ),
-        .sie_o           (_id_sie      ),
+        //.sstatus_o       (_id_sstatus  ),
+        //.sie_o           (_id_sie      ),
         .stvec_o         (_id_stvec    ),
         .sepc_o          (_id_sepc     ),
-        .sip_o           (_id_sip      ),
+        //.sip_o           (_id_sip      ),
         .satp_o          (id_satp      ),
         .scause_o        (_id_scause   ),
         .stval_o         (_id_stval    ),
@@ -1173,7 +1203,7 @@ module lab6_top (
         .exe_reg_rd_i           (exe_reg_rd),
         .exe_rf_write_enable_i  (exe_rf_write_enable),
         .exe_alu_y_i            (exe_alu_y),        // (arithmetic instruction)
-        .exe_data_csr_i         (exe_data_csr),     // (csr instruction)
+        .exe_data_csr_i         (_exe_masked_data_csr),     // (csr instruction)
         .exe_pc_plus4_i         (exe_pc_plus4),     // (jal/jalr instruction)
         .exe_data_rd_mux_i      (exe_data_rd_mux), 
 
@@ -1212,6 +1242,7 @@ module lab6_top (
         .id_csr_i               (_id_id_csr),
         .data_csr_i             (_id_data_csr),
         .csr_write_enable_i     (_id_csr_write_enable),
+        .csr_mask_i             (_id_csr_mask),
 
         .is_branch_i            (id_is_branch),
         .inst_pc_i              (id_inst_pc),
@@ -1241,6 +1272,7 @@ module lab6_top (
         .id_csr_o               (exe_id_csr),
         .data_csr_o             (exe_data_csr),
         .csr_write_enable_o     (exe_csr_write_enable),
+        .csr_mask_o             (exe_csr_mask),
 
         .is_branch_o            (exe_is_branch),
         .inst_pc_o              (exe_inst_pc),
@@ -1283,6 +1315,11 @@ module lab6_top (
     logic [31:0] _exe_alu_a;
     logic [31:0] _exe_alu_b;
     wire         _exe_bubble;
+
+    wire  [31:0] _exe_masked_data_csr;
+
+    assign _exe_masked_data_csr = exe_data_csr & exe_csr_mask;
+
 
     assign exe_next_exception = exe_prev_exception ? exe_prev_exception : exe_exception;
     assign exe_next_trap_mode = exe_prev_exception ? exe_prev_trap_mode : exe_trap_mode;
@@ -1358,17 +1395,18 @@ module lab6_top (
     end
     
     exe_alu exe_alu_inst (
-        .op(exe_alu_op),
-        .a(_exe_alu_a),
-        .b(_exe_alu_b),
-        .y(exe_alu_y)
+        .op  (exe_alu_op),
+        .mask(exe_csr_mask),
+        .a   (_exe_alu_a),
+        .b   (_exe_alu_b),
+        .y   (exe_alu_y)
     );
     
     exe_comparator exe_comparator_inst (
-        .op (exe_cmp_op),
-        .a  (exe_data_rs1),
-        .b  (exe_data_rs2),
-        .y  (exe_branch_take)
+        .op  (exe_cmp_op),
+        .a   (exe_data_rs1),
+        .b   (exe_data_rs2),
+        .y   (exe_branch_take)
     );
     
     exe_stall_controller exe_stall_controller_inst (
@@ -1406,7 +1444,7 @@ module lab6_top (
         .data_rs2_i             (exe_data_rs2),
         .reg_rd_i               (exe_reg_rd),
         .id_csr_i               (exe_id_csr),
-        .data_csr_i             (exe_data_csr),
+        .data_csr_i             (_exe_masked_data_csr), // just allow masked bits
         .csr_write_enable_i     (exe_csr_write_enable),
 
         .mode_o                 (mem_mode),
@@ -1708,6 +1746,42 @@ module lab6_top (
     assign wb_mstatus  = wb_new_mstatus;
 
     /* =========== stage wb end =========== */
+
+    ila_0 ila(
+        .clk(clk),
+        .probe0(id_inst_pc),
+        .probe1(_id_mstatus),
+        .probe2(core_mode),
+        .probe3(core_time),
+        .probe4(core_timecmp),
+        .probe5(core_time_irq),
+
+        .probe6(_id_medeleg),
+        .probe7(_id_mideleg),
+        .probe8(_id_mie),
+        .probe9(_id_mip),
+
+        .probe10(wbs_cyc_o),
+        .probe11(wbs_stb_o),
+        .probe12(wbs_ack_i),
+        .probe13(wbs_adr_o),
+        .probe14(wbs_dat_o),
+        .probe15(wbs_dat_i),
+        .probe16(wbs_sel_o),
+        .probe17(wbs_we_o ),
+
+        .probe18(im_wbs_adr_o),
+        .probe19(debug_mmu_state),
+        .probe20(_if_inst_addr),
+        .probe21(_if_inst_pc),
+        .probe22(core_satp),
+
+        .probe23(core_page_fault),
+        .probe24(debug_mmu_pf_pte),
+        .probe25(debug_mmu_pf_cause)
+
+
+    );
 
 
 endmodule

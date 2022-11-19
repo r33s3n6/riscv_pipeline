@@ -120,9 +120,13 @@ module if_im_controller #(
     // control signals
     input wire do_new_req_i,
     input wire [ADDR_WIDTH-1:0] addr_i,
+    input wire [DATA_WIDTH-1:0] satp_i,
+    input wire [           1:0] mode_i,
+    input wire                  sum_i,
 
     output wire [ADDR_WIDTH-1:0] data_addr_o,
     output wire [DATA_WIDTH-1:0] data_o,
+
 
 
     // wb signals
@@ -133,12 +137,16 @@ module if_im_controller #(
     output wire  [DATA_WIDTH-1:0]   wb_dat_o,
     input  wire  [DATA_WIDTH-1:0]   wb_dat_i,
     output wire  [DATA_WIDTH/8-1:0] wb_sel_o,
-    output wire                     wb_we_o
+    output wire                     wb_we_o,
+
+    output wire  [DATA_WIDTH-1:0]   satp_o,
+    output wire  [           1:0]   mode_o,
+    output wire                     sum_o
 );
 
     // hard wired signals
     assign wb_stb_o = wb_cyc_o;
-    assign wb_dat_o = {DATA_WIDTH{1'b0}};
+    assign wb_dat_o = {{(DATA_WIDTH-1){1'b0}}, 1'b1}; // notify that we are instruction fetch
     assign wb_sel_o = {DATA_WIDTH/8{1'b1}};
     assign wb_we_o = 1'b0;
 
@@ -152,22 +160,39 @@ module if_im_controller #(
 
     // request buffer
     logic [ADDR_WIDTH-1:0] wb_addr_reg;
+    logic [ADDR_WIDTH-1:0] satp_buffer; 
+    logic [           1:0] mode_buffer; 
+    logic                  sum_buffer;
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             wb_addr_reg <= `BUBBLE_INST_PC;
+            satp_buffer <= 32'h0000_0000;
+            mode_buffer <= 2'b11;
+            sum_buffer  <= 1'b0;
         end else if (state_reg == ST_REQUEST & do_new_req_i) begin
             wb_addr_reg <= addr_i;
+            satp_buffer <= satp_i;
+            mode_buffer <= mode_i;
+            sum_buffer  <= sum_i;
         end
     end
-    assign wb_adr_o = state_reg == ST_REQUEST ? addr_i : wb_addr_reg;
+
+    // we are at request cycle 1, we update the output signals
+    // when we are at request cycle >= 2 or we are not in request state, we keep the output signals the same by buffer
+    assign wb_adr_o = (state_reg == ST_REQUEST & do_new_req_i) ? addr_i : wb_addr_reg;
+    assign satp_o   = (state_reg == ST_REQUEST & do_new_req_i) ? satp_i : satp_buffer;
+    assign mode_o   = (state_reg == ST_REQUEST & do_new_req_i) ? mode_i : mode_buffer;
+    assign sum_o    = (state_reg == ST_REQUEST & do_new_req_i) ? sum_i  : sum_buffer;
 
     // output buffer
     logic [DATA_WIDTH-1:0] data_reg;
     logic [ADDR_WIDTH-1:0] addr_reg;
 
-    assign data_addr_o = wb_ack_i? wb_adr_o: addr_reg;
-    assign data_o = wb_ack_i? wb_dat_i: data_reg;
+    assign data_addr_o = wb_ack_i ? wb_adr_o : addr_reg;
+    assign data_o      = wb_ack_i ? wb_dat_i : data_reg;
+
+    
 
 
     always_ff @(posedge clk_i) begin

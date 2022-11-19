@@ -31,6 +31,7 @@ endmodule
 module exe_alu(
   input  wire signed [31:0] a,
   input  wire        [31:0] b,
+  input  wire        [31:0] mask, // writable bits
   input  wire        [ 3:0] op,
   output logic       [31:0] y
 );
@@ -51,14 +52,14 @@ module exe_alu(
       `ALU_XOR   : y = a  ^  b;
       `ALU_SRL   : y = a >>  b[4:0];
       `ALU_SRA   : y = a >>> b[4:0];
-      `ALU_OR    : y = a  |  b;
+      `ALU_OR    : y = b  |  (a & mask); // set
       `ALU_AND   : y = a  &  b;
       `ALU_XNOR  : y = a  ^ ~b;
       `ALU_CLZ   : y = {26'b0, clz_a[5:0]};
       `ALU_MIN   : y =   signed'(a) <   signed'(b) ? a : b;
-      `ALU_CLR   : y = b & ~a;
-      `ALU_USE_A : y = a;
-      default    : y = 32'bx;
+      `ALU_CLR   : y = b & ~(a & mask);
+      `ALU_USE_A : y = (b & ~mask) | (a & mask);
+      default    : y = {32{1'bx}};
     endcase
   end
     
@@ -216,7 +217,7 @@ always_ff @(posedge clk_i) begin
             inst_pc_o <= inst_pc_i;
             pc_plus4_o <= pc_plus4_i;
             alu_y_o <= alu_y_i;
-            mem_operation_o <= mem_operation_i;
+            
 
             mem_unsigned_ext_o <= mem_unsigned_ext_i;
 
@@ -231,10 +232,12 @@ always_ff @(posedge clk_i) begin
                 mem_write_enable_o <= mem_write_enable_i;
                 csr_write_enable_o <= csr_write_enable_i;
                 rf_write_enable_o <= rf_write_enable_i;
+                mem_operation_o <= mem_operation_i;
             end else begin // disable side effects on exception
                 mem_write_enable_o <= 1'b0;
                 csr_write_enable_o <= 1'b0;
                 rf_write_enable_o <= 1'b0;
+                mem_operation_o <= 1'b0;
             end
 
 

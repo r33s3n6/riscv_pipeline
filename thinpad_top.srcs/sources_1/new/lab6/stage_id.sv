@@ -1,6 +1,6 @@
 `include "alu_define.sv"
 
-// no csr support
+// TODO: set unsupported bits raise illegal instruction exception
 module id_instruction_decoder (
     input wire   [31:0] inst_i,
     input wire   [ 1:0] mode_i,
@@ -21,6 +21,7 @@ module id_instruction_decoder (
 
     output logic [ 4:0] id_csr_o,
     output wire         csr_write_enable_o,
+    output logic [31:0] csr_mask_o,
 
     output logic [31:0] imm_o,
     output logic [31:0] uimm_o,
@@ -79,48 +80,8 @@ module id_instruction_decoder (
     assign reg_rs1_o = (opcode[6:0] == 7'b0110111) ? 5'b0 : rs1; // lui use rs1 as 0
     assign reg_rs2_o = rs2;
 
-    // csr id
-    always_comb begin
-        case(csr)
-            `CSR_CYCLE    : id_csr_o = `CSR_ID_CYCLE    ;
-            `CSR_TIME     : id_csr_o = `CSR_ID_TIME     ;
-            `CSR_CYCLEH   : id_csr_o = `CSR_ID_CYCLEH   ;
-            `CSR_TIMEH    : id_csr_o = `CSR_ID_TIMEH    ;
 
-            `CSR_SSTATUS  : id_csr_o = `CSR_ID_SSTATUS  ;
-            `CSR_SIE      : id_csr_o = `CSR_ID_SIE      ;
-            `CSR_STVEC    : id_csr_o = `CSR_ID_STVEC    ;
 
-            `CSR_SSCRATCH : id_csr_o = `CSR_ID_SSCRATCH ;
-            `CSR_SEPC     : id_csr_o = `CSR_ID_SEPC     ;
-            `CSR_SCAUSE   : id_csr_o = `CSR_ID_SCAUSE   ;
-            `CSR_STVAL    : id_csr_o = `CSR_ID_STVAL    ;
-            `CSR_SIP      : id_csr_o = `CSR_ID_SIP      ;
-
-            `CSR_SATP     : id_csr_o = `CSR_ID_SATP     ;
-
-            `CSR_MHARTID  : id_csr_o = `CSR_ID_MHARTID  ;
-
-            `CSR_MSTATUS  : id_csr_o = `CSR_ID_MSTATUS  ;
-            `CSR_MEDELEG  : id_csr_o = `CSR_ID_MEDELEG  ;
-            `CSR_MIDELEG  : id_csr_o = `CSR_ID_MIDELEG  ;
-            `CSR_MIE      : id_csr_o = `CSR_ID_MIE      ;
-            `CSR_MTVEC    : id_csr_o = `CSR_ID_MTVEC    ;
-
-            `CSR_MSCRATCH : id_csr_o = `CSR_ID_MSCRATCH ;
-            `CSR_MEPC     : id_csr_o = `CSR_ID_MEPC     ;
-            `CSR_MCAUSE   : id_csr_o = `CSR_ID_MCAUSE   ;
-            `CSR_MTVAL    : id_csr_o = `CSR_ID_MTVAL    ;
-            `CSR_MIP      : id_csr_o = `CSR_ID_MIP      ;
-
-            `CSR_MCYCLE   : id_csr_o = `CSR_ID_MCYCLE   ;
-            `CSR_MCYCLEH  : id_csr_o = `CSR_ID_MCYCLEH  ;
-
-            `CSR_PMPCFG0  : id_csr_o = `CSR_ID_PMPCFG0  ;
-            `CSR_PMPADDR0 : id_csr_o = `CSR_ID_PMPADDR0 ;
-            default       : id_csr_o = `CSR_ID_UNKNOWN  ;
-        endcase
-    end
     logic csr_inst;
     logic csr_read_only;
     logic csr_read;
@@ -135,6 +96,13 @@ module id_instruction_decoder (
     assign csr_priv_ok   =  (csr[9:8] <= mode) && (!(csr_read_only && csr_write)) && (id_csr_o != `CSR_ID_UNKNOWN);
 
     assign csr_write_enable_o = csr_inst && csr_write && csr_priv_ok;
+
+    logic [31:0] csr_mask;
+    csr_shadow_register_translation csr_translator(
+        .addr_i(csr),
+        .addr_o(id_csr_o),
+        .mask_o(csr_mask)
+    );
 
 
     // inst_type
@@ -191,8 +159,11 @@ module id_instruction_decoder (
 
     assign is_branch_o = (inst_type == B_TYPE || inst_type == J_TYPE || opcode[6:0] == 7'b1100111); // branch, jal, jalr
 
+
+
     // alu_operation
     always_comb begin
+        csr_mask_o = 32'hffffffff;
         if (   inst_type == B_TYPE 
             || inst_type == U_TYPE 
             || inst_type == J_TYPE 
@@ -205,16 +176,18 @@ module id_instruction_decoder (
                 alu_op_o[3:0] = `ALU_MIN;
             end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b01) begin // csrrw{,i}
                 alu_op_o[3:0] = `ALU_USE_A;
+                csr_mask_o = csr_mask;
             end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b10) begin // csrrs{,i}
                 alu_op_o[3:0] = `ALU_OR;
+                csr_mask_o = csr_mask;
             end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b11) begin // csrrc{,i}
                 alu_op_o[3:0] = `ALU_CLR;
+                csr_mask_o = csr_mask;
             end else begin
                 alu_op_o[2:0] = funct3[2:0];
                 alu_op_o[3] = (inst_type == R_TYPE 
                             || funct3[2:0] == 3'b101 // I-type srli/srai
                             || funct3[2:0] == 3'b001 // I-type slli/clz
-                            || funct3[2:0] == 3'b100 // I-type xnor
                             ) ? funct7[5] : 1'b0;
             end
         end
@@ -380,10 +353,10 @@ module id_instruction_decoder (
 
         end else if (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0) begin // fence
 
-            if  (   (funct3 == 3'b000 && inst_i == 4'b0)  // fence
-                ||  (funct3 == 3'b001 && inst_i == 12'b0) // fence.i
+            if  (   (funct3 == 3'b000 && rs1 == 0 && rd == 0)  // fence
+                ||  (funct3 == 3'b001 && inst_i[31:20] == 12'b0 && rs1 == 5'b0) // fence.i
             ) begin
-                invalid_inst_o = 1'b1; // TODO: implement fence and fence.i
+                invalid_inst_o = 1'b0; // TODO: implement fence and fence.i (after we have no dcache & icache)
             end
 
         end else if (opcode == 7'b1110011) begin // system
@@ -413,7 +386,7 @@ module id_instruction_decoder (
                 end else if (funct7 == 7'b0001001) begin // sfence.vma
                     if (rd == 5'b0) begin
                         if (mode >= S_MODE) begin
-                            invalid_inst_o = 1'b0; // TODO: implement sfence.vma (we have no tlb)
+                            invalid_inst_o = 1'b0; // TODO: implement sfence.vma (after we have no tlb)
                         end
                     end
                 end
@@ -539,11 +512,11 @@ module id_csr_file(
     input  wire  [31:0] stval_i,
 
     // important status registers
-    output wire [31: 0] sstatus_o,
-    output wire [31: 0] sie_o,
+    //output wire [31: 0] sstatus_o,
+    //output wire [31: 0] sie_o,
     output wire [31: 0] stvec_o,
     output wire [31: 0] sepc_o,
-    output wire [31: 0] sip_o,
+    //output wire [31: 0] sip_o,
     output wire [31: 0] satp_o,
     output wire [31: 0] scause_o,
     output wire [31: 0] stval_o,
@@ -569,11 +542,11 @@ module id_csr_file(
 
     assign rdata_a_o = forwarded_reg[raddr_a_i];
 
-    assign sstatus_o = forwarded_reg[`CSR_ID_SSTATUS];
-    assign sie_o     = forwarded_reg[`CSR_ID_SIE];
+    //assign sstatus_o = forwarded_reg[`CSR_ID_SSTATUS];
+    //assign sie_o     = forwarded_reg[`CSR_ID_SIE];
     assign stvec_o   = forwarded_reg[`CSR_ID_STVEC];
     assign sepc_o    = forwarded_reg[`CSR_ID_SEPC];
-    assign sip_o     = forwarded_reg[`CSR_ID_SIP];
+    //assign sip_o     = forwarded_reg[`CSR_ID_SIP];
     assign satp_o    = forwarded_reg[`CSR_ID_SATP];
     assign scause_o  = forwarded_reg[`CSR_ID_SCAUSE];
     assign stval_o   = forwarded_reg[`CSR_ID_STVAL];
@@ -590,64 +563,31 @@ module id_csr_file(
 
     assign old_mstatus_o = reg_file[`CSR_ID_MSTATUS];
 
-    logic [31:0] exe_forwarded_data;
-    logic [31:0] mem_forwarded_data;
-    logic [31:0] wb_forwarded_data;
-
-    csr_shadow_register_forward exe_csrf(
-        .addr_i(exe_waddr_i),
-        .data_i(exe_wdata_i),
-        .data_o(exe_forwarded_data)
-    );
-
-    csr_shadow_register_forward mem_csrf(
-        .addr_i(mem_waddr_i),
-        .data_i(mem_wdata_i),
-        .data_o(mem_forwarded_data)
-    );
-
-    csr_shadow_register_forward wb_csrf(
-        .addr_i(waddr_i),
-        .data_i(wdata_i),
-        .data_o(wb_forwarded_data)
-    );
 
     // forward registers
     always_comb begin
         forwarded_reg = reg_file;
 
         if (we_i) begin
-            forwarded_reg[waddr_i] = wb_forwarded_data;
+            forwarded_reg[waddr_i] = wdata_i;
         end
         if (mem_we_i) begin
-            forwarded_reg[mem_waddr_i] = mem_forwarded_data;
+            forwarded_reg[mem_waddr_i] = mem_wdata_i;
         end
         if (exe_we_i) begin
-            forwarded_reg[exe_waddr_i] = exe_forwarded_data;
+            forwarded_reg[exe_waddr_i] = exe_wdata_i;
         end
 
-        forwarded_reg[`CSR_ID_CYCLE]   = forwarded_reg[`CSR_ID_MCYCLE];
-        forwarded_reg[`CSR_ID_CYCLEH]  = forwarded_reg[`CSR_ID_MCYCLEH];
-
     end
 
 
-    // read from shadow register
-    always_comb begin
-        reg_file[`CSR_ID_SIP]     = `CSR_SHADOW_SIP_MASK     & reg_file[`CSR_ID_MIP];
-        reg_file[`CSR_ID_SIE]     = `CSR_SHADOW_SIE_MASK     & reg_file[`CSR_ID_MIE];
-        reg_file[`CSR_ID_SSTATUS] = `CSR_SHADOW_SSTATUS_MASK & reg_file[`CSR_ID_MSTATUS];
-    end
 
     // read from shadow register (fake mmio)
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            reg_file[`CSR_ID_TIME    ] <= 32'b0;
-            reg_file[`CSR_ID_TIMEH   ] <= 32'b0;
+            
         end else begin
-            // time
-            reg_file[`CSR_ID_TIME]  <= core_time_i[31:0];
-            reg_file[`CSR_ID_TIMEH] <= core_time_i[63:32];
+
         end
     end
   
@@ -677,6 +617,9 @@ module id_csr_file(
             reg_file[`CSR_ID_PMPCFG0 ] <= 32'b0;
             reg_file[`CSR_ID_PMPADDR0] <= 32'b0;
 
+            reg_file[`CSR_ID_TIME ] <= 32'b0;
+            reg_file[`CSR_ID_TIMEH] <= 32'b0;
+
 
         end else begin
             if (wb_exception_i) begin
@@ -692,84 +635,14 @@ module id_csr_file(
 
             end
             else if (we_i) begin
-                case (waddr_i)
-                    `CSR_ID_STVEC: begin
-                        reg_file[`CSR_ID_STVEC] <= wdata_i;
-                    end
-                    `CSR_ID_SSCRATCH: begin
-                        reg_file[`CSR_ID_SSCRATCH] <= wdata_i;
-                    end
-                    `CSR_ID_SEPC: begin
-                        reg_file[`CSR_ID_SEPC] <= wdata_i;
-                    end
-                    `CSR_ID_SCAUSE: begin
-                        reg_file[`CSR_ID_SCAUSE] <= wdata_i;
-                    end
-                    `CSR_ID_STVAL: begin
-                        reg_file[`CSR_ID_STVAL] <= wdata_i;
-                    end
-                    `CSR_ID_SATP: begin
-                        reg_file[`CSR_ID_SATP] <= wdata_i;
-                    end
-                    `CSR_ID_MSTATUS: begin
-                        reg_file[`CSR_ID_MSTATUS] <= wdata_i;
-                    end
-                    `CSR_ID_MEDELEG: begin
-                        reg_file[`CSR_ID_MEDELEG] <= wdata_i;
-                    end
-                    `CSR_ID_MIDELEG: begin
-                        reg_file[`CSR_ID_MIDELEG] <= wdata_i;
-                    end
-                    `CSR_ID_MIE: begin
-                        reg_file[`CSR_ID_MIE] <= wdata_i;
-                    end
-                    `CSR_ID_MTVEC: begin
-                        reg_file[`CSR_ID_MTVEC] <= wdata_i;
-                    end
-                    `CSR_ID_MSCRATCH: begin
-                        reg_file[`CSR_ID_MSCRATCH] <= wdata_i;
-                    end
-                    `CSR_ID_MEPC: begin
-                        reg_file[`CSR_ID_MEPC] <= wdata_i;
-                    end
-                    `CSR_ID_MCAUSE: begin
-                        reg_file[`CSR_ID_MCAUSE] <= wdata_i;
-                    end
-                    `CSR_ID_MTVAL: begin
-                        reg_file[`CSR_ID_MTVAL] <= wdata_i;
-                    end
-                    `CSR_ID_MIP: begin
-                        reg_file[`CSR_ID_MIP] <= (wdata_i & ~`CSR_MTIP_MASK) | core_time_irq_i;
-                    end
-                    `CSR_ID_MCYCLE: begin
-                        reg_file[`CSR_ID_MCYCLE] <= wdata_i;
-                    end
-                    `CSR_ID_MCYCLEH: begin
-                        reg_file[`CSR_ID_MCYCLEH] <= wdata_i;
-                    end
-                    `CSR_ID_PMPCFG0: begin
-                        reg_file[`CSR_ID_PMPCFG0] <= wdata_i;
-                    end
-                    `CSR_ID_PMPADDR0: begin
-                        reg_file[`CSR_ID_PMPADDR0] <= wdata_i;
-                    end
-                    // shadow registers write
-                    `CSR_ID_SIP: begin
-                        reg_file[`CSR_ID_MIP] <= ((reg_file[`CSR_ID_MIP] & ~`CSR_SHADOW_SIP_MASK) | (wdata_i & `CSR_SHADOW_SIP_MASK));
-                    end
-                    `CSR_ID_SIE: begin
-                        reg_file[`CSR_ID_MIE] <= ((reg_file[`CSR_ID_MIE] & ~`CSR_SHADOW_SIE_MASK) | (wdata_i & `CSR_SHADOW_SIE_MASK));
-                    end
-                    `CSR_ID_SSTATUS: begin
-                        reg_file[`CSR_ID_MSTATUS] <= ((reg_file[`CSR_ID_MSTATUS] & ~`CSR_SHADOW_SSTATUS_MASK) | (wdata_i & `CSR_SHADOW_SSTATUS_MASK));
-                    end
-                    default: begin
-                        // do nothing
-
-                    end
-                endcase
-                // reg_file[waddr_i] <= wdata_i;
+                if (waddr_i != `CSR_ID_TIME && waddr_i != `CSR_ID_TIMEH) begin
+                    reg_file[waddr_i] <= wdata_i;
+                end
             end 
+
+            // time
+            reg_file[`CSR_ID_TIME ] <= core_time_i[31: 0];
+            reg_file[`CSR_ID_TIMEH] <= core_time_i[63:32];
 
             
             if (!(we_i && waddr_i == `CSR_ID_MIP)) begin
@@ -827,6 +700,9 @@ module id_pipeline_regs (
 
     input wire [ 4:0] id_csr_i,
     output reg [ 4:0] id_csr_o,
+
+    input wire [31:0] csr_mask_i,
+    output reg [31:0] csr_mask_o,
 
     input wire [31:0] data_csr_i,
     output reg [31:0] data_csr_o,
@@ -900,6 +776,7 @@ module id_pipeline_regs (
             id_csr_o <= 5'b0;
             data_csr_o <= 32'b0;
             csr_write_enable_o <= 1'b0;
+            csr_mask_o <= 32'b0;
 
             is_branch_o <= 1'b0;
             inst_pc_o <= 32'b0;
@@ -941,6 +818,7 @@ module id_pipeline_regs (
                 id_csr_o <= 5'b0;
                 data_csr_o <= 32'b0;
                 csr_write_enable_o <= 1'b0;
+                csr_mask_o <= 32'b0;
 
                 is_branch_o <= 1'b0;
                 inst_pc_o <= 32'b0;
@@ -977,23 +855,26 @@ module id_pipeline_regs (
 
                 id_csr_o <= id_csr_i;
                 data_csr_o <= data_csr_i;
+                csr_mask_o <= csr_mask_i;
                 
 
                 is_branch_o <= is_branch_i;
                 inst_pc_o <= inst_pc_i;
                 pc_plus4_o <= pc_plus4_i;
 
-                mem_operation_o <= mem_operation_i;
+                
                 mem_unsigned_ext_o <= mem_unsigned_ext_i;
 
                 if (!exception_i) begin
                     mem_write_enable_o <= mem_write_enable_i;
                     csr_write_enable_o <= csr_write_enable_i;
                     rf_write_enable_o <= rf_write_enable_i;
+                    mem_operation_o <= mem_operation_i;
                 end else begin // disable side effects on exception
                     mem_write_enable_o <= 1'b0;
                     csr_write_enable_o <= 1'b0;
                     rf_write_enable_o <= 1'b0;
+                    mem_operation_o <= 1'b0;
                 end
 
                 data_rd_mux_o <= data_rd_mux_i;

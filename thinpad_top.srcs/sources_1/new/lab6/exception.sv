@@ -220,7 +220,7 @@ module exp_exception_encoder (
         else                        begin exception_code_o = 31'd24; end 
     end
 
-        // handle exception
+    // handle exception
     wire   delegated_to_supervisor;
     assign delegated_to_supervisor = (mode_i <= S_MODE) && (medeleg_i[exception_code_o] == 1'b1);
 
@@ -263,22 +263,24 @@ module exp_interrupt_encoder (
     assign real_mie = ((mode_i == M_MODE) && mstatus_mie) || mode_i < M_MODE;
     assign real_sie = ((mode_i == S_MODE) && mstatus_sie) || mode_i < S_MODE;
 
+    // M-mode handling interrupts
     wire m_mti, m_msi, m_mei;
     wire m_sti, m_ssi, m_sei;
 
+    // S-mode handling interrupts
     wire s_sti, s_ssi, s_sei;
 
-    wire [31:0] mi; // machine all interrupts
-    assign mi = mie_i & mip_i;
+    wire [31:0] mi; 
+    assign mi = mie_i & mip_i; // all enabled pending interrupts
 
     wire [31:0] m_int;
     wire [31:0] s_int;
-    assign m_int = mi & ~mideleg_i;
-    assign s_int = mi & mideleg_i;
+    assign m_int = mi & ~mideleg_i; // those will be handled by machine mode (not delegated to supervisor mode)
+    assign s_int = mi & mideleg_i;  // those will be handled by supervisor mode (delegated to supervisor mode)
     
 
     exp_mix_decoder m_int_decoder(
-        .mix(m_int), // not delegated
+        .mix(m_int), 
         .meix(m_mei),
         .msix(m_msi),
         .mtix(m_mti),
@@ -288,7 +290,7 @@ module exp_interrupt_encoder (
     );
 
     exp_mix_decoder s_int_decoder(
-        .mix(s_int), // delegated
+        .mix(s_int), 
         .seix(s_sei),
         .ssix(s_ssi),
         .stix(s_sti)
@@ -297,12 +299,15 @@ module exp_interrupt_encoder (
 
     wire machine_interrupt;
     wire supervisor_interrupt;
-    assign machine_interrupt = real_mie && (m_mei | m_msi | m_mti | m_sei | m_ssi | m_sti);
-    assign supervisor_interrupt = real_sie &&  (s_sei | s_ssi | s_sti);
+
+    assign machine_interrupt    = real_mie && (m_mei | m_msi | m_mti | m_sei | m_ssi | m_sti);
+    assign supervisor_interrupt = real_sie && (s_sei | s_ssi | s_sti);
 
     wire [31:0] real_int;
     wire [ 1:0] int_mode;
-    assign real_int    = machine_interrupt ? m_int : supervisor_interrupt ? s_int : 32'b0;
+
+    // interrupts that will be handled
+    assign real_int    = machine_interrupt ? m_int  : supervisor_interrupt ? s_int  : 32'b0;
     assign int_mode    = machine_interrupt ? M_MODE : supervisor_interrupt ? S_MODE : 2'bxx; // should not be used if there's not interrupt
 
 
@@ -311,22 +316,3 @@ module exp_interrupt_encoder (
 
 endmodule
 
-module exp_next_mode_mcause_encoder (
-    input  wire  [31:0] int_i,
-    input  wire  [ 1:0] int_mode_i,
-    input  wire  [31:0] exception_code_i,
-    input  wire  [ 1:0] exp_mode_i,
-
-    output wire  [31:0] mcause_o,
-    output wire  [ 1:0] next_mode_o
-);
-
-    exp_mcause_encoder mcause_encoder_inst (
-        .int_i(int_i),
-        .exception_code_i(exception_code_i),
-        .mcause_o(mcause_o)
-    );
-
-    assign next_mode_o = (int_i != 32'b0) ? int_mode_i : exp_mode_i;
-
-endmodule
