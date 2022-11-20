@@ -253,7 +253,8 @@ module lab6_top (
 
         .debug_mmu_state_o    (debug_mmu_state),
         .debug_mmu_pf_pte_o   (debug_mmu_pf_pte),
-        .debug_mmu_pf_cause_o (debug_mmu_pf_cause)
+        .debug_mmu_pf_cause_o (debug_mmu_pf_cause),
+        .debug_tlb_enable_i   (dip_sw[0])
     );
 
 
@@ -711,7 +712,8 @@ module lab6_top (
     assign _if_do_req = _if_pc_valid & ~mem_mem_operation & ~_if_pc_misaligned;
 
     assign _if_pagefault = _if_do_req  // we are doing a request
-                        & (_if_inst_addr == _if_inst_pc) // request is done
+                        & (_if_inst_addr == _if_inst_pc) // request is done //TODO: remove this
+                        & wbm1_ack_i // request is acked
                         & core_page_fault;  // page fault
 
 
@@ -1000,7 +1002,7 @@ module lab6_top (
     wire _id_inst_decode_sret;
     wire _id_inst_decode_tlb_clear;
 
-    assign core_tlb_clear = _id_inst_decode_tlb_clear; // TODO: move to other place
+    assign core_tlb_clear = (wb_prev_mcause == `EXP_SFENCE_VMA); // TODO: move to other place
 
     wire        _id_exp_normal_exception;
     wire [30:0] _id_exp_normal_exception_code;
@@ -1049,6 +1051,10 @@ module lab6_top (
             id_exp_exception        = 1'b1;
             id_exp_exception_code   = `EXP_SRET;
             id_exp_trap_mode        = _id_mstatus_spp;
+        end else if(_id_inst_decode_tlb_clear) begin
+            id_exp_exception        = 1'b1;
+            id_exp_exception_code   = `EXP_SFENCE_VMA;
+            id_exp_trap_mode        = id_mode; // DO not change anything
         end else begin
             id_exp_exception        = 1'b0;
             id_exp_exception_code   = 31'b0;
@@ -1508,7 +1514,7 @@ module lab6_top (
     wire mem_sa_access_fault   ;
 
     
-    wire mem_pagefault = mem_mem_operation & core_page_fault;
+    wire mem_pagefault = wbm0_ack_i & mem_mem_operation & core_page_fault;
 
     
     assign mem_load_page_fault = mem_pagefault & ~mem_mem_write_enable;
@@ -1715,6 +1721,9 @@ module lab6_top (
                 wb_new_mstatus_sie  = wb_old_mstatus_spie;
                 wb_new_mstatus_spie = 1'b1;
                 wb_new_mstatus_spp  = 1'b0;
+            end else if (wb_prev_mcause == `EXP_SFENCE_VMA) begin
+                wb_tvec = wb_inst_pc + 3'd4; // TODO: replace with reg
+
             end else begin
                 if (wb_prev_trap_mode == M_MODE) begin
                     wb_tvec = _id_mtvec;
@@ -1786,7 +1795,13 @@ module lab6_top (
 
         .probe23(core_page_fault),
         .probe24(debug_mmu_pf_pte),
-        .probe25(debug_mmu_pf_cause)
+        .probe25(debug_mmu_pf_cause),
+
+        .probe26(mem_inst_pc),
+        .probe27(wb_inst_pc),
+        .probe28(wb_prev_mcause),
+        .probe29(wb_prev_exception),
+        .probe30(wb_prev_trap_mode)
 
 
     );
