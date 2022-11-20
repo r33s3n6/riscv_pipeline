@@ -65,8 +65,8 @@ module if_pc_controller #(
     input  wire         if_regs_stall_i,
   
     input  wire         id_next_exception_i,
-    input  wire         exe_next_exception_i,
-    input  wire         mem_next_exception_i,
+    input  wire         exe_prev_exception_i,
+    input  wire         mem_prev_exception_i,
     input  wire         wb_prev_exception_i,
   
     input  wire         tlb_clear_i,
@@ -81,8 +81,8 @@ module if_pc_controller #(
     assign pc_valid_o = !(  branch_last_i 
                         |   branch_take_i
                         |   id_next_exception_i
-                        |   exe_next_exception_i
-                        |   mem_next_exception_i
+                        |   exe_prev_exception_i
+                        |   mem_prev_exception_i // TODO: changed by timing loop
                         |   wb_prev_exception_i
                         |   tlb_clear_i
                         );

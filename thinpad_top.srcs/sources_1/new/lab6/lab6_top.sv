@@ -799,8 +799,8 @@ module lab6_top (
         .if_regs_stall_i        (_if_stall),
 
         .id_next_exception_i    (id_next_exception),
-        .exe_next_exception_i   (exe_next_exception),
-        .mem_next_exception_i   (mem_next_exception),
+        .exe_prev_exception_i   (exe_prev_exception),
+        .mem_prev_exception_i   (mem_prev_exception),
         .wb_prev_exception_i    (wb_prev_exception),
         .tlb_clear_i            (core_tlb_clear),
 

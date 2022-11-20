@@ -12,9 +12,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="6636922fs"></ZoomStartTime>
-      <ZoomEndTime time="7017523fs"></ZoomEndTime>
-      <Cursor1Time time="6815522fs"></Cursor1Time>
+      <ZoomStartTime time="9597510fs"></ZoomStartTime>
+      <ZoomEndTime time="10549011fs"></ZoomEndTime>
+      <Cursor1Time time="10328510fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="381"></NameColumnWidth>
@@ -1194,6 +1194,7 @@
    <wvobject fp_name="group382" type="group">
       <obj_property name="label">sram_controller</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/sram_controller_base/clk_i" type="logic">
          <obj_property name="ElementShortName">clk_i</obj_property>
          <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -1339,6 +1340,7 @@
    <wvobject fp_name="group751" type="group">
       <obj_property name="label">clint</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/clint_device/clk_i" type="logic">
          <obj_property name="ElementShortName">clk_i</obj_property>
          <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -1427,6 +1429,7 @@
       <wvobject fp_name="group2714" type="group">
          <obj_property name="label">sv32</obj_property>
          <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_enable" type="logic">
             <obj_property name="ElementShortName">sv32_enable</obj_property>
             <obj_property name="ObjectShortName">sv32_enable</obj_property>
@@ -1435,9 +1438,17 @@
             <obj_property name="ElementShortName">sv32_level[1:0]</obj_property>
             <obj_property name="ObjectShortName">sv32_level[1:0]</obj_property>
          </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_level_next" type="array">
+            <obj_property name="ElementShortName">sv32_level_next[1:0]</obj_property>
+            <obj_property name="ObjectShortName">sv32_level_next[1:0]</obj_property>
+         </wvobject>
          <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_pt" type="array">
             <obj_property name="ElementShortName">sv32_pt[31:0]</obj_property>
             <obj_property name="ObjectShortName">sv32_pt[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_pt_next" type="array">
+            <obj_property name="ElementShortName">sv32_pt_next[31:0]</obj_property>
+            <obj_property name="ObjectShortName">sv32_pt_next[31:0]</obj_property>
          </wvobject>
          <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_vpn" type="array">
             <obj_property name="ElementShortName">sv32_vpn[0:1][9:0]</obj_property>
@@ -1446,6 +1457,14 @@
          <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_adr_o" type="array">
             <obj_property name="ElementShortName">sv32_wbm_adr_o[31:0]</obj_property>
             <obj_property name="ObjectShortName">sv32_wbm_adr_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_adr_next" type="array">
+            <obj_property name="ElementShortName">sv32_wbm_adr_next[31:0]</obj_property>
+            <obj_property name="ObjectShortName">sv32_wbm_adr_next[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_adr_buf" type="array">
+            <obj_property name="ElementShortName">sv32_wbm_adr_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">sv32_wbm_adr_buf[31:0]</obj_property>
          </wvobject>
          <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_cyc_o" type="logic">
             <obj_property name="ElementShortName">sv32_wbm_cyc_o</obj_property>
@@ -1605,6 +1624,34 @@
       <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_sram_data" type="array">
          <obj_property name="ElementShortName">sv32_sram_data[31:0]</obj_property>
          <obj_property name="ObjectShortName">sv32_sram_data[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_response_from_slave" type="logic">
+         <obj_property name="ElementShortName">sv32_response_from_slave</obj_property>
+         <obj_property name="ObjectShortName">sv32_response_from_slave</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_pte_state" type="array">
+         <obj_property name="ElementShortName">sv32_pte_state[1:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_state[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_request_from_master" type="logic">
+         <obj_property name="ElementShortName">sv32_request_from_master</obj_property>
+         <obj_property name="ObjectShortName">sv32_request_from_master</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_we_buf" type="logic">
+         <obj_property name="ElementShortName">sv32_wbm_we_buf</obj_property>
+         <obj_property name="ObjectShortName">sv32_wbm_we_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_dat_buf" type="array">
+         <obj_property name="ElementShortName">sv32_wbm_dat_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_wbm_dat_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_sel_buf" type="array">
+         <obj_property name="ElementShortName">sv32_wbm_sel_buf[3:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_wbm_sel_buf[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mmu_sv32_inst/sv32_wbm_adr_buf" type="array">
+         <obj_property name="ElementShortName">sv32_wbm_adr_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_wbm_adr_buf[31:0]</obj_property>
       </wvobject>
    </wvobject>
 </wave_config>
