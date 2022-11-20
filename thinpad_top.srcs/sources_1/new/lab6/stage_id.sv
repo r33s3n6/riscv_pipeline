@@ -10,6 +10,7 @@ module id_instruction_decoder (
     output logic        ebreak_o,           
     output logic        mret_o,
     output logic        sret_o,
+    output logic        tlb_clear_o,
 
     output wire         is_branch_o,
     
@@ -356,7 +357,7 @@ module id_instruction_decoder (
             if  (   (funct3 == 3'b000 && rs1 == 0 && rd == 0)  // fence
                 ||  (funct3 == 3'b001 && inst_i[31:20] == 12'b0 && rs1 == 5'b0) // fence.i
             ) begin
-                invalid_inst_o = 1'b0; // TODO: implement fence and fence.i (after we have no dcache & icache)
+                invalid_inst_o = 1'b0; // TODO: implement fence and fence.i (after we have dcache & icache)
             end
 
         end else if (opcode == 7'b1110011) begin // system
@@ -436,11 +437,11 @@ module id_instruction_decoder (
         end
     end
 
-    assign ecall_o   = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0);
-    assign ebreak_o  = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1);
-    assign sret_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
-    assign mret_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
-
+    assign ecall_o     = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0);
+    assign ebreak_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1);
+    assign sret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
+    assign mret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
+    assign tlb_clear_o = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0);
 
 endmodule
 

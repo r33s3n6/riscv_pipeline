@@ -60,21 +60,22 @@ module if_pc_controller #(
     parameter DATA_WIDTH = 32
 
 ) (
-
-    input wire        branch_last_i,
-    input wire        branch_take_i,
-    input wire        if_regs_stall_i,
-
-    input wire        id_next_exception_i,
-    input wire        exe_next_exception_i,
-    input wire        mem_next_exception_i,
-    input wire        wb_prev_exception_i,
-
-    input wire [31:0] inst_pc_i,
-    input wire [31:0] inst_addr_i,
-
-    output wire       pc_stall_o,
-    output wire       pc_valid_o
+    input  wire         branch_last_i,
+    input  wire         branch_take_i,
+    input  wire         if_regs_stall_i,
+  
+    input  wire         id_next_exception_i,
+    input  wire         exe_next_exception_i,
+    input  wire         mem_next_exception_i,
+    input  wire         wb_prev_exception_i,
+  
+    input  wire         tlb_clear_i,
+  
+    input  wire  [31:0] inst_pc_i,
+    input  wire  [31:0] inst_addr_i,
+ 
+    output logic        pc_stall_o,
+    output wire         pc_valid_o
 
 );
     assign pc_valid_o = !(  branch_last_i 
@@ -83,25 +84,23 @@ module if_pc_controller #(
                         |   exe_next_exception_i
                         |   mem_next_exception_i
                         |   wb_prev_exception_i
+                        |   tlb_clear_i
                         );
     
-    logic pc_stall_o_comb;
-    
-    assign pc_stall_o = pc_stall_o_comb;
 
     always_comb begin
         if (wb_prev_exception_i) begin
-            pc_stall_o_comb = 1'b0;
+            pc_stall_o = 1'b0;
         end else if (if_regs_stall_i) begin
-            pc_stall_o_comb = 1'b1;
+            pc_stall_o = 1'b1;
         end else if (branch_last_i) begin
-            pc_stall_o_comb = 1'b1;
+            pc_stall_o = 1'b1;
         end else if (branch_take_i) begin
-            pc_stall_o_comb = 1'b0;
+            pc_stall_o = 1'b0;
         end else if (inst_pc_i != inst_addr_i) begin
-            pc_stall_o_comb = 1'b1;
+            pc_stall_o = 1'b1;
         end else begin
-            pc_stall_o_comb = 1'b0;
+            pc_stall_o = 1'b0;
         end
 
     end

@@ -134,6 +134,8 @@ module lab6_top (
     (* MARK_DEBUG = "TRUE" *) logic [31:0] core_satp;
     (* MARK_DEBUG = "TRUE" *) logic        core_sum;
 
+    (* MARK_DEBUG = "TRUE" *) logic        core_tlb_clear;
+
     /* =========== Wishbone Arbiter begin =========== */
     logic        wbm0_cyc_o;
     logic        wbm0_stb_o;
@@ -227,7 +229,9 @@ module lab6_top (
         .satp_i       (core_satp),
         .sum_i        (core_sum),
         .mode_i       (core_mode),
+        .tlb_clear_i  (core_tlb_clear),
         .page_fault_o (core_page_fault),
+        
 
         .wbs_cyc_i    (im_wbs_cyc_o),
         .wbs_stb_i    (im_wbs_stb_o),
@@ -704,7 +708,6 @@ module lab6_top (
 
     assign _if_pc_misaligned = (_if_inst_pc[1:0] != 2'b00);
 
-    // TODO: this may cause bug (unstable signal)
     assign _if_do_req = _if_pc_valid & ~mem_mem_operation & ~_if_pc_misaligned;
 
     assign _if_pagefault = _if_do_req  // we are doing a request
@@ -799,6 +802,7 @@ module lab6_top (
         .exe_next_exception_i   (exe_next_exception),
         .mem_next_exception_i   (mem_next_exception),
         .wb_prev_exception_i    (wb_prev_exception),
+        .tlb_clear_i            (core_tlb_clear),
 
         .inst_addr_i            (_if_inst_addr),
         .inst_pc_i              (_if_inst_pc),
@@ -807,7 +811,7 @@ module lab6_top (
         .pc_valid_o             (_if_pc_valid)
     );
 
-    // TODO: buffer logic may should be moved to other place
+    // TODO: for clearer logic, those status buffer (mode, satp, sum, etc) should be moved to other place
     // instruction memory controller
     if_im_controller if_im_controller_inst (
         .clk_i          (clk),
@@ -994,6 +998,9 @@ module lab6_top (
     wire _id_inst_decode_ebreak;
     wire _id_inst_decode_mret;
     wire _id_inst_decode_sret;
+    wire _id_inst_decode_tlb_clear;
+
+    assign core_tlb_clear = _id_inst_decode_tlb_clear; // TODO: move to other place
 
     wire        _id_exp_normal_exception;
     wire [30:0] _id_exp_normal_exception_code;
@@ -1074,6 +1081,7 @@ module lab6_top (
         .ebreak_o           (_id_inst_decode_ebreak),
         .mret_o             (_id_inst_decode_mret),
         .sret_o             (_id_inst_decode_sret),
+        .tlb_clear_o        (_id_inst_decode_tlb_clear),
 
         .is_branch_o        (id_is_branch),
 
