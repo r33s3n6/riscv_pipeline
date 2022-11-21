@@ -55,9 +55,10 @@ module tlb_sv32(
     output logic        hit_o
 );
     
-    logic [19:0] vpn  [0:15];
-    logic [21:0] ppn  [0:15];
-    logic [ 7:0] perm [0:15]; 
+    logic [19:0] vpn   [0:15];
+    logic [21:0] ppn   [0:15];
+    logic [ 7:0] perm  [0:15];
+    logic        valid [0:15];
 
     logic [3:0] hit_idx;
     
@@ -68,7 +69,7 @@ module tlb_sv32(
         hit_idx = 4'hf;
         hit_o   = 1'b0;
         for (int i = 0; i < 16; i = i + 1) begin
-            if (vpn_i == vpn[i]) begin
+            if (vpn_i == vpn[i] & valid[i]) begin
                 hit_idx = i;
                 hit_o   = 1'b1;
                 break;
@@ -79,30 +80,35 @@ module tlb_sv32(
     // put hit entry at the top
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            vpn  <= '{default: '0};
-            ppn  <= '{default: '0};
-            perm <= '{default: '0};
+            vpn   <= '{default: '0};
+            ppn   <= '{default: '0};
+            perm  <= '{default: '0};
+            valid <= '{default: '0};
         end else begin
             if (clear_i) begin
-                vpn  <= '{default: '0};
-                ppn  <= '{default: '0};
-                perm <= '{default: '0};
+                vpn   <= '{default: '0};
+                ppn   <= '{default: '0};
+                perm  <= '{default: '0};
+                valid <= '{default: '0};
             end else if (enable_i | write_enable_i) begin // LRU
                 if (hit_o | write_enable_i) begin
                     for (int i = 1; i <= hit_idx; i = i + 1) begin
-                        vpn[i]  <= vpn[i-1];
-                        ppn[i]  <= ppn[i-1];
-                        perm[i] <= perm[i-1];
+                        vpn[i]   <= vpn[i-1];
+                        ppn[i]   <= ppn[i-1];
+                        perm[i]  <= perm[i-1];
+                        valid[i] <= valid[i-1];
                     end
 
-                    if (write_enable_i) begin
-                        vpn [0] <= vpn_i;
-                        ppn [0] <= ppn_i;
-                        perm[0] <= perm_i;
+                    if (write_enable_i) begin 
+                        vpn [0]  <= vpn_i;
+                        ppn [0]  <= ppn_i;
+                        perm[0]  <= perm_i;
+                        valid[0] <= 1'b1;
                     end else begin // hit
-                        vpn [0] <= vpn[hit_idx];
-                        ppn [0] <= ppn[hit_idx];
-                        perm[0] <= perm[hit_idx];
+                        vpn [0]  <= vpn[hit_idx];
+                        ppn [0]  <= ppn[hit_idx];
+                        perm[0]  <= perm[hit_idx];
+                        valid[0] <= 1'b1;
                     end
 
                 end
@@ -156,7 +162,11 @@ module mmu_sv32(
     output logic [ 1:0] debug_mmu_state_o,
     output logic [31:0] debug_mmu_pf_pte_o,
     output logic [ 3:0] debug_mmu_pf_cause_o,
-    input  wire         debug_tlb_enable_i
+    input  wire         debug_tlb_enable_i,
+
+    output logic [31:0] debug_paddr_o,
+    output logic        debug_tlb_hit_o,
+    output logic [ 1:0] debug_pte_state_o
 );
 
     typedef enum logic {
@@ -383,10 +393,10 @@ module mmu_sv32(
             state <= IDLE;
             page_fault_o <= 0;
             sv32_mem_addr <= 32'b0;
-            sv32_tlb_write_enable <= 1'b0;
+
 
         end else begin
-            sv32_tlb_write_enable <= 1'b0;
+
             case (state)
                 IDLE: begin
                     debug_mmu_pf_pte_o <= 32'hffffffff;
@@ -399,7 +409,7 @@ module mmu_sv32(
                             end else begin
                                 state <= DONE;
                                 page_fault_o <= 1;
-                                debug_mmu_pf_pte_o <= sv32_tlb_ppn_o;
+                                debug_mmu_pf_pte_o <= {sv32_tlb_ppn_o, 2'b00, sv32_pte_perm};
                             end
                         end else begin
                             state      <= FETCH_PTE;
@@ -421,7 +431,7 @@ module mmu_sv32(
                             if (sv32_pte_state == OK) begin
                                 state                 <= MEM_OPERATION;
                                 sv32_mem_addr         <= {wbm_dat_i[`PTE_PPN] , wbs_adr_i[11:0]};
-                                sv32_tlb_write_enable <= 1'b1;
+
                             end else if (sv32_pte_state == NEXT) begin
                                 state      <= FETCH_PTE;
                                 sv32_level <= sv32_level - 1;
@@ -452,6 +462,42 @@ module mmu_sv32(
     end
 
     always_comb begin
+
+        sv32_tlb_write_enable = 1'b0;
+        case (state)
+            IDLE: begin
+
+            end
+            FETCH_PTE: begin
+                if (wbm_ack_i) begin
+                    // TODO: not check misaligned superpage
+                    // TODO: not check A/D bits
+                    if (wbm_dat_i[`PTE_V] == 1'b0 | (~wbm_dat_i[`PTE_R] & wbm_dat_i[`PTE_W])) begin
+
+                    end else begin
+                        if (sv32_pte_state == OK) begin
+                            sv32_tlb_write_enable = 1'b1;
+                        end else if (sv32_pte_state == NEXT) begin
+
+                        end else begin // PF
+
+                        end
+
+                    end
+                end
+            end
+
+            MEM_OPERATION: begin
+
+            end
+            DONE: begin
+
+            end
+        endcase
+    end
+
+
+    always_comb begin
         if (state == DONE) begin
             sv32_wbs_ack_o = 1'b1;
         end else begin
@@ -461,6 +507,9 @@ module mmu_sv32(
 
     assign debug_mmu_state_o    = state;
     assign debug_mmu_pf_cause_o = debug_sv32_pte_state_cause;
+    assign debug_paddr_o        = sv32_mem_addr;
+    assign debug_tlb_hit_o      = sv32_tlb_hit;
+    assign debug_pte_state_o    = sv32_pte_state;
     //assign debug_mmu_pf_pte_o   = sv32_pte;
 
 endmodule
