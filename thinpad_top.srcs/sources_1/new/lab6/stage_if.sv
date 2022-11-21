@@ -2,6 +2,19 @@
 `define BUBBLE_INST_PC 32'h0000_0000
 
 
+module adder4 #(
+    parameter ADDR_WIDTH = 32
+) (
+    input wire [ADDR_WIDTH-1:0] data_i,
+    output wire [ADDR_WIDTH-1:0] data_plus4_o
+);
+
+    assign data_plus4_o = data_i + 4;
+
+endmodule
+
+
+
 module if_pc_reg #(    
     parameter ADDR_WIDTH = 32,
     parameter PC_INIT = 32'h8000_0000
@@ -39,17 +52,6 @@ module if_next_pc_mux (
     assign next_pc_o = wb_prev_exception_i ? pc_tvec_i : 
                               do_branch_i  ? pc_branch_target_i
                                            : pc_plus4_i;
-
-endmodule
-
-module adder4 #(
-    parameter ADDR_WIDTH = 32
-) (
-    input wire [ADDR_WIDTH-1:0] data_i,
-    output wire [ADDR_WIDTH-1:0] data_plus4_o
-);
-
-    assign data_plus4_o = data_i + 4;
 
 endmodule
 

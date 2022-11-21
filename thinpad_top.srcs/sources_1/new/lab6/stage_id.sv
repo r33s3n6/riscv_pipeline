@@ -387,7 +387,7 @@ module id_instruction_decoder (
                 end else if (funct7 == 7'b0001001) begin // sfence.vma
                     if (rd == 5'b0) begin
                         if (mode >= S_MODE) begin
-                            invalid_inst_o = 1'b0; // TODO: implement sfence.vma (after we have no tlb)
+                            invalid_inst_o = 1'b0;
                         end
                     end
                 end

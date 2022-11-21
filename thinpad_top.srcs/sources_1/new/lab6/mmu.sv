@@ -177,7 +177,6 @@ module mmu_sv32(
     satp_mode_t satp_mode;
     assign satp_mode = satp_mode_t'(satp_i[31]);
 
-    
 
     logic sv32_enable;
     assign sv32_enable = !(satp_mode == BARE | mode_i == M_MODE);
@@ -221,11 +220,19 @@ module mmu_sv32(
         IDLE,
         FETCH_PTE,
         MEM_OPERATION,
-        DONE
+        REPORT_PF
 
     } sv32_state_t;
-    sv32_state_t state;
+    sv32_state_t state, state_next;
 
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            state <= IDLE;
+        end else begin
+            state <= state_next;
+        end
+    end
+    
     // sv32 parameters
     logic [ 9:0] sv32_vpn [0:1];
     logic [19:0] sv32_all_vpn;
@@ -245,7 +252,8 @@ module mmu_sv32(
     assign sv32_request_from_master = sv32_enable & wbs_cyc_i & wbs_stb_i;
 
     // Note: dangerous
-    assign sv32_response_from_slave  = sv32_enable & wbm_cyc_o & wbm_stb_o & wbm_ack_i;
+    // assign sv32_response_from_slave  = sv32_enable & wbm_cyc_o & wbm_stb_o & wbm_ack_i;
+    assign sv32_response_from_slave  = sv32_enable & wbm_ack_i;
 
 
     // tlb signals
@@ -271,67 +279,105 @@ module mmu_sv32(
         .perm_o         (sv32_tlb_perm_o),
         .write_enable_i (sv32_tlb_write_enable)
     );
+    logic  sv32_tlb_hit;
+    assign sv32_tlb_hit =  debug_tlb_enable_i & sv32_tlb_hit_o;
 
-    // TODO: debug
-    logic sv32_tlb_hit;
-    assign sv32_tlb_hit = debug_tlb_enable_i & sv32_tlb_hit_o & sv32_tlb_enable;
-
+    
+    // buffer wbs result
     logic [31:0] sv32_sram_data;
-    assign sv32_sram_data = wbm_dat_i;
+    simple_buffer sv32_sram_buffer(
+        .clk_i          (clk_i),
+        .rst_i          (rst_i),
+        .data_i         (wbm_dat_i),
+        .data_o         (sv32_sram_data),
+        .write_enable_i (sv32_response_from_slave ) // TODO: & ~sv32_wbm_we_o
+    );
+
+
+
     always_comb begin
         sv32_tlb_vpn    = sv32_all_vpn;
         sv32_tlb_ppn_i  = sv32_sram_data[`PTE_PPN];
         sv32_tlb_perm_i = sv32_sram_data[7:0];
         sv32_tlb_enable = (state == IDLE) & sv32_request_from_master;
     end
+
+
+
     // walk status
     logic [31:0] sv32_pt;
     logic [ 1:0] sv32_level;
 
-
-
-
-    logic [31:0] sv32_mem_addr;
-
     // sv32_wbm_* signals
-    always_comb begin
-        // default
-        sv32_wbm_cyc_o =  1'b0;
-        sv32_wbm_stb_o =  1'b0;
-        sv32_wbm_adr_o = 32'b0;
-        sv32_wbm_dat_o = 32'b0;
-        sv32_wbm_sel_o =  4'b0;
-        sv32_wbm_we_o  =  1'b0;
 
-        case (state)
-            IDLE: begin
+    logic        sv32_wbm_cyc_buf;
+    logic        sv32_wbm_stb_buf;
+    logic [31:0] sv32_wbm_adr_buf;
+    logic [31:0] sv32_wbm_dat_buf;
+    logic [ 3:0] sv32_wbm_sel_buf;
+    logic        sv32_wbm_we_buf;
 
-            end
-            FETCH_PTE: begin
+    logic [31:0] sv32_pt_buf;   
+    logic [ 1:0] sv32_level_buf;
 
-                sv32_wbm_cyc_o = 1'b1;
-                sv32_wbm_stb_o = 1'b1;
-                sv32_wbm_adr_o = sv32_pt + sv32_vpn[sv32_level] * `PTESIZE;
-                sv32_wbm_dat_o = 32'b0;
-                sv32_wbm_sel_o = 4'b1111;
-                sv32_wbm_we_o  = 1'b0;
-            end
-            MEM_OPERATION: begin
-                sv32_wbm_cyc_o = 1'b1;
-                sv32_wbm_stb_o = 1'b1;
-                sv32_wbm_adr_o = sv32_mem_addr;
-                sv32_wbm_dat_o = wbs_dat_i;
-                sv32_wbm_sel_o = wbs_sel_i;
-                sv32_wbm_we_o  = wbs_we_i;
-            end
+    logic        sv32_wbm_cyc_next;
+    logic        sv32_wbm_stb_next;
+    logic [31:0] sv32_wbm_adr_next;
+    logic [31:0] sv32_wbm_dat_next;
+    logic [ 3:0] sv32_wbm_sel_next;
+    logic        sv32_wbm_we_next;
 
-            DONE: begin
+    logic [31:0] sv32_pt_next;   
+    logic [ 1:0] sv32_level_next;
+
+    logic        sv32_wbm_forward;
 
 
-            end
-        endcase
+    // if we at state idle, we can immediately start new request by forwarding
+    assign sv32_wbm_cyc_o = sv32_wbm_forward ? sv32_wbm_cyc_next : sv32_wbm_cyc_buf;
+    assign sv32_wbm_stb_o = sv32_wbm_forward ? sv32_wbm_stb_next : sv32_wbm_stb_buf;
+    assign sv32_wbm_adr_o = sv32_wbm_forward ? sv32_wbm_adr_next : sv32_wbm_adr_buf;
+    assign sv32_wbm_dat_o = sv32_wbm_forward ? sv32_wbm_dat_next : sv32_wbm_dat_buf;
+    assign sv32_wbm_sel_o = sv32_wbm_forward ? sv32_wbm_sel_next : sv32_wbm_sel_buf;
+    assign sv32_wbm_we_o  = sv32_wbm_forward ? sv32_wbm_we_next  : sv32_wbm_we_buf;
+
+    assign sv32_pt        = sv32_wbm_forward ? sv32_pt_next      : sv32_pt_buf;
+    assign sv32_level     = sv32_wbm_forward ? sv32_level_next   : sv32_level_buf;
+
+    
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            sv32_wbm_cyc_buf <= 1'b0;
+            sv32_wbm_stb_buf <= 1'b0;
+            sv32_wbm_adr_buf <= 32'h0;
+            sv32_wbm_dat_buf <= 32'h0;
+            sv32_wbm_sel_buf <= 4'h0;
+            sv32_wbm_we_buf  <= 1'b0;
+
+            sv32_pt_buf      <= 32'h0;
+            sv32_level_buf   <= 0;
+        end else begin
+
+            sv32_wbm_cyc_buf <= sv32_wbm_cyc_next;
+            sv32_wbm_stb_buf <= sv32_wbm_stb_next;
+            sv32_wbm_adr_buf <= sv32_wbm_adr_next;
+            sv32_wbm_dat_buf <= sv32_wbm_dat_next;
+            sv32_wbm_sel_buf <= sv32_wbm_sel_next;
+            sv32_wbm_we_buf  <= sv32_wbm_we_next;
+
+            sv32_pt_buf      <= sv32_pt_next;
+            sv32_level_buf   <= sv32_level_next;
+
+        end
     end
 
+
+    logic [31:0] sv32_pte;
+    assign sv32_pte = sv32_tlb_hit ? {sv32_tlb_ppn_o, 2'b00, sv32_tlb_perm_o} : sv32_sram_data;
+
+    // for permission check
+    logic [7:0] sv32_pte_perm;
+    assign sv32_pte_perm = sv32_pte[7:0];
 
     typedef enum logic [1:0] {
         OK,  // permission check ok
@@ -340,10 +386,6 @@ module mmu_sv32(
     } sv32_pte_state_t;
 
     sv32_pte_state_t sv32_pte_state;
-
-    logic [7:0] sv32_pte_perm;
-    assign sv32_pte_perm = sv32_tlb_hit ? sv32_tlb_perm_o : wbm_dat_i[7:0];
-
 
     logic [3:0] debug_sv32_pte_state_cause;
 
@@ -388,128 +430,152 @@ module mmu_sv32(
         end
     end
 
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            state <= IDLE;
-            page_fault_o <= 0;
-            sv32_mem_addr <= 32'b0;
+    // as slave
+    assign sv32_wbs_dat_o = sv32_sram_data;
 
-
-        end else begin
-
-            case (state)
-                IDLE: begin
-                    debug_mmu_pf_pte_o <= 32'hffffffff;
-
-                    if (wbs_cyc_i && wbs_stb_i && sv32_enable) begin
-                        if (sv32_tlb_hit) begin
-                            if (sv32_pte_state == OK) begin
-                                state <= MEM_OPERATION;
-                                sv32_mem_addr <= {sv32_tlb_ppn_o, wbs_adr_i[11:0]};
-                            end else begin
-                                state <= DONE;
-                                page_fault_o <= 1;
-                                debug_mmu_pf_pte_o <= {sv32_tlb_ppn_o, 2'b00, sv32_pte_perm};
-                            end
-                        end else begin
-                            state      <= FETCH_PTE;
-                            sv32_pt    <= satp_i[21:0] * `PAGESIZE;
-                            sv32_level <= `LEVELS-1;
-                        end
-                    end
-                end
-                FETCH_PTE: begin
-                    if (wbm_ack_i) begin
-                        // TODO: not check misaligned superpage
-                        // TODO: not check A/D bits
-                        if (wbm_dat_i[`PTE_V] == 1'b0 | (~wbm_dat_i[`PTE_R] & wbm_dat_i[`PTE_W])) begin
-                            state        <= DONE;
-                            page_fault_o <= 1'b1;
-
-                            debug_mmu_pf_pte_o <= wbm_dat_i;
-                        end else begin
-                            if (sv32_pte_state == OK) begin
-                                state                 <= MEM_OPERATION;
-                                sv32_mem_addr         <= {wbm_dat_i[`PTE_PPN] , wbs_adr_i[11:0]};
-
-                            end else if (sv32_pte_state == NEXT) begin
-                                state      <= FETCH_PTE;
-                                sv32_level <= sv32_level - 1;
-                                sv32_pt    <= wbm_dat_i[`PTE_PPN] * `PAGESIZE;
-                            end else begin // PF
-                                state        <= DONE;
-                                page_fault_o <= 1'b1;
-
-                                debug_mmu_pf_pte_o <= wbm_dat_i;
-                            end
-
-                        end
-                    end
-                end
-
-                MEM_OPERATION: begin
-                    if (wbm_ack_i) begin
-                        sv32_wbs_dat_o <= wbm_dat_i;
-                        state          <= DONE;
-                    end
-                end
-                DONE: begin
-                    page_fault_o <= 1'b0;
-                    state <= IDLE;
-                end
-            endcase
-        end
-    end
-
+    // state_next, page_fault
     always_comb begin
 
+        page_fault_o          = 1'b0;
         sv32_tlb_write_enable = 1'b0;
+        state_next            = state;
+        sv32_wbs_ack_o        = 1'b0;
+
         case (state)
             IDLE: begin
+                if (sv32_request_from_master) begin // new request
+                    if(sv32_tlb_hit) begin
+                        if (sv32_pte_state == OK) begin
+                            state_next = MEM_OPERATION; 
+                        end else if (sv32_pte_state == PF) begin
+                            state_next = REPORT_PF;
+                        end
+                    end else begin
+                        state_next = FETCH_PTE;
+                    end  
 
+                end
             end
             FETCH_PTE: begin
                 if (wbm_ack_i) begin
-                    // TODO: not check misaligned superpage
-                    // TODO: not check A/D bits
-                    if (wbm_dat_i[`PTE_V] == 1'b0 | (~wbm_dat_i[`PTE_R] & wbm_dat_i[`PTE_W])) begin
-
-                    end else begin
-                        if (sv32_pte_state == OK) begin
-                            sv32_tlb_write_enable = 1'b1;
-                        end else if (sv32_pte_state == NEXT) begin
-
-                        end else begin // PF
-
-                        end
-
+                    if(sv32_pte_state == NEXT) begin
+                        state_next = FETCH_PTE;
+                    end else if (sv32_pte_state == OK) begin
+                        sv32_tlb_write_enable = 1'b1; // write tlb
+                        state_next = MEM_OPERATION;
+                    end else if (sv32_pte_state == PF) begin
+                        state_next = REPORT_PF;
+                        // sv32_wbs_ack_o = 1'b1;
+                        // page_fault_o = 1'b1;
                     end
                 end
             end
 
             MEM_OPERATION: begin
+                if (wbm_ack_i) begin
+                    state_next = IDLE;
+                    sv32_wbs_ack_o = 1'b1;
+                end
+            end
+
+            REPORT_PF: begin
+                state_next = IDLE;
+                sv32_wbs_ack_o = 1'b1;
+                page_fault_o = 1'b1;
 
             end
-            DONE: begin
 
-            end
         endcase
     end
 
 
     always_comb begin
-        if (state == DONE) begin
-            sv32_wbs_ack_o = 1'b1;
+        sv32_pt_next    = sv32_pt_buf;
+        sv32_level_next = sv32_level_buf;
+
+        case (state)
+            IDLE: begin
+                if (sv32_request_from_master) begin // new request
+                    if(!sv32_tlb_hit) begin
+                        sv32_pt_next    = satp_i[21:0] * `PAGESIZE;
+                        sv32_level_next = `LEVELS-1;
+                    end
+                end
+            end
+            FETCH_PTE: begin
+                if (wbm_ack_i) begin
+                    if(sv32_pte_state == NEXT) begin
+                        sv32_pt_next    = wbm_dat_i[`PTE_PPN] * `PAGESIZE;
+                        sv32_level_next = sv32_level - 1;
+                    end 
+                end
+            end
+        endcase
+
+    end
+
+
+
+
+    // sv32_wbm_forward
+    always_comb begin
+        if (state == IDLE & sv32_request_from_master) begin
+            sv32_wbm_forward = 1'b0; // TODO: we are not forward right now because it cause logic loop
         end else begin
-            sv32_wbs_ack_o = 1'b0;
+            sv32_wbm_forward = 1'b0;
         end
+    end
+
+
+
+    // wbm signals
+    always_comb begin
+        case (state_next)
+            IDLE: begin
+                sv32_wbm_cyc_next =  1'b0;
+                sv32_wbm_stb_next =  1'b0;
+
+                sv32_wbm_adr_next = 32'b0;
+                sv32_wbm_dat_next = 32'b0;
+                sv32_wbm_sel_next =  4'b0;
+                sv32_wbm_we_next  =  1'b0;
+            end
+            FETCH_PTE: begin
+                sv32_wbm_cyc_next = 1'b1;
+                sv32_wbm_stb_next = 1'b1;
+                sv32_wbm_adr_next = sv32_pt_next + sv32_vpn[sv32_level_next] * `PTESIZE;
+                sv32_wbm_dat_next = 32'b0;
+                sv32_wbm_sel_next = 4'b1111;
+                sv32_wbm_we_next  = 1'b0;
+            end
+            MEM_OPERATION: begin
+                sv32_wbm_cyc_next = 1'b1;
+                sv32_wbm_stb_next = 1'b1;
+                sv32_wbm_adr_next = {sv32_pte[`PTE_PPN] , wbs_adr_i[11:0]};
+                sv32_wbm_dat_next = wbs_dat_i;
+                sv32_wbm_sel_next = wbs_sel_i;
+                sv32_wbm_we_next  = wbs_we_i;
+            end
+            REPORT_PF: begin
+                sv32_wbm_cyc_next = 1'b0;
+                sv32_wbm_stb_next = 1'b0;
+                sv32_wbm_adr_next = 32'b0;
+                sv32_wbm_dat_next = 32'b0;
+                sv32_wbm_sel_next = 4'b0;
+                sv32_wbm_we_next  = 1'b0;
+            end
+
+
+        endcase
+
     end
 
     assign debug_mmu_state_o    = state;
     assign debug_mmu_pf_cause_o = debug_sv32_pte_state_cause;
-    assign debug_paddr_o        = sv32_mem_addr;
+    assign debug_mmu_pf_pte_o   = sv32_pte;
+
+    assign debug_paddr_o        = {sv32_pte[`PTE_PPN] , wbs_adr_i[11:0]};
     assign debug_tlb_hit_o      = sv32_tlb_hit;
     assign debug_pte_state_o    = sv32_pte_state;
-    //assign debug_mmu_pf_pte_o   = sv32_pte;
 
 endmodule
