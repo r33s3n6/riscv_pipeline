@@ -1,3 +1,4 @@
+// Note: you must ensure that wb_* signals input delay is not too long
 module sram_controller #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 32,
@@ -9,18 +10,18 @@ module sram_controller #(
     localparam SRAM_BYTE_WIDTH = $clog2(SRAM_BYTES)
 ) (
     // clk and reset
-    input wire clk_i,
-    input wire rst_i,
+    input  wire clk_i,
+    input  wire rst_i,
 
     // wishbone slave interface
-    input wire wb_cyc_i,
-    input wire wb_stb_i,
+    input  wire wb_cyc_i,
+    input  wire wb_stb_i,
     output wire wb_ack_o,
-    input wire [ADDR_WIDTH-1:0] wb_adr_i,
-    input wire [DATA_WIDTH-1:0] wb_dat_i,
+    input  wire [ADDR_WIDTH-1:0] wb_adr_i,
+    input  wire [DATA_WIDTH-1:0] wb_dat_i,
     output wire [DATA_WIDTH-1:0] wb_dat_o,
-    input wire [DATA_WIDTH/8-1:0] wb_sel_i,
-    input wire wb_we_i,
+    input  wire [DATA_WIDTH/8-1:0] wb_sel_i,
+    input  wire wb_we_i,
 
     // sram interface
     output wire [SRAM_ADDR_WIDTH-1:0] sram_addr,

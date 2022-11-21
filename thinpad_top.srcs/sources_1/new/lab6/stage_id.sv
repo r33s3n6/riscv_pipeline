@@ -445,6 +445,13 @@ module id_instruction_decoder (
 
 endmodule
 
+// module id_control_flow_change_detector(
+//     input  wire [31:0] inst_i,
+// 
+//     output wire        change_o
+// );
+// endmodule
+
 module id_register_file(
     input  wire         clk_i,
     input  wire         rst_i,
@@ -543,24 +550,23 @@ module id_csr_file(
 
     assign rdata_a_o = forwarded_reg[raddr_a_i];
 
-    //assign sstatus_o = forwarded_reg[`CSR_ID_SSTATUS];
-    //assign sie_o     = forwarded_reg[`CSR_ID_SIE];
-    assign stvec_o   = forwarded_reg[`CSR_ID_STVEC];
-    assign sepc_o    = forwarded_reg[`CSR_ID_SEPC];
-    //assign sip_o     = forwarded_reg[`CSR_ID_SIP];
-    assign satp_o    = forwarded_reg[`CSR_ID_SATP];
-    assign scause_o  = forwarded_reg[`CSR_ID_SCAUSE];
-    assign stval_o   = forwarded_reg[`CSR_ID_STVAL];
+    // WARNING: DO NOT FORWARD, BECAUSE IT WILL CAUSE LONG LOGIC DELAY
+    assign stvec_o   = reg_file[`CSR_ID_STVEC];
+    assign sepc_o    = reg_file[`CSR_ID_SEPC];
 
-    assign mstatus_o = forwarded_reg[`CSR_ID_MSTATUS];
-    assign medeleg_o = forwarded_reg[`CSR_ID_MEDELEG];
-    assign mideleg_o = forwarded_reg[`CSR_ID_MIDELEG];
-    assign mie_o     = forwarded_reg[`CSR_ID_MIE];
-    assign mtvec_o   = forwarded_reg[`CSR_ID_MTVEC];
-    assign mepc_o    = forwarded_reg[`CSR_ID_MEPC];
-    assign mip_o     = forwarded_reg[`CSR_ID_MIP];
-    assign mcause_o  = forwarded_reg[`CSR_ID_MCAUSE];
-    assign mtval_o   = forwarded_reg[`CSR_ID_MTVAL];
+    assign satp_o    = reg_file[`CSR_ID_SATP];
+    assign scause_o  = reg_file[`CSR_ID_SCAUSE];
+    assign stval_o   = reg_file[`CSR_ID_STVAL];
+
+    assign mstatus_o = reg_file[`CSR_ID_MSTATUS];
+    assign medeleg_o = reg_file[`CSR_ID_MEDELEG];
+    assign mideleg_o = reg_file[`CSR_ID_MIDELEG];
+    assign mie_o     = reg_file[`CSR_ID_MIE];
+    assign mtvec_o   = reg_file[`CSR_ID_MTVEC];
+    assign mepc_o    = reg_file[`CSR_ID_MEPC];
+    assign mip_o     = reg_file[`CSR_ID_MIP];
+    assign mcause_o  = reg_file[`CSR_ID_MCAUSE];
+    assign mtval_o   = reg_file[`CSR_ID_MTVAL];
 
     assign old_mstatus_o = reg_file[`CSR_ID_MSTATUS];
 
@@ -906,6 +912,8 @@ module id_stall_controller (
 
 endmodule
 
+
+// TODO: those bubble logic is not that clear and optimized for delay
 module id_bubble_controller (
     input wire wait_reg_i,
 

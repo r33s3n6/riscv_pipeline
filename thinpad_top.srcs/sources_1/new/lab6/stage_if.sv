@@ -56,50 +56,72 @@ module if_next_pc_mux (
 endmodule
 
 
+module if_pc_controller (
+    // pc_valid related signals`
 
-module if_pc_controller #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32
-
-) (
+    // if last instruction was a branch, then we need to
+    // wait for branch result, because next instruction may
+    // be invalid or pagefault, so pc is not valid
     input  wire         branch_last_i,
+
+    // if exe-stage report branch not taken, then we can fetch 
+    // next instruction, which is pc_now, so pc is valid
+    // if branch taken, pc_next is valid, and at this time
+    // pc is still invalid
     input  wire         branch_take_i,
-    input  wire         if_regs_stall_i,
-  
+
+    // if exception occurs, pc is not valid, 
+    // note that we implement sfence.vma as exception, 
+    // so when tlb updates, we are not doing any request
+    // we implement mret/sret as exceptions too, therefore 
+    // instructions that follows mret/sret will not be fetched,
+    // causing no problems
     input  wire         id_next_exception_i,
     input  wire         exe_prev_exception_i,
     input  wire         mem_prev_exception_i,
     input  wire         wb_prev_exception_i,
+
+    // if last instruction stalls, we need to keep the same pc
+    input  wire         if_regs_stall_i,
   
-    input  wire         tlb_clear_i,
-  
+    // if instruction fetch not complete, we stall pc until
+    // it is complete
     input  wire  [31:0] inst_pc_i,
     input  wire  [31:0] inst_addr_i,
+
+    // Note: pc is not definitely stall when pc is not valid,
+    // because we may update pc to valid value this cycle
  
     output logic        pc_stall_o,
     output wire         pc_valid_o
 
-);
+);  
+    // not including wb_prev_exception_i
+    logic exception_pending;
+    assign exception_pending = id_next_exception_i 
+                             | exe_prev_exception_i 
+                             | mem_prev_exception_i;
+
+
     assign pc_valid_o = !(  branch_last_i 
                         |   branch_take_i
-                        |   id_next_exception_i
-                        |   exe_prev_exception_i
-                        |   mem_prev_exception_i // TODO: changed by timing loop
+                        |   exception_pending
                         |   wb_prev_exception_i
-                        |   tlb_clear_i
                         );
     
-
+    // TODO: this logic may change if branch prediction is implemented
     always_comb begin
         if (wb_prev_exception_i) begin
+            pc_stall_o = 1'b0;
+        end else if (branch_take_i) begin // when branch taken, if_regs is bubble, so it 
             pc_stall_o = 1'b0;
         end else if (if_regs_stall_i) begin
             pc_stall_o = 1'b1;
         end else if (branch_last_i) begin
             pc_stall_o = 1'b1;
-        end else if (branch_take_i) begin
-            pc_stall_o = 1'b0;
         end else if (inst_pc_i != inst_addr_i) begin
+            pc_stall_o = 1'b1;
+        end else if (exception_pending) begin
             pc_stall_o = 1'b1;
         end else begin
             pc_stall_o = 1'b0;
@@ -115,18 +137,18 @@ module if_im_controller #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32
 ) (
-    input wire clk_i,
-    input wire rst_i,
+    input  wire                   clk_i,
+    input  wire                   rst_i,
 
     // control signals
-    input wire do_new_req_i,
-    input wire [ADDR_WIDTH-1:0] addr_i,
-    input wire [DATA_WIDTH-1:0] satp_i,
-    input wire [           1:0] mode_i,
-    input wire                  sum_i,
-
-    output wire [ADDR_WIDTH-1:0] data_addr_o,
-    output wire [DATA_WIDTH-1:0] data_o,
+    input  wire                   do_new_req_i,
+    input  wire  [ADDR_WIDTH-1:0] addr_i,
+    input  wire  [DATA_WIDTH-1:0] satp_i,
+    input  wire  [           1:0] mode_i,
+    input  wire                   sum_i,
+ 
+    output wire  [ADDR_WIDTH-1:0] data_addr_o,
+    output wire  [DATA_WIDTH-1:0] data_o,
 
 
 
