@@ -1317,7 +1317,7 @@ module mmu_physical_memory_interface #(
                 wb_we_o_next  = 1'b1; // write
             end
             default: begin
-                wb_forward = 1'b1;
+                wb_forward = 1'b0;
 
                 wb_cyc_o_next = 1'bx;
                 wb_stb_o_next = 1'bx;
