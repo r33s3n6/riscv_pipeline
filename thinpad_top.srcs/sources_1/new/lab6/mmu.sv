@@ -900,10 +900,6 @@ module mmu_physical_memory_interface #(
                 do_ack = 1'b0;
                 serve_ready = 1'b1;
             end
-            default: begin
-                do_ack = 1'bx;
-                serve_ready = 1'bx;
-            end
         endcase
 
     end
@@ -1187,7 +1183,7 @@ module mmu_physical_memory_interface #(
         end else begin
             case (state) 
                 // serve ready state
-                _IDLE, CACHE_HIT, BUS_DONE, BUS_DONE_READ, BUS_DONE_SECOND, CACHE_FLUSH_DONE: begin
+                IDLE, CACHE_HIT, BUS_DONE, BUS_DONE_READ, BUS_DONE_SECOND, CACHE_FLUSH_DONE: begin
                     if (serve) begin
                         if (flush_i) begin
                             raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
@@ -1228,9 +1224,6 @@ module mmu_physical_memory_interface #(
                 end
                 CACHE_FLUSH_BUS_DONE: begin
                     raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
-                end
-                default: begin
-                    raw_state <= _IDLE;
                 end
             endcase
         end
@@ -1286,6 +1279,14 @@ module mmu_physical_memory_interface #(
                     wb_we_o_next  = 1'b1; // write
                 end
             end
+            BUS_REQUEST_SECOND: begin
+                wb_cyc_o_next = 1'b1;
+                wb_stb_o_next = 1'b1;
+                wb_adr_o_next = cache_addr_out;
+                wb_dat_o_next = cache_data_out;
+                wb_sel_o_next = 4'hf; // cache miss, write back all
+                wb_we_o_next  = 1'b1; // write
+            end
             BUS_WAIT, BUS_WAIT_SECOND, CACHE_FLUSH_BUS_WAIT: begin // keep values
                 wb_forward = 1'b0;
 
@@ -1315,16 +1316,6 @@ module mmu_physical_memory_interface #(
                 wb_dat_o_next = cache_data_out;
                 wb_sel_o_next = 4'hf; // flush all
                 wb_we_o_next  = 1'b1; // write
-            end
-            default: begin
-                wb_forward = 1'b0;
-
-                wb_cyc_o_next = 1'bx;
-                wb_stb_o_next = 1'bx;
-                wb_adr_o_next = {32{1'bx}};
-                wb_dat_o_next = {32{1'bx}};
-                wb_sel_o_next = {4{1'bx}};
-                wb_we_o_next  = 1'bx;
             end
 
         endcase
