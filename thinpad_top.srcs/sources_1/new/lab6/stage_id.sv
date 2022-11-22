@@ -445,12 +445,51 @@ module id_instruction_decoder (
 
 endmodule
 
-// module id_control_flow_change_detector(
-//     input  wire [31:0] inst_i,
-// 
-//     output wire        change_o
-// );
-// endmodule
+module id_control_flow_change_detector(
+    input  wire [31:0] inst_i,
+
+    output wire        change_o
+);
+
+    logic [ 2:0] funct3;
+    logic [ 6:0] funct7;
+    logic [ 6:0] opcode;
+    logic [ 4:0] rd;
+    logic [ 4:0] rs1;
+    logic [ 4:0] rs2;
+
+    assign funct3 = inst_i[14:12];
+    assign funct7 = inst_i[31:25];
+    assign opcode = inst_i[6:0];
+    assign rd     = inst_i[11:7];
+    assign rs1    = inst_i[19:15];
+    assign rs2    = inst_i[24:20];
+
+    logic ecall;
+    logic ebreak;
+    logic sret;
+    logic mret;
+    logic sfence_vma;
+
+    assign ecall     = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b0);
+    assign ebreak    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1);
+    assign sret      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
+    assign mret      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
+    assign sfence_vma = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0);
+
+
+    logic jal;
+    logic jalr;
+    logic branch;
+
+    assign jal     = (opcode == 7'b1101111);
+    assign jalr    = (opcode == 7'b1100111 && funct3 == 3'b0);
+    assign branch  = (opcode == 7'b1100011);
+
+
+    assign change_o = ecall || ebreak || sret || mret || sfence_vma || jal || jalr || branch;
+
+endmodule
 
 module id_register_file(
     input  wire         clk_i,
