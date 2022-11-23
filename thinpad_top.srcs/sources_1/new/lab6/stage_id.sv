@@ -487,7 +487,8 @@ module id_control_flow_change_detector(
     assign branch  = (opcode == 7'b1100011);
 
 
-    assign change_o = ecall || ebreak || sret || mret || sfence_vma || jal || jalr || branch;
+    //assign change_o = ecall || ebreak || sret || mret || sfence_vma || jal || jalr || branch;
+    assign change_o = ecall || ebreak || sret || mret || sfence_vma;
 
 endmodule
 

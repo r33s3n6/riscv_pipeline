@@ -631,13 +631,419 @@ module mmu_vm_status_regs(
 
 endmodule
 
+// we only use 21 bit physical address
+//     9        16          5       2
+// | xxxxxx |   tag   |   index   | 00 |
+// 32      23         7           2    0
+
+// cache entry
+//     1       1      16    32
+// | valid | dirty | tag | data |
+// 50     49      48    32      0
 
 // you MUST provide valid signals BEFORE posedge clk_i
 // and you can get valid data AFTER posedge clk_i
 module mmu_memory_cache #(
-    parameter CACHE_DATA_SIZE = 32, // bytes
-    parameter CACHE_SETS      = 16,
-    parameter CACHE_WAYS      = 4,
+    parameter CACHE_DATA_SIZE = 4, // bytes
+    parameter CACHE_SETS      = 32,
+    parameter CACHE_WAYS      = 8,
+    parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS),
+    parameter CACHE_WAY_WIDTH = $clog2(CACHE_WAYS)
+)
+(
+    input  wire         clk_i,
+    input  wire         rst_i,
+
+    input  wire         flush_i,
+    input  wire  [CACHE_SET_WIDTH-1:0] flush_set_i,
+    // output wire         flush_hit_o,
+
+    input  wire         enable_i,
+    input  wire         write_enable_i,
+    input  wire         dirty_i,
+
+    input  wire  [31:0] addr_i,
+    input  wire  [31:0] data_i,
+    input  wire  [ 3:0] data_sel_i,
+    
+    output logic [31:0] addr_o,
+    output logic [31:0] data_o,
+    output logic        hit_o,
+
+    output logic        victim_o // write back needed
+);  
+
+
+    logic [15:0] tag;
+    logic [ 4:0] index;
+    assign tag   = addr_i[22:7];
+    assign index = addr_i[6:2];
+
+    logic [15:0] tag_buf;
+    logic [ 4:0] index_buf;
+    
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            index_buf <= 5'b0;
+            tag_buf   <= 16'b0;
+        end else begin
+            index_buf <= index;
+            tag_buf   <= tag;
+        end
+    end
+
+    logic [31:0] data_i_buf;
+    logic [ 3:0] data_sel_i_buf;
+    logic dirty_i_buf;
+    //logic addr_i_buf;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            data_i_buf     <= 32'b0;
+            data_sel_i_buf <=  4'b0;
+            dirty_i_buf    <=  1'b0;
+            //addr_i_buf     <= 32'b0;
+        end else begin
+            data_i_buf     <= data_i;
+            data_sel_i_buf <= data_sel_i;
+            dirty_i_buf    <= dirty_i;
+            //addr_i_buf     <= addr_i;
+        end
+    end
+
+    logic [CACHE_WAY_WIDTH-1:0] victim_idx;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            victim_idx <= 0;
+        end else begin
+            victim_idx <= victim_idx + 1; // kind of random
+        end
+    end
+
+
+    logic         bram_write_enable;
+
+    logic [  4:0] bram_addr_write;
+    logic [ 31:0] bram_addr_read;
+
+    logic [399:0] bram_data_in;
+    logic [399:0] bram_data_out;
+    bram_400x32 bram(
+        .clka(clk_i),
+        .ena(1'b1),
+        .wea(bram_write_enable),
+        .addra(bram_addr_write),
+        .dina(bram_data_in),
+
+        .clkb(clk_i),
+        .enb(1'b1),
+        .addrb(bram_addr_read),
+        .doutb(bram_data_out)
+    );
+
+
+    logic [CACHE_WAYS-1:0] valid_arr_out;
+    logic [CACHE_WAYS-1:0] dirty_arr_out;
+    logic [          15:0] tag_arr_out   [0:CACHE_WAYS-1];
+    logic [          31:0] data_arr_out  [0:CACHE_WAYS-1];
+
+    logic [     CACHE_WAYS-1:0] cache_hit;
+
+    logic [CACHE_WAYS-1:0] valid_arr_in;
+    logic [CACHE_WAYS-1:0] dirty_arr_in; 
+    logic [          15:0] tag_arr_in   [0:CACHE_WAYS-1];
+    logic [          31:0] data_arr_in  [0:CACHE_WAYS-1];
+    
+
+    // assign those arr
+    generate
+        for (genvar i = 0; i < CACHE_WAYS; i = i + 1) begin : gen_arr_out_wires
+            assign valid_arr_out[i] = bram_data_out[50*i+49];
+            assign dirty_arr_out[i] = bram_data_out[50*i+48];
+            assign tag_arr_out[i]   = bram_data_out[50*i+47:50*i+32];
+            assign data_arr_out[i]  = bram_data_out[50*i+31:50*i];
+            assign cache_hit[i]     = (tag_arr_out[i] == tag_buf) & valid_arr_out[i];
+        end
+    endgenerate
+
+    generate
+        for (genvar i = 0; i < CACHE_WAYS; i = i + 1) begin : gen_arr_in_wires
+            assign bram_data_in[50*i+49]         = valid_arr_in[i]; 
+            assign bram_data_in[50*i+48]         = dirty_arr_in[i]; 
+            assign bram_data_in[50*i+47:50*i+32] =   tag_arr_in[i];  
+            assign bram_data_in[50*i+31:50*i]    =  data_arr_in[i]; 
+        end
+    endgenerate
+
+    logic                       clean_available;
+    logic [CACHE_WAY_WIDTH-1:0] clean_index;
+
+    logic                       hit;
+    logic [CACHE_WAY_WIDTH-1:0] hit_index;
+
+    // assign clean_available and clean_index
+    always_comb begin
+        clean_available = 1'b0;
+        clean_index     = {CACHE_WAY_WIDTH{1'b0}};
+        for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
+            if (~(valid_arr_out[i] & dirty_arr_out[i])) begin
+                clean_available = 1'b1;
+                clean_index     = i;
+                break;
+            end
+        end
+    end
+
+    // assign hit and hit_index
+    always_comb begin
+        hit       = 1'b0;
+        hit_index = {CACHE_WAY_WIDTH{1'b0}};
+        for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
+            if (cache_hit[i]) begin
+                hit       = 1'b1;
+                hit_index = i;
+                break;
+            end
+        end
+    end
+
+
+
+    // select bit mask
+    logic [31:0] sel_bit_mask;
+
+    // generate bit mask
+    generate 
+        for (genvar i = 0; i < 32; i = i + 8) begin : gen_sel_bit_mask
+            assign sel_bit_mask[i+7:i] = {8{data_sel_i_buf[i/8]}};
+        end
+    endgenerate
+
+
+    // cache hit logic
+
+
+    typedef enum logic [2:0] {
+        ST_IDLE,
+        ST_CACHE_GOT_READ,
+        ST_CACHE_GOT_WRITE,
+        ST_FLUSH_IDLE,
+        ST_FLUSH_GOT
+    } state_t;
+
+    state_t state, state_next;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            state <= ST_IDLE;
+        end else begin
+            state <= state_next;
+        end
+    end
+
+    // logic [31:0] data_write;
+    // assign data_write = (data_i & sel_bit_mask) | (cache_data & ~sel_bit_mask);
+
+    // cache flush logic
+    // logic [     CACHE_WAYS-1:0] dirty_way; // set after entering flush state
+    logic [  CACHE_WAY_WIDTH:0] num_dirty_ways;
+    logic [CACHE_WAY_WIDTH-1:0] dirty_way_index;
+
+    // assign num_dirty_ways and dirty_way
+    always_comb begin
+        num_dirty_ways = 0;
+        for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
+            if (dirty_arr_out[i]) begin
+                dirty_way_index = i;
+                num_dirty_ways = num_dirty_ways + 1;
+            end
+        end
+    end
+    
+
+
+    logic [CACHE_SET_WIDTH-1:0] flush_set_i_buf;
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            flush_set_i_buf <= 0;
+        end else begin
+            flush_set_i_buf <= flush_set_i;
+        end
+    end
+
+
+    always_comb begin
+        if (flush_i) begin
+            bram_addr_read = flush_set_i;
+        end else begin
+            bram_addr_read = index;
+        end
+    end
+
+
+    // bram_write_enable & hit
+    always_comb begin
+        hit_o             = 1'b0;
+        victim_o          = 1'b0;
+        addr_o            = 32'h0;
+        data_o            = 32'h0;
+        state_next        = state;
+
+        bram_write_enable = 1'b0;
+        bram_addr_write   = index_buf; // default write back last
+
+        valid_arr_in = valid_arr_out; 
+        dirty_arr_in = dirty_arr_out; 
+          tag_arr_in =   tag_arr_out; 
+         data_arr_in =  data_arr_out; 
+
+        
+
+
+        case (state) 
+            ST_FLUSH_GOT: begin // write back cache
+                if (num_dirty_ways > 0) begin
+                    hit_o  = 1'b1;
+                    addr_o = {9'b1_0000_0000, tag_arr_out[dirty_way_index], flush_set_i_buf , 2'b00 };
+                    data_o = data_arr_out[dirty_way_index];
+                    dirty_arr_in[dirty_way_index] = 1'b0;
+
+                    bram_write_enable = 1'b1;
+                    bram_addr_write   = flush_set_i_buf; // write back last set
+
+                    if (enable_i && flush_i) begin
+                        state_next = ST_FLUSH_GOT;
+                    end else begin
+                        state_next = ST_FLUSH_IDLE;
+                    end
+                end else begin // no write back
+                    if (flush_set_i_buf == CACHE_SETS-1) begin
+                        if (enable_i) begin // we can goto normal operation, // assert ~flush_i
+                            if (write_enable_i) begin
+                                state_next = ST_CACHE_GOT_WRITE;
+                            end else begin
+                                state_next = ST_CACHE_GOT_READ;
+                            end
+                        end else begin
+                            state_next = ST_IDLE;
+                        end
+                    end else begin
+                        if (enable_i && flush_i) begin
+                            state_next = ST_FLUSH_GOT;
+                        end else begin
+                            state_next = ST_FLUSH_IDLE;
+                        end
+                    end
+                end
+               
+            end
+            ST_FLUSH_IDLE: begin
+                if (enable_i && flush_i) begin
+                    state_next = ST_FLUSH_GOT;
+                end else begin
+                    state_next = ST_FLUSH_IDLE;
+                end
+            end
+            
+            ST_IDLE: begin
+                if (enable_i) begin
+                    if (flush_i) begin
+                        state_next = ST_FLUSH_GOT;
+                    end else if (write_enable_i) begin
+                        state_next = ST_CACHE_GOT_WRITE;
+                    end else begin
+                        state_next = ST_CACHE_GOT_READ;
+                    end
+                end else begin
+                    state_next = ST_IDLE;
+                end
+            end
+
+            ST_CACHE_GOT_READ: begin
+                // state logic
+                if (enable_i) begin
+                    if (flush_i) begin
+                        state_next = ST_FLUSH_GOT;
+                    end else if (write_enable_i) begin
+                        state_next = ST_CACHE_GOT_WRITE;
+                    end else begin
+                        state_next = ST_CACHE_GOT_READ;
+                    end
+                end else begin
+                    state_next = ST_IDLE;
+                end
+                // output logic
+                if (hit) begin
+                    hit_o = 1'b1;
+                    data_o = data_arr_out[hit_index];
+                end
+            end
+            ST_CACHE_GOT_WRITE: begin
+                // state logic
+                if (enable_i) begin
+                    if (flush_i) begin
+                        state_next = ST_FLUSH_GOT;
+                    end else if (write_enable_i) begin
+                        state_next = ST_CACHE_GOT_WRITE;
+                    end else begin
+                        state_next = ST_CACHE_GOT_READ;
+                    end
+                end else begin
+                    state_next = ST_IDLE;
+                end
+                // output logic
+                if (hit) begin
+                    hit_o = 1'b1;
+                    dirty_arr_in[hit_index] = dirty_i_buf; // actually it must be 1
+                    data_arr_in [hit_index] = (sel_bit_mask & data_i_buf) | (~sel_bit_mask & data_arr_out[hit_index]);
+                    tag_arr_in  [hit_index] = tag_buf;
+
+                    bram_addr_write = index_buf;
+                    bram_write_enable = 1'b1;
+                end else if (clean_available & (data_sel_i_buf == 4'b1111)) begin // we are valid, and there's room
+                    hit_o = 1'b1;
+                    valid_arr_in[clean_index] = 1'b1;
+                    dirty_arr_in[clean_index] = dirty_i_buf;
+                    data_arr_in [clean_index] = data_i_buf;
+                    tag_arr_in  [clean_index] = tag_buf;
+
+                    bram_addr_write = index_buf;
+                    bram_write_enable = 1'b1;
+
+                end else if (data_sel_i_buf != 4'b1111) begin // we are not valid
+                    hit_o = 1'b0; // TODO: we are not support write partial data when not directly hit
+                end else begin // not hit, we need to pick up a victim
+                    // assert not clean_available, so it is all dirty
+                    hit_o = 1'b1;
+                    
+                    valid_arr_in[victim_idx] = 1'b1;
+                    dirty_arr_in[victim_idx] = dirty_i_buf;
+                    tag_arr_in  [victim_idx] = tag_buf;
+                    data_arr_in [victim_idx] = data_i_buf;
+
+                    bram_addr_write = index_buf;
+                    bram_write_enable = 1'b1;
+
+                    // victim logic
+                    victim_o = 1'b1;
+                    addr_o = {9'b1_0000_0000, tag_arr_out[victim_idx], index_buf , 2'b00 };
+                    data_o = data_arr_out[victim_idx];
+
+                end
+            end
+        endcase
+    end
+
+
+endmodule
+
+// you MUST provide valid signals BEFORE posedge clk_i
+// and you can get valid data AFTER posedge clk_i
+module mmu_simple_memory_cache #(
+    parameter CACHE_DATA_SIZE = 4, // bytes
+    parameter CACHE_SETS      = 32,
+    parameter CACHE_WAYS      = 8,
     parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS) 
 )
 (
@@ -672,7 +1078,7 @@ module mmu_memory_cache #(
     logic        cache_valid;
     logic        cache_dirty;
 
-        // select bit mask
+    // select bit mask
     logic [31:0] sel_bit_mask;
 
     // generate bit mask
@@ -768,9 +1174,9 @@ endmodule
 // you MUST provide valid signals BEFORE posedge clk_i
 // and you can get valid data AFTER posedge clk_i
 module mmu_physical_memory_interface #(
-    parameter CACHE_DATA_SIZE = 32, // bytes
-    parameter CACHE_SETS      = 16,  
-    parameter CACHE_WAYS      = 4,
+    parameter CACHE_DATA_SIZE = 4, // bytes
+    parameter CACHE_SETS      = 32,  
+    parameter CACHE_WAYS      = 8,
     parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS) 
 )
 
@@ -830,7 +1236,7 @@ module mmu_physical_memory_interface #(
         BUS_WAIT,                   // bus wait or done   : (no ack) (no serve) wait for bus
         BUS_DONE_WRITE,             // bus wait or done   : (no ack) (serve)    no need to write back to cache (write miss) (acked before)
         BUS_DONE_READ,              // bus wait or done   : (ack)    (serve)    read miss ( no cache, so no write back )
-        BUS_DONE_READ_WRITE_BACK,   // bus wait or done   : (ack)    (no serve) write back to cache (read miss)
+        BUS_DONE_READ_WRITE_BACK,   // bus wait or done   : (ack)    (no serve) write back to cache (read miss) // TODO: we can serve actually
 
         BUS_VICTIM_REQUEST,         // bus victim or done : (no ack) (no serve) start bus request for victim
         BUS_NO_VICTIM,              // bus victim or done : (no ack) (serve)    no victim, serve
@@ -1043,7 +1449,7 @@ module mmu_physical_memory_interface #(
             cache_data_sel     = 4'b0;
 
             cache_flush        = 1'b1;
-            cache_flush_set = cache_flush_set_reg + 1;
+            cache_flush_set    = cache_flush_set_reg + 1;
             
 
         end else begin
@@ -1359,9 +1765,9 @@ endmodule
 // TODO: instrustion cache is now set as no flush, but we should invalidate it actually
 // you need provide address before posedge
 module mmu_virtual_memory_interface #(
-    parameter CACHE_DATA_SIZE = 32, // bytes
-    parameter CACHE_SETS      = 16,
-    parameter CACHE_WAYS      = 4
+    parameter CACHE_DATA_SIZE = 4, // bytes
+    parameter CACHE_SETS      = 32,
+    parameter CACHE_WAYS      = 8
 ) 
 (
     input  wire         clk_i,
@@ -1929,7 +2335,7 @@ module mmu_virtual_memory_interface #(
                     pmi_write_enable_i = 1'b0;
                     pmi_no_cache_i     = 1'b0;
                     if (serve_ready) begin
-                        pmi_addr_i     = sv32_pt_next + sv32_vpn_next[sv32_level_next] * `PTESIZE;
+                        pmi_addr_i     = sv32_pt_next + sv32_vpn_next[sv32_level_next] * `PTESIZE; // TODO: this can be optimized ()
                     end else begin
                         pmi_addr_i     = sv32_pt_next + sv32_vpn[sv32_level_next] * `PTESIZE;
                     end
