@@ -12,15 +12,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1499440fs"></ZoomStartTime>
-      <ZoomEndTime time="2050841fs"></ZoomEndTime>
-      <Cursor1Time time="1743840fs"></Cursor1Time>
+      <ZoomStartTime time="221896720fs"></ZoomStartTime>
+      <ZoomEndTime time="222088221fs"></ZoomEndTime>
+      <Cursor1Time time="221922120fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="381"></NameColumnWidth>
-      <ValueColumnWidth column_width="238"></ValueColumnWidth>
+      <ValueColumnWidth column_width="232"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="15" />
+   <WVObjectSize size="16" />
    <wave_markers>
       <marker time="4796911846" label="" />
       <marker time="5644877500" label="" />
@@ -250,7 +250,6 @@
    <wvobject fp_name="group354" type="group">
       <obj_property name="label">stage_id</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/id_mode" type="array">
          <obj_property name="ElementShortName">id_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">id_mode[1:0]</obj_property>
@@ -1228,6 +1227,14 @@
          <obj_property name="ElementShortName">wb_we_i</obj_property>
          <obj_property name="ObjectShortName">wb_we_i</obj_property>
       </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/state_reg" type="array">
+         <obj_property name="ElementShortName">state_reg[1:0]</obj_property>
+         <obj_property name="ObjectShortName">state_reg[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/sram_controller_base/next_state_comb" type="array">
+         <obj_property name="ElementShortName">next_state_comb[1:0]</obj_property>
+         <obj_property name="ObjectShortName">next_state_comb[1:0]</obj_property>
+      </wvobject>
       <wvobject fp_name="/lab6_tb/dut/sram_controller_base/sram_addr" type="array">
          <obj_property name="ElementShortName">sram_addr[19:0]</obj_property>
          <obj_property name="ObjectShortName">sram_addr[19:0]</obj_property>
@@ -1446,10 +1453,6 @@
          <obj_property name="ElementShortName">mode_i[1:0]</obj_property>
          <obj_property name="ObjectShortName">mode_i[1:0]</obj_property>
       </wvobject>
-      <wvobject fp_name="/lab6_tb/dut/if_im_fetch/tlb_clear_i" type="logic">
-         <obj_property name="ElementShortName">tlb_clear_i</obj_property>
-         <obj_property name="ObjectShortName">tlb_clear_i</obj_property>
-      </wvobject>
       <wvobject fp_name="/lab6_tb/dut/if_im_fetch/page_fault_o" type="logic">
          <obj_property name="ElementShortName">page_fault_o</obj_property>
          <obj_property name="ObjectShortName">page_fault_o</obj_property>
@@ -1457,6 +1460,7 @@
       <wvobject fp_name="group623" type="group">
          <obj_property name="label">wb_wires</obj_property>
          <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/lab6_tb/dut/if_im_fetch/wb_cyc_o" type="logic">
             <obj_property name="ElementShortName">wb_cyc_o</obj_property>
             <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
@@ -1721,6 +1725,829 @@
       <wvobject fp_name="/lab6_tb/dut/if_im_fetch/ack_addr_buf" type="array">
          <obj_property name="ElementShortName">ack_addr_buf[31:0]</obj_property>
          <obj_property name="ObjectShortName">ack_addr_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="group640" type="group">
+         <obj_property name="label">pmi</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/clk_i" type="logic">
+            <obj_property name="ElementShortName">clk_i</obj_property>
+            <obj_property name="ObjectShortName">clk_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/rst_i" type="logic">
+            <obj_property name="ElementShortName">rst_i</obj_property>
+            <obj_property name="ObjectShortName">rst_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/flush_i" type="logic">
+            <obj_property name="ElementShortName">flush_i</obj_property>
+            <obj_property name="ObjectShortName">flush_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/no_cache_i" type="logic">
+            <obj_property name="ElementShortName">no_cache_i</obj_property>
+            <obj_property name="ObjectShortName">no_cache_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/enable_i" type="logic">
+            <obj_property name="ElementShortName">enable_i</obj_property>
+            <obj_property name="ObjectShortName">enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/write_enable_i" type="logic">
+            <obj_property name="ElementShortName">write_enable_i</obj_property>
+            <obj_property name="ObjectShortName">write_enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/addr_i" type="array">
+            <obj_property name="ElementShortName">addr_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">addr_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_i" type="array">
+            <obj_property name="ElementShortName">data_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_sel_i" type="array">
+            <obj_property name="ElementShortName">data_sel_i[3:0]</obj_property>
+            <obj_property name="ObjectShortName">data_sel_i[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/ack_addr_o" type="array">
+            <obj_property name="ElementShortName">ack_addr_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">ack_addr_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/ack_o" type="logic">
+            <obj_property name="ElementShortName">ack_o</obj_property>
+            <obj_property name="ObjectShortName">ack_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_o" type="array">
+            <obj_property name="ElementShortName">data_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_cyc_o" type="logic">
+            <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+            <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_stb_o" type="logic">
+            <obj_property name="ElementShortName">wb_stb_o</obj_property>
+            <obj_property name="ObjectShortName">wb_stb_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_ack_i" type="logic">
+            <obj_property name="ElementShortName">wb_ack_i</obj_property>
+            <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_adr_o" type="array">
+            <obj_property name="ElementShortName">wb_adr_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_adr_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_dat_o" type="array">
+            <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_dat_i" type="array">
+            <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_sel_o" type="array">
+            <obj_property name="ElementShortName">wb_sel_o[3:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_sel_o[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_we_o" type="logic">
+            <obj_property name="ElementShortName">wb_we_o</obj_property>
+            <obj_property name="ObjectShortName">wb_we_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/sync_done_o" type="logic">
+            <obj_property name="ElementShortName">sync_done_o</obj_property>
+            <obj_property name="ObjectShortName">sync_done_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/raw_state" type="array">
+            <obj_property name="ElementShortName">raw_state[2:0]</obj_property>
+            <obj_property name="ObjectShortName">raw_state[2:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/state" type="array">
+            <obj_property name="ElementShortName">state[4:0]</obj_property>
+            <obj_property name="ObjectShortName">state[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/serve_ready" type="logic">
+            <obj_property name="ElementShortName">serve_ready</obj_property>
+            <obj_property name="ObjectShortName">serve_ready</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/do_ack" type="logic">
+            <obj_property name="ElementShortName">do_ack</obj_property>
+            <obj_property name="ObjectShortName">do_ack</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/serve" type="logic">
+            <obj_property name="ElementShortName">serve</obj_property>
+            <obj_property name="ObjectShortName">serve</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/no_cache_i_buf" type="logic">
+            <obj_property name="ElementShortName">no_cache_i_buf</obj_property>
+            <obj_property name="ObjectShortName">no_cache_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/enable_i_buf" type="logic">
+            <obj_property name="ElementShortName">enable_i_buf</obj_property>
+            <obj_property name="ObjectShortName">enable_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/write_enable_i_buf" type="logic">
+            <obj_property name="ElementShortName">write_enable_i_buf</obj_property>
+            <obj_property name="ObjectShortName">write_enable_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/addr_i_buf" type="array">
+            <obj_property name="ElementShortName">addr_i_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">addr_i_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_i_buf" type="array">
+            <obj_property name="ElementShortName">data_i_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_i_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_sel_i_buf" type="array">
+            <obj_property name="ElementShortName">data_sel_i_buf[3:0]</obj_property>
+            <obj_property name="ObjectShortName">data_sel_i_buf[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_cyc_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_cyc_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_cyc_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_stb_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_stb_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_stb_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_adr_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_adr_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_adr_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_dat_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_dat_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_sel_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_sel_o_buf[3:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_sel_o_buf[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/wb_we_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_we_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_we_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_flush" type="logic">
+            <obj_property name="ElementShortName">cache_flush</obj_property>
+            <obj_property name="ObjectShortName">cache_flush</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_flush_set" type="array">
+            <obj_property name="ElementShortName">cache_flush_set[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_flush_set[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_flush_set_reg" type="array">
+            <obj_property name="ElementShortName">cache_flush_set_reg[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_flush_set_reg[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_enable" type="logic">
+            <obj_property name="ElementShortName">cache_enable</obj_property>
+            <obj_property name="ObjectShortName">cache_enable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_write_enable" type="logic">
+            <obj_property name="ElementShortName">cache_write_enable</obj_property>
+            <obj_property name="ObjectShortName">cache_write_enable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_addr_in" type="array">
+            <obj_property name="ElementShortName">cache_addr_in[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_addr_in[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_data_in" type="array">
+            <obj_property name="ElementShortName">cache_data_in[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_in[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_data_sel" type="array">
+            <obj_property name="ElementShortName">cache_data_sel[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_sel[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_hit" type="logic">
+            <obj_property name="ElementShortName">cache_hit</obj_property>
+            <obj_property name="ObjectShortName">cache_hit</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_addr_out" type="array">
+            <obj_property name="ElementShortName">cache_addr_out[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_addr_out[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_data_out" type="array">
+            <obj_property name="ElementShortName">cache_data_out[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_out[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_victim" type="logic">
+            <obj_property name="ElementShortName">cache_victim</obj_property>
+            <obj_property name="ObjectShortName">cache_victim</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache_dirty_in" type="logic">
+            <obj_property name="ElementShortName">cache_dirty_in</obj_property>
+            <obj_property name="ObjectShortName">cache_dirty_in</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/ack_addr_buf" type="array">
+            <obj_property name="ElementShortName">ack_addr_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">ack_addr_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_o_buf" type="array">
+            <obj_property name="ElementShortName">data_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/data_o_next" type="array">
+            <obj_property name="ElementShortName">data_o_next[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o_next[31:0]</obj_property>
+         </wvobject>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group735" type="group">
+      <obj_property name="label">mem_vmi</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/clk_i" type="logic">
+         <obj_property name="ElementShortName">clk_i</obj_property>
+         <obj_property name="ObjectShortName">clk_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/rst_i" type="logic">
+         <obj_property name="ElementShortName">rst_i</obj_property>
+         <obj_property name="ObjectShortName">rst_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/no_flush_cache_i" type="logic">
+         <obj_property name="ElementShortName">no_flush_cache_i</obj_property>
+         <obj_property name="ObjectShortName">no_flush_cache_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_no_cache_i" type="logic">
+         <obj_property name="ElementShortName">vmi_no_cache_i</obj_property>
+         <obj_property name="ObjectShortName">vmi_no_cache_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_enable_i" type="logic">
+         <obj_property name="ElementShortName">vmi_enable_i</obj_property>
+         <obj_property name="ObjectShortName">vmi_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">vmi_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">vmi_write_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_addr_i" type="array">
+         <obj_property name="ElementShortName">vmi_addr_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_addr_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_data_i" type="array">
+         <obj_property name="ElementShortName">vmi_data_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_data_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_data_sel_i" type="array">
+         <obj_property name="ElementShortName">vmi_data_sel_i[3:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_data_sel_i[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_ack_addr_o" type="array">
+         <obj_property name="ElementShortName">vmi_ack_addr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_ack_addr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_ack_o" type="logic">
+         <obj_property name="ElementShortName">vmi_ack_o</obj_property>
+         <obj_property name="ObjectShortName">vmi_ack_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_data_o" type="array">
+         <obj_property name="ElementShortName">vmi_data_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_data_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/satp_i" type="array">
+         <obj_property name="ElementShortName">satp_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">satp_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sum_i" type="logic">
+         <obj_property name="ElementShortName">sum_i</obj_property>
+         <obj_property name="ObjectShortName">sum_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/mode_i" type="array">
+         <obj_property name="ElementShortName">mode_i[1:0]</obj_property>
+         <obj_property name="ObjectShortName">mode_i[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/flush_i" type="logic">
+         <obj_property name="ElementShortName">flush_i</obj_property>
+         <obj_property name="ObjectShortName">flush_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/page_fault_o" type="logic">
+         <obj_property name="ElementShortName">page_fault_o</obj_property>
+         <obj_property name="ObjectShortName">page_fault_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_cyc_o" type="logic">
+         <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+         <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_stb_o" type="logic">
+         <obj_property name="ElementShortName">wb_stb_o</obj_property>
+         <obj_property name="ObjectShortName">wb_stb_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_ack_i" type="logic">
+         <obj_property name="ElementShortName">wb_ack_i</obj_property>
+         <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_adr_o" type="array">
+         <obj_property name="ElementShortName">wb_adr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_adr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_dat_o" type="array">
+         <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_dat_i" type="array">
+         <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_sel_o" type="array">
+         <obj_property name="ElementShortName">wb_sel_o[3:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_sel_o[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/wb_we_o" type="logic">
+         <obj_property name="ElementShortName">wb_we_o</obj_property>
+         <obj_property name="ObjectShortName">wb_we_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sync_done_o" type="logic">
+         <obj_property name="ElementShortName">sync_done_o</obj_property>
+         <obj_property name="ObjectShortName">sync_done_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_tlb_enable_i" type="logic">
+         <obj_property name="ElementShortName">debug_sv32_tlb_enable_i</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_tlb_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_state_o" type="array">
+         <obj_property name="ElementShortName">debug_state_o[2:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_state_o[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_pte_o" type="array">
+         <obj_property name="ElementShortName">debug_sv32_pte_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_pte_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_pf_cause_o" type="array">
+         <obj_property name="ElementShortName">debug_sv32_pf_cause_o[3:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_pf_cause_o[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_tlb_hit_o" type="logic">
+         <obj_property name="ElementShortName">debug_sv32_tlb_hit_o</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_tlb_hit_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_pte_state_o" type="array">
+         <obj_property name="ElementShortName">debug_sv32_pte_state_o[1:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_pte_state_o[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_paddr_o" type="array">
+         <obj_property name="ElementShortName">debug_paddr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_paddr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_no_cache_i" type="logic">
+         <obj_property name="ElementShortName">pmi_no_cache_i</obj_property>
+         <obj_property name="ObjectShortName">pmi_no_cache_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_enable_i" type="logic">
+         <obj_property name="ElementShortName">pmi_enable_i</obj_property>
+         <obj_property name="ObjectShortName">pmi_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_write_enable_i" type="logic">
+         <obj_property name="ElementShortName">pmi_write_enable_i</obj_property>
+         <obj_property name="ObjectShortName">pmi_write_enable_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_addr_i" type="array">
+         <obj_property name="ElementShortName">pmi_addr_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pmi_addr_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_data_i" type="array">
+         <obj_property name="ElementShortName">pmi_data_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pmi_data_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_data_sel_i" type="array">
+         <obj_property name="ElementShortName">pmi_data_sel_i[3:0]</obj_property>
+         <obj_property name="ObjectShortName">pmi_data_sel_i[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_ack_addr_o" type="array">
+         <obj_property name="ElementShortName">pmi_ack_addr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pmi_ack_addr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_ack_o" type="logic">
+         <obj_property name="ElementShortName">pmi_ack_o</obj_property>
+         <obj_property name="ObjectShortName">pmi_ack_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_data_o" type="array">
+         <obj_property name="ElementShortName">pmi_data_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pmi_data_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi_ack" type="logic">
+         <obj_property name="ElementShortName">pmi_ack</obj_property>
+         <obj_property name="ObjectShortName">pmi_ack</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/raw_state" type="array">
+         <obj_property name="ElementShortName">raw_state[1:0]</obj_property>
+         <obj_property name="ObjectShortName">raw_state[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/raw_state_next" type="array">
+         <obj_property name="ElementShortName">raw_state_next[1:0]</obj_property>
+         <obj_property name="ObjectShortName">raw_state_next[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/state" type="array">
+         <obj_property name="ElementShortName">state[2:0]</obj_property>
+         <obj_property name="ObjectShortName">state[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/serve_ready" type="logic">
+         <obj_property name="ElementShortName">serve_ready</obj_property>
+         <obj_property name="ObjectShortName">serve_ready</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/do_ack" type="logic">
+         <obj_property name="ElementShortName">do_ack</obj_property>
+         <obj_property name="ObjectShortName">do_ack</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/serve" type="logic">
+         <obj_property name="ElementShortName">serve</obj_property>
+         <obj_property name="ObjectShortName">serve</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/satp_mode" type="other">
+         <obj_property name="ElementShortName">satp_mode</obj_property>
+         <obj_property name="ObjectShortName">satp_mode</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_enable" type="logic">
+         <obj_property name="ElementShortName">sv32_enable</obj_property>
+         <obj_property name="ObjectShortName">sv32_enable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_no_cache_i_buf" type="logic">
+         <obj_property name="ElementShortName">vmi_no_cache_i_buf</obj_property>
+         <obj_property name="ObjectShortName">vmi_no_cache_i_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_enable_i_buf" type="logic">
+         <obj_property name="ElementShortName">vmi_enable_i_buf</obj_property>
+         <obj_property name="ObjectShortName">vmi_enable_i_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_write_enable_i_buf" type="logic">
+         <obj_property name="ElementShortName">vmi_write_enable_i_buf</obj_property>
+         <obj_property name="ObjectShortName">vmi_write_enable_i_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_addr_i_buf" type="array">
+         <obj_property name="ElementShortName">vmi_addr_i_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_addr_i_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_data_i_buf" type="array">
+         <obj_property name="ElementShortName">vmi_data_i_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_data_i_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_data_sel_i_buf" type="array">
+         <obj_property name="ElementShortName">vmi_data_sel_i_buf[3:0]</obj_property>
+         <obj_property name="ObjectShortName">vmi_data_sel_i_buf[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_enable_buf" type="logic">
+         <obj_property name="ElementShortName">sv32_enable_buf</obj_property>
+         <obj_property name="ObjectShortName">sv32_enable_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/satp_buf" type="other">
+         <obj_property name="ElementShortName">satp_buf</obj_property>
+         <obj_property name="ObjectShortName">satp_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sum_buf" type="logic">
+         <obj_property name="ElementShortName">sum_buf</obj_property>
+         <obj_property name="ObjectShortName">sum_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/mode_buf" type="logic">
+         <obj_property name="ElementShortName">mode_buf</obj_property>
+         <obj_property name="ObjectShortName">mode_buf</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_vpn" type="array">
+         <obj_property name="ElementShortName">sv32_vpn[0:1][9:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_vpn[0:1][9:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_vpn_next" type="array">
+         <obj_property name="ElementShortName">sv32_vpn_next[0:1][9:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_vpn_next[0:1][9:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_all_vpn" type="array">
+         <obj_property name="ElementShortName">sv32_all_vpn[19:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_all_vpn[19:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_all_vpn_buf" type="array">
+         <obj_property name="ElementShortName">sv32_all_vpn_buf[19:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_all_vpn_buf[19:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte" type="array">
+         <obj_property name="ElementShortName">sv32_pte[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte_buf" type="array">
+         <obj_property name="ElementShortName">sv32_pte_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte_next" type="array">
+         <obj_property name="ElementShortName">sv32_pte_next[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_next[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte_forward" type="logic">
+         <obj_property name="ElementShortName">sv32_pte_forward</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_forward</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte_perm" type="array">
+         <obj_property name="ElementShortName">sv32_pte_perm[7:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_perm[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_we" type="logic">
+         <obj_property name="ElementShortName">vmi_we</obj_property>
+         <obj_property name="ObjectShortName">vmi_we</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/vmi_x" type="logic">
+         <obj_property name="ElementShortName">vmi_x</obj_property>
+         <obj_property name="ObjectShortName">vmi_x</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_check_bit" type="logic">
+         <obj_property name="ElementShortName">sv32_check_bit</obj_property>
+         <obj_property name="ObjectShortName">sv32_check_bit</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_hit_o" type="logic">
+         <obj_property name="ElementShortName">sv32_tlb_hit_o</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_hit_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_hit" type="logic">
+         <obj_property name="ElementShortName">sv32_tlb_hit</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_hit</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_ppn_o" type="array">
+         <obj_property name="ElementShortName">sv32_tlb_ppn_o[21:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_ppn_o[21:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_perm_o" type="array">
+         <obj_property name="ElementShortName">sv32_tlb_perm_o[7:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_perm_o[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pt" type="array">
+         <obj_property name="ElementShortName">sv32_pt[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pt[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_level" type="array">
+         <obj_property name="ElementShortName">sv32_level[1:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_level[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pt_next" type="array">
+         <obj_property name="ElementShortName">sv32_pt_next[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pt_next[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_level_next" type="array">
+         <obj_property name="ElementShortName">sv32_level_next[1:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_level_next[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_pte_state" type="array">
+         <obj_property name="ElementShortName">sv32_pte_state[1:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_pte_state[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/debug_sv32_pte_state_cause" type="array">
+         <obj_property name="ElementShortName">debug_sv32_pte_state_cause[3:0]</obj_property>
+         <obj_property name="ObjectShortName">debug_sv32_pte_state_cause[3:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_enable" type="logic">
+         <obj_property name="ElementShortName">sv32_tlb_enable</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_enable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_write_enable" type="logic">
+         <obj_property name="ElementShortName">sv32_tlb_write_enable</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_write_enable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_vpn" type="array">
+         <obj_property name="ElementShortName">sv32_tlb_vpn[19:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_vpn[19:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_ppn_i" type="array">
+         <obj_property name="ElementShortName">sv32_tlb_ppn_i[21:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_ppn_i[21:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/sv32_tlb_perm_i" type="array">
+         <obj_property name="ElementShortName">sv32_tlb_perm_i[7:0]</obj_property>
+         <obj_property name="ObjectShortName">sv32_tlb_perm_i[7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/physical_addr" type="array">
+         <obj_property name="ElementShortName">physical_addr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">physical_addr[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/in_sram" type="logic">
+         <obj_property name="ElementShortName">in_sram</obj_property>
+         <obj_property name="ObjectShortName">in_sram</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/ack_data_buf" type="array">
+         <obj_property name="ElementShortName">ack_data_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ack_data_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/ack_data_next" type="array">
+         <obj_property name="ElementShortName">ack_data_next[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ack_data_next[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/ack_addr_buf" type="array">
+         <obj_property name="ElementShortName">ack_addr_buf[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ack_addr_buf[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/ack_addr_next" type="array">
+         <obj_property name="ElementShortName">ack_addr_next[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ack_addr_next[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="group790" type="group">
+         <obj_property name="label">pmi</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/clk_i" type="logic">
+            <obj_property name="ElementShortName">clk_i</obj_property>
+            <obj_property name="ObjectShortName">clk_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/rst_i" type="logic">
+            <obj_property name="ElementShortName">rst_i</obj_property>
+            <obj_property name="ObjectShortName">rst_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/flush_i" type="logic">
+            <obj_property name="ElementShortName">flush_i</obj_property>
+            <obj_property name="ObjectShortName">flush_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/no_cache_i" type="logic">
+            <obj_property name="ElementShortName">no_cache_i</obj_property>
+            <obj_property name="ObjectShortName">no_cache_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/enable_i" type="logic">
+            <obj_property name="ElementShortName">enable_i</obj_property>
+            <obj_property name="ObjectShortName">enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/write_enable_i" type="logic">
+            <obj_property name="ElementShortName">write_enable_i</obj_property>
+            <obj_property name="ObjectShortName">write_enable_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/addr_i" type="array">
+            <obj_property name="ElementShortName">addr_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">addr_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_i" type="array">
+            <obj_property name="ElementShortName">data_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_sel_i" type="array">
+            <obj_property name="ElementShortName">data_sel_i[3:0]</obj_property>
+            <obj_property name="ObjectShortName">data_sel_i[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/ack_addr_o" type="array">
+            <obj_property name="ElementShortName">ack_addr_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">ack_addr_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/ack_o" type="logic">
+            <obj_property name="ElementShortName">ack_o</obj_property>
+            <obj_property name="ObjectShortName">ack_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_o" type="array">
+            <obj_property name="ElementShortName">data_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_cyc_o" type="logic">
+            <obj_property name="ElementShortName">wb_cyc_o</obj_property>
+            <obj_property name="ObjectShortName">wb_cyc_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_stb_o" type="logic">
+            <obj_property name="ElementShortName">wb_stb_o</obj_property>
+            <obj_property name="ObjectShortName">wb_stb_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_ack_i" type="logic">
+            <obj_property name="ElementShortName">wb_ack_i</obj_property>
+            <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_adr_o" type="array">
+            <obj_property name="ElementShortName">wb_adr_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_adr_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_dat_o" type="array">
+            <obj_property name="ElementShortName">wb_dat_o[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_o[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_dat_i" type="array">
+            <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_sel_o" type="array">
+            <obj_property name="ElementShortName">wb_sel_o[3:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_sel_o[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_we_o" type="logic">
+            <obj_property name="ElementShortName">wb_we_o</obj_property>
+            <obj_property name="ObjectShortName">wb_we_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/sync_done_o" type="logic">
+            <obj_property name="ElementShortName">sync_done_o</obj_property>
+            <obj_property name="ObjectShortName">sync_done_o</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/raw_state" type="array">
+            <obj_property name="ElementShortName">raw_state[2:0]</obj_property>
+            <obj_property name="ObjectShortName">raw_state[2:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/state" type="array">
+            <obj_property name="ElementShortName">state[4:0]</obj_property>
+            <obj_property name="ObjectShortName">state[4:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/serve_ready" type="logic">
+            <obj_property name="ElementShortName">serve_ready</obj_property>
+            <obj_property name="ObjectShortName">serve_ready</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/do_ack" type="logic">
+            <obj_property name="ElementShortName">do_ack</obj_property>
+            <obj_property name="ObjectShortName">do_ack</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/serve" type="logic">
+            <obj_property name="ElementShortName">serve</obj_property>
+            <obj_property name="ObjectShortName">serve</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/no_cache_i_buf" type="logic">
+            <obj_property name="ElementShortName">no_cache_i_buf</obj_property>
+            <obj_property name="ObjectShortName">no_cache_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/enable_i_buf" type="logic">
+            <obj_property name="ElementShortName">enable_i_buf</obj_property>
+            <obj_property name="ObjectShortName">enable_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/write_enable_i_buf" type="logic">
+            <obj_property name="ElementShortName">write_enable_i_buf</obj_property>
+            <obj_property name="ObjectShortName">write_enable_i_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/addr_i_buf" type="array">
+            <obj_property name="ElementShortName">addr_i_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">addr_i_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_i_buf" type="array">
+            <obj_property name="ElementShortName">data_i_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_i_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_sel_i_buf" type="array">
+            <obj_property name="ElementShortName">data_sel_i_buf[3:0]</obj_property>
+            <obj_property name="ObjectShortName">data_sel_i_buf[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_cyc_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_cyc_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_cyc_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_stb_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_stb_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_stb_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_adr_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_adr_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_adr_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_dat_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_dat_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_dat_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_sel_o_buf" type="array">
+            <obj_property name="ElementShortName">wb_sel_o_buf[3:0]</obj_property>
+            <obj_property name="ObjectShortName">wb_sel_o_buf[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/wb_we_o_buf" type="logic">
+            <obj_property name="ElementShortName">wb_we_o_buf</obj_property>
+            <obj_property name="ObjectShortName">wb_we_o_buf</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_flush" type="logic">
+            <obj_property name="ElementShortName">cache_flush</obj_property>
+            <obj_property name="ObjectShortName">cache_flush</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_flush_set" type="array">
+            <obj_property name="ElementShortName">cache_flush_set[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_flush_set[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_flush_set_reg" type="array">
+            <obj_property name="ElementShortName">cache_flush_set_reg[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_flush_set_reg[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_enable" type="logic">
+            <obj_property name="ElementShortName">cache_enable</obj_property>
+            <obj_property name="ObjectShortName">cache_enable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_write_enable" type="logic">
+            <obj_property name="ElementShortName">cache_write_enable</obj_property>
+            <obj_property name="ObjectShortName">cache_write_enable</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_addr_in" type="array">
+            <obj_property name="ElementShortName">cache_addr_in[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_addr_in[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_data_in" type="array">
+            <obj_property name="ElementShortName">cache_data_in[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_in[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_data_sel" type="array">
+            <obj_property name="ElementShortName">cache_data_sel[3:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_sel[3:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_hit" type="logic">
+            <obj_property name="ElementShortName">cache_hit</obj_property>
+            <obj_property name="ObjectShortName">cache_hit</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_addr_out" type="array">
+            <obj_property name="ElementShortName">cache_addr_out[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_addr_out[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_data_out" type="array">
+            <obj_property name="ElementShortName">cache_data_out[31:0]</obj_property>
+            <obj_property name="ObjectShortName">cache_data_out[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_victim" type="logic">
+            <obj_property name="ElementShortName">cache_victim</obj_property>
+            <obj_property name="ObjectShortName">cache_victim</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache_dirty_in" type="logic">
+            <obj_property name="ElementShortName">cache_dirty_in</obj_property>
+            <obj_property name="ObjectShortName">cache_dirty_in</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/ack_addr_buf" type="array">
+            <obj_property name="ElementShortName">ack_addr_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">ack_addr_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_o_buf" type="array">
+            <obj_property name="ElementShortName">data_o_buf[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o_buf[31:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/data_o_next" type="array">
+            <obj_property name="ElementShortName">data_o_next[31:0]</obj_property>
+            <obj_property name="ObjectShortName">data_o_next[31:0]</obj_property>
+         </wvobject>
       </wvobject>
    </wvobject>
 </wave_config>

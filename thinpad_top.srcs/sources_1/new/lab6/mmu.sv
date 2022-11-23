@@ -39,6 +39,7 @@ module simple_buffer(
 
 endmodule
 
+// TODO: replace with optimized version
 // simple, read in 1 cycle
 module tlb_sv32 #(
     parameter ENTRIES   = 4,
@@ -657,7 +658,9 @@ module mmu_memory_cache #(
     
     output logic [31:0] addr_o,
     output logic [31:0] data_o,
-    output logic        hit_o // when write, not hit means write back
+    output logic        hit_o,
+
+    output logic        victim_o // write back needed
 );  
 
     // TODO: implement cache
@@ -665,6 +668,7 @@ module mmu_memory_cache #(
     // simple cache, test upper logic
     logic [31:0] cache_data; // just one data
     logic [31:0] cache_addr;
+
     logic        cache_valid;
     logic        cache_dirty;
 
@@ -685,77 +689,75 @@ module mmu_memory_cache #(
         if (rst_i) begin
             cache_data  <= 32'b0;
             cache_addr  <= 32'b0;
+
             cache_valid <= 1'b0;
             cache_dirty <= 1'b0;
+
             hit_o       <= 1'b0;
+            victim_o    <= 1'b0;
 
             addr_o      <= 32'b0;
             data_o      <= 32'b0;
         end else begin
+            // default
+            hit_o       <= 1'b0;
+            victim_o    <= 1'b0;
+            addr_o      <= 32'b0;
+            data_o      <= 32'b0;
+
             if (flush_i) begin
-                if (cache_valid & cache_dirty) begin
+                if (cache_valid & cache_dirty) begin // some valid bit should write back
                     addr_o      <= cache_addr;
                     data_o      <= cache_data;
+                    
                     cache_data  <= 32'b0;
                     cache_addr  <= 32'b0;
+
                     cache_valid <= 1'b0;
                     cache_dirty <= 1'b0;
                     hit_o       <= 1'b1;
-                end else begin
-                    addr_o      <= 32'b0;
-                    data_o      <= 32'b0;
-                    cache_data  <= 32'b0;
-                    cache_addr  <= 32'b0;
-                    cache_valid <= 1'b0;
-                    cache_dirty <= 1'b0;
-                    hit_o       <= 1'b0;
+                    victim_o    <= 1'b1;
                 end
                 
             end else begin
                 if (enable_i) begin
                     if (write_enable_i) begin
-                        if (cache_valid) begin
-                            if (cache_addr == addr_i) begin
-                                cache_data  <= data_write;
-                                cache_dirty <= dirty_i;
-                                hit_o       <= 1'b1;
-                            end else begin
-                                cache_data  <= data_write;
-                                cache_addr  <= addr_i;
-                                cache_dirty <= dirty_i;
-                                if (cache_dirty) begin
-                                    addr_o <= cache_addr;
-                                    data_o <= cache_data;
-                                    hit_o  <= 1'b0;
-                                end else begin
-                                    addr_o <= 32'b0;
-                                    data_o <= 32'b0;
-                                    hit_o  <= 1'b1;
-                                end
-                            end
-                        end else begin // not valid, just write
+                        if (cache_valid && cache_addr == addr_i) begin // just write directly
+                            cache_data  <= data_write;
+                            cache_dirty <= 1'b1; // we assert dirty bit
+                            hit_o       <= 1'b1;
+                        end else if (data_sel_i == 4'b1111) begin  // no room for us, if we are completely valid, just write
                             cache_data  <= data_write;
                             cache_addr  <= addr_i;
                             cache_valid <= 1'b1;
                             cache_dirty <= dirty_i;
+
                             hit_o       <= 1'b1;
+
+                            if (cache_valid & cache_dirty) begin
+                                addr_o <= cache_addr;
+                                data_o <= cache_data;
+                                victim_o <= 1'b1;
+                            end
+                        end else begin // if not, don't write
+                            hit_o       <= 1'b0;
                         end
                     end else begin
-                        if (cache_valid && cache_addr == addr_i) begin
-                            hit_o       <= 1'b1;
-                            addr_o      <= cache_addr;
+                        // read
+                        if (cache_valid && (cache_addr == addr_i)) begin
                             data_o      <= cache_data;
+                            hit_o       <= 1'b1;
                         end else begin
-                            hit_o       <= 1'b0;
-                            addr_o      <= 32'b0;
-                            data_o      <= 32'b0;
+                            // if (cache_valid && cache_dirty) begin // prepare victim for write back
+                            //     addr_o      <= cache_addr;
+                            //     data_o      <= cache_data;
+                            //     victim_o    <= 1'b1;
+                            //     cache_dirty <= 1'b0;
+                            // end
                         end
                     end
-                end else begin
-                    hit_o       <= 1'b0;
-                    addr_o      <= 32'b0;
-                    data_o      <= 32'b0;
                 end
+
             end
         end
     end
@@ -791,14 +793,14 @@ module mmu_physical_memory_interface #(
     output wire  [31:0] data_o,
 
     // wbm signals (as master) (fall back to wish bone bus)
-    output wire         wb_cyc_o,
-    output wire         wb_stb_o,
+    output logic        wb_cyc_o,
+    output logic        wb_stb_o,
     input  wire         wb_ack_i,
-    output wire  [31:0] wb_adr_o,
-    output wire  [31:0] wb_dat_o,
+    output logic [31:0] wb_adr_o,
+    output logic [31:0] wb_dat_o,
     input  wire  [31:0] wb_dat_i,
-    output wire  [ 3:0] wb_sel_o,
-    output wire         wb_we_o,
+    output logic [ 3:0] wb_sel_o,
+    output logic        wb_we_o,
 
     output wire         sync_done_o
 );
@@ -807,7 +809,8 @@ module mmu_physical_memory_interface #(
         _IDLE,
         CACHE_HIT_OR_BUS,
         BUS_WAIT_OR_DONE,
-        HIT_OR_SECOND_BUS,
+        BUS_VICTIM_OR_DONE,
+        BUS_VICTIM_WAIT_OR_DONE, // write back needed
         CACHE_FLUSH_BUS_REQUEST_OR_DONE,
         CACHE_FLUSH_BUS_WAIT_OR_DONE
     } raw_state_t;
@@ -817,23 +820,29 @@ module mmu_physical_memory_interface #(
     assign sync_done_o = (raw_state != CACHE_FLUSH_BUS_REQUEST_OR_DONE) && (raw_state != CACHE_FLUSH_BUS_WAIT_OR_DONE);
     
     // TODO: note that no cache write is acked immediately (this may cause problems)
-    typedef enum logic [3:0] {
-        IDLE,                     // idle              : (no ack) (serve)    we can serve new request
-        CACHE_HIT,                // cache hit or bus  : (ack)    (serve)    cache hit
-        BUS_REQUEST_WRITE_MISS,   // cache hit or bus  : (ack)    (no serve) write cache miss 
-        BUS_REQUEST_READ_MISS,    // cache hit or bus  : (no ack) (no serve) read cache miss
-        BUS_WAIT,                 // bus wait or done  : (no ack) (no serve) wait for bus
-        BUS_DONE,                 // bus wait or done  : (no ack) (serve)    no need to write back to cache (write miss) (acked before)
-        BUS_DONE_READ,            // bus wait or done  : (ack)    (serve)    no cache (read miss)
-        BUS_WRITE_CACHE,          // bus wait or done  : (ack)    (no serve) write cache (read miss)
-        BUS_REQUEST_SECOND,       // hit or second     : (no ack) (no serve) second bus request (read miss, write miss, write back to mem)
-        BUS_WAIT_SECOND,          // hit or second     : (no ack) (no serve) wait for second bus
-        BUS_DONE_SECOND,          // hit or second     : (no ack) (serve)    done for second bus (acked before)
-        CACHE_FLUSH_BUS_REQUEST,  // cf bus req/done   : (no ack) (no serve) cache flush on entry
-        CACHE_FLUSH_DONE,         // cf bus req/done   : (no ack) (serve)    cache flush done
-        CACHE_FLUSH_NEXT_SET,     // cf bus req/done   : (no ack) (no serve) cache flush next set
-        CACHE_FLUSH_BUS_WAIT,     // cf bus wait/done  : (no ack) (no serve) wait for cache flush
-        CACHE_FLUSH_BUS_DONE      // cf bus wait/done  : (no ack) (no serve) cache flush one entry bus done
+    typedef enum logic [4:0] {
+        IDLE,                       // idle               : (no ack) (serve)    we can serve new request
+        CACHE_HIT_NO_VICTIM,        // cache hit or bus   : (ack)    (serve)    cache hit with no victim
+        CACHE_HIT_VICTIM,           // cache hit or bus   : (ack)    (no serve) cache hit with victim, (start bus and goto bus victim w/d)
+        BUS_REQUEST_WRITE,          // cache hit or bus   : (ack)    (no serve) fall back to bus write // TODO: this ack immediately (may cause problems when no_cache is set)
+        BUS_REQUEST_READ,           // cache hit or bus   : (no ack) (no serve) fall back to bus read
+
+        BUS_WAIT,                   // bus wait or done   : (no ack) (no serve) wait for bus
+        BUS_DONE_WRITE,             // bus wait or done   : (no ack) (serve)    no need to write back to cache (write miss) (acked before)
+        BUS_DONE_READ,              // bus wait or done   : (ack)    (serve)    read miss ( no cache, so no write back )
+        BUS_DONE_READ_WRITE_BACK,   // bus wait or done   : (ack)    (no serve) write back to cache (read miss)
+
+        BUS_VICTIM_REQUEST,         // bus victim or done : (no ack) (no serve) start bus request for victim
+        BUS_NO_VICTIM,              // bus victim or done : (no ack) (serve)    no victim, serve
+
+        BUS_VICTIM_WAIT,            // bus victim w/d     : (no ack) (no serve) wait for bus
+        BUS_VICTIM_DONE,            // bus victim w/d     : (no ack) (serve)    write victim done
+
+        CACHE_FLUSH_BUS_REQUEST,    // cf bus req/done    : (no ack) (no serve) cache flush on entry
+        CACHE_FLUSH_DONE,           // cf bus req/done    : (no ack) (serve)    cache flush all done
+        CACHE_FLUSH_NEXT_SET,       // cf bus req/done    : (no ack) (no serve) cache flush next set
+        CACHE_FLUSH_BUS_WAIT,       // cf bus wait/done   : (no ack) (no serve) wait for cache flush
+        CACHE_FLUSH_BUS_DONE        // cf bus wait/done   : (no ack) (no serve) cache flush one entry bus done
        
     } state_t;
 
@@ -845,61 +854,32 @@ module mmu_physical_memory_interface #(
     logic do_ack;
 
     always_comb begin
-
         case(state)
-            IDLE: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b1;
-            end
-            CACHE_HIT: begin
-                do_ack = 1'b1;
-                serve_ready = 1'b1;
-            end
-            BUS_REQUEST_WRITE_MISS: begin
-                do_ack = 1'b1;
-                serve_ready = 1'b0;
-            end
-            BUS_REQUEST_READ_MISS: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b0;
-            end
-            BUS_WAIT: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b0;
-            end
-            BUS_DONE: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b1;
-            end
-            BUS_DONE_READ: begin
-                do_ack = 1'b1;
-                serve_ready = 1'b1;
-            end
-            BUS_WRITE_CACHE: begin
-                do_ack = 1'b1;
-                serve_ready = 1'b0;
-            end
-            BUS_REQUEST_SECOND: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b0;
-            end
-            BUS_WAIT_SECOND: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b0;
-            end
-            BUS_DONE_SECOND: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b1;
-            end
-            CACHE_FLUSH_BUS_REQUEST, CACHE_FLUSH_BUS_WAIT,
-            CACHE_FLUSH_BUS_DONE, CACHE_FLUSH_NEXT_SET: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b0;
-            end
-            CACHE_FLUSH_DONE: begin
-                do_ack = 1'b0;
-                serve_ready = 1'b1;
-            end
+            IDLE                     : begin do_ack = 1'b0; serve_ready = 1'b1; end
+      
+            CACHE_HIT_NO_VICTIM      : begin do_ack = 1'b1; serve_ready = 1'b1; end
+            CACHE_HIT_VICTIM         : begin do_ack = 1'b1; serve_ready = 1'b0; end
+            BUS_REQUEST_WRITE        : begin do_ack = 1'b1; serve_ready = 1'b0; end
+            BUS_REQUEST_READ         : begin do_ack = 1'b0; serve_ready = 1'b0; end
+      
+            BUS_WAIT                 : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            BUS_DONE_WRITE           : begin do_ack = 1'b0; serve_ready = 1'b1; end
+            BUS_DONE_READ            : begin do_ack = 1'b1; serve_ready = 1'b1; end
+            BUS_DONE_READ_WRITE_BACK : begin do_ack = 1'b1; serve_ready = 1'b0; end
+      
+            BUS_VICTIM_REQUEST       : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            BUS_NO_VICTIM            : begin do_ack = 1'b0; serve_ready = 1'b1; end
+      
+            BUS_VICTIM_WAIT          : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            BUS_VICTIM_DONE          : begin do_ack = 1'b0; serve_ready = 1'b1; end
+ 
+            CACHE_FLUSH_BUS_REQUEST  : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            CACHE_FLUSH_DONE         : begin do_ack = 1'b0; serve_ready = 1'b1; end
+            CACHE_FLUSH_NEXT_SET     : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            CACHE_FLUSH_BUS_WAIT     : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            CACHE_FLUSH_BUS_DONE     : begin do_ack = 1'b0; serve_ready = 1'b0; end
+ 
+            default                  : begin do_ack = 1'b0; serve_ready = 1'b0; end
         endcase
 
     end
@@ -926,7 +906,8 @@ module mmu_physical_memory_interface #(
             data_i_buf         <= 32'b0;
             data_sel_i_buf     <= 4'b0;
         end else begin
-            if (serve) begin
+            // TODO: if replace `serve` with `serve_ready`, it will cause vivado synthesis stuck 
+            if (serve) begin // if we can serve, then we save those values
                 no_cache_i_buf     <= no_cache_i;
                 enable_i_buf       <= enable_i;
                 write_enable_i_buf <= write_enable_i;
@@ -940,12 +921,6 @@ module mmu_physical_memory_interface #(
 
 
     // request buffer
-    logic        wb_cyc_o_next;
-    logic        wb_stb_o_next;
-    logic [31:0] wb_adr_o_next;
-    logic [31:0] wb_dat_o_next;
-    logic [ 3:0] wb_sel_o_next;
-    logic         wb_we_o_next;
 
     logic        wb_cyc_o_buf;
     logic        wb_stb_o_buf;
@@ -953,8 +928,6 @@ module mmu_physical_memory_interface #(
     logic [31:0] wb_dat_o_buf;
     logic [ 3:0] wb_sel_o_buf;
     logic         wb_we_o_buf;
-
-    logic        wb_forward;
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
@@ -965,27 +938,21 @@ module mmu_physical_memory_interface #(
             wb_sel_o_buf <= 4'b0;
             wb_we_o_buf  <= 1'b0;
         end else begin
-            wb_cyc_o_buf <= wb_cyc_o_next;
-            wb_stb_o_buf <= wb_stb_o_next;
-            wb_adr_o_buf <= wb_adr_o_next;
-            wb_dat_o_buf <= wb_dat_o_next;
-            wb_sel_o_buf <= wb_sel_o_next;
-            wb_we_o_buf  <= wb_we_o_next;
+            // save the request
+            wb_cyc_o_buf <= wb_cyc_o;
+            wb_stb_o_buf <= wb_stb_o;
+            wb_adr_o_buf <= wb_adr_o;
+            wb_dat_o_buf <= wb_dat_o;
+            wb_sel_o_buf <= wb_sel_o;
+            wb_we_o_buf  <=  wb_we_o;
 
         end
     end
 
-    // forward signals
-    assign wb_cyc_o = wb_forward ? wb_cyc_o_next : wb_cyc_o_buf;
-    assign wb_stb_o = wb_forward ? wb_stb_o_next : wb_stb_o_buf;
-    assign wb_adr_o = wb_forward ? wb_adr_o_next : wb_adr_o_buf;
-    assign wb_dat_o = wb_forward ? wb_dat_o_next : wb_dat_o_buf;
-    assign wb_sel_o = wb_forward ? wb_sel_o_next : wb_sel_o_buf;
-    assign wb_we_o  = wb_forward ?  wb_we_o_next :  wb_we_o_buf;
 
 
-    logic        cache_flush;
-    logic [CACHE_SET_WIDTH-1:0]       cache_flush_set;
+    logic                       cache_flush;
+    logic [CACHE_SET_WIDTH-1:0] cache_flush_set;
     logic [CACHE_SET_WIDTH-1:0] cache_flush_set_reg;
 
     logic        cache_enable;
@@ -997,12 +964,12 @@ module mmu_physical_memory_interface #(
     logic        cache_hit;
     logic [31:0] cache_addr_out;
     logic [31:0] cache_data_out;
+    logic        cache_victim;
 
     logic        cache_dirty_in;
 
-    // TODO: cache_flush, cache_flush_set
 
-    // not using buf
+    // using input wires, not buf
     mmu_memory_cache # (
         .CACHE_DATA_SIZE (CACHE_DATA_SIZE),
         .CACHE_SETS      (CACHE_SETS),
@@ -1024,7 +991,8 @@ module mmu_physical_memory_interface #(
 
         .addr_o          (cache_addr_out),
         .data_o          (cache_data_out),
-        .hit_o           (cache_hit)
+        .hit_o           (cache_hit),
+        .victim_o        (cache_victim)
     );
 
     always_comb begin
@@ -1049,7 +1017,7 @@ module mmu_physical_memory_interface #(
                 cache_data_in      = data_i;
                 cache_data_sel     = data_sel_i;
             end
-        end else if (state == BUS_WRITE_CACHE) begin
+        end else if (state == BUS_DONE_READ_WRITE_BACK) begin
             cache_enable       = 1'b1;
             cache_write_enable = 1'b1;
             cache_addr_in      = addr_i_buf;
@@ -1087,6 +1055,7 @@ module mmu_physical_memory_interface #(
         end
     end
 
+    // save
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             cache_flush_set_reg <= {CACHE_SET_WIDTH{1'b0}};
@@ -1096,64 +1065,59 @@ module mmu_physical_memory_interface #(
     end
 
 
-    logic second_bus_requested; // used to determine state
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            second_bus_requested <= 1'b0;
-        end else begin
-            if (state == BUS_REQUEST_SECOND) begin
-                second_bus_requested <= 1'b1;
-            end else if (state == BUS_DONE_SECOND) begin
-                second_bus_requested <= 1'b0;
-            end
-        end
-    end
-
     // state
     always_comb begin
         case(raw_state)
             _IDLE: begin
                 state = IDLE;
             end
-            CACHE_HIT_OR_BUS: begin
+            CACHE_HIT_OR_BUS: begin // request began, we use buf value
+                
                 if (~no_cache_i_buf & cache_hit) begin
-                    state = CACHE_HIT;
-                end else begin
-                    if (write_enable_i_buf) begin
-                        state = BUS_REQUEST_WRITE_MISS;
+                    if (cache_victim) begin
+                        state = CACHE_HIT_VICTIM;
                     end else begin
-                        state = BUS_REQUEST_READ_MISS;
+                        state = CACHE_HIT_NO_VICTIM;
+                    end
+                end else begin // miss
+                    if (write_enable_i_buf) begin
+                        state = BUS_REQUEST_WRITE;
+                    end else begin
+                        state = BUS_REQUEST_READ;
                     end
                 end
             end
             BUS_WAIT_OR_DONE: begin
                 if (wb_ack_i) begin
                     if (write_enable_i_buf) begin
-                        state = BUS_DONE;
+                        state = BUS_DONE_WRITE;
                     end else begin
                         if (no_cache_i_buf) begin
                             state = BUS_DONE_READ;
                         end else begin
-                            state = BUS_WRITE_CACHE;
+                            state = BUS_DONE_READ_WRITE_BACK;
                         end
                     end
                 end else begin
                     state = BUS_WAIT;
                 end
             end
-            HIT_OR_SECOND_BUS: begin
-                if (cache_hit) begin
-                    state = BUS_DONE_SECOND; // no need to second bus
-                end else if (wb_ack_i) begin
-                    state = BUS_DONE_SECOND;
+            BUS_VICTIM_OR_DONE: begin
+                // write with sel == 4'hf is definitely hit
+                if (cache_victim) begin
+                    state = BUS_VICTIM_REQUEST;
                 end else begin
-                    if (second_bus_requested) begin
-                        state = BUS_WAIT_SECOND;
-                    end else begin
-                        state = BUS_REQUEST_SECOND;
-                    end
+                    state = BUS_NO_VICTIM;
                 end
             end
+            BUS_VICTIM_WAIT_OR_DONE: begin
+                if (wb_ack_i) begin
+                    state = BUS_VICTIM_DONE;
+                end else begin
+                    state = BUS_VICTIM_WAIT;
+                end
+            end
+
             CACHE_FLUSH_BUS_REQUEST_OR_DONE: begin
                 if (cache_hit) begin
                     state = CACHE_FLUSH_BUS_REQUEST;
@@ -1183,7 +1147,8 @@ module mmu_physical_memory_interface #(
         end else begin
             case (state) 
                 // serve ready state
-                IDLE, CACHE_HIT, BUS_DONE, BUS_DONE_READ, BUS_DONE_SECOND, CACHE_FLUSH_DONE: begin
+                IDLE, CACHE_HIT_NO_VICTIM, BUS_DONE_WRITE, BUS_DONE_READ,
+                BUS_NO_VICTIM, BUS_VICTIM_DONE, CACHE_FLUSH_DONE: begin
                     if (serve) begin
                         if (flush_i) begin
                             raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
@@ -1195,23 +1160,17 @@ module mmu_physical_memory_interface #(
                         raw_state <= _IDLE;
                     end
                 end
-                BUS_REQUEST_READ_MISS: begin
+                CACHE_HIT_VICTIM, BUS_VICTIM_REQUEST: begin
+                    raw_state <= BUS_VICTIM_WAIT_OR_DONE;
+                end
+                BUS_REQUEST_WRITE, BUS_REQUEST_READ, BUS_WAIT: begin
                     raw_state <= BUS_WAIT_OR_DONE;
                 end
-                BUS_REQUEST_WRITE_MISS: begin
-                    raw_state <= BUS_WAIT_OR_DONE;
+                BUS_DONE_READ_WRITE_BACK: begin
+                    raw_state <= BUS_VICTIM_OR_DONE;
                 end
-                BUS_WAIT: begin
-                    raw_state <= BUS_WAIT_OR_DONE;
-                end
-                BUS_WRITE_CACHE: begin
-                    raw_state <= HIT_OR_SECOND_BUS;
-                end
-                BUS_REQUEST_SECOND: begin
-                    raw_state <= HIT_OR_SECOND_BUS;
-                end
-                BUS_WAIT_SECOND: begin
-                    raw_state <= HIT_OR_SECOND_BUS;
+                BUS_VICTIM_WAIT: begin
+                    raw_state <= BUS_VICTIM_WAIT_OR_DONE;
                 end
                 CACHE_FLUSH_BUS_REQUEST: begin
                     raw_state <= CACHE_FLUSH_BUS_WAIT_OR_DONE;
@@ -1225,97 +1184,111 @@ module mmu_physical_memory_interface #(
                 CACHE_FLUSH_BUS_DONE: begin
                     raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
                 end
+                default: begin
+                    raw_state <= _IDLE;
+                end
             endcase
         end
     end
 
 
+
     // wb_* signals
     always_comb begin
-        case (state)
-            IDLE, CACHE_HIT, CACHE_FLUSH_NEXT_SET, CACHE_FLUSH_DONE: begin // clear wb signals
-                wb_forward    = 1'b1;
+        // default no request
 
-                wb_cyc_o_next = 1'b0;
-                wb_stb_o_next = 1'b0;
-                wb_adr_o_next = 32'b0;
-                wb_dat_o_next = 32'b0;
-                wb_sel_o_next = 4'b0;
-                wb_we_o_next  = 1'b0;    
+        case (raw_state)
+            _IDLE: begin // clear wb signals
+
+                wb_cyc_o = 1'b0;
+                wb_stb_o = 1'b0;
+                wb_adr_o = 32'b0;
+                wb_dat_o = 32'b0;
+                wb_sel_o = 4'b0;
+                wb_we_o  = 1'b0;    
             end
-            BUS_REQUEST_READ_MISS: begin
-                wb_forward = 1'b1;
-                if (no_cache_i_buf) begin // just forward request
-                    wb_cyc_o_next = 1'b1;
-                    wb_stb_o_next = 1'b1;
-                    wb_adr_o_next = addr_i_buf;
-                    wb_dat_o_next = data_i_buf;
-                    wb_sel_o_next = data_sel_i_buf;
-                    wb_we_o_next  = 1'b0; // read
+            CACHE_HIT_OR_BUS: begin 
+                // NOTE: we can determine those state with `state`, but it seems that vivado
+                // would recognize that as logic loop, so we use `raw_state` instead
+                if (no_cache_i_buf | (~cache_hit & write_enable_i_buf)) begin // just forward request
+                    wb_cyc_o = 1'b1;
+                    wb_stb_o = 1'b1;
+                    wb_adr_o = addr_i_buf;
+                    wb_dat_o = data_i_buf;
+                    wb_sel_o = data_sel_i_buf;
+                    wb_we_o  = write_enable_i_buf; // read/write
+                end else if (~cache_hit & ~write_enable_i_buf) begin // read miss, read all
+                    wb_cyc_o = 1'b1;
+                    wb_stb_o = 1'b1;
+                    wb_adr_o = addr_i_buf;
+                    wb_dat_o = data_i_buf;
+                    wb_sel_o = 4'b1111;
+                    wb_we_o  = write_enable_i_buf; // read
+                end else if (cache_hit & cache_victim) begin // only happens when write cache, write back
+                    wb_cyc_o = 1'b1;
+                    wb_stb_o = 1'b1;
+                    wb_adr_o = cache_addr_out;
+                    wb_dat_o = cache_data_out;
+                    wb_sel_o = 4'b1111;
+                    wb_we_o  = write_enable_i_buf;
                 end else begin
-                    wb_cyc_o_next = 1'b1;
-                    wb_stb_o_next = 1'b1;
-                    wb_adr_o_next = addr_i_buf;
-                    wb_dat_o_next = data_i_buf;
-                    wb_sel_o_next = 4'hf; // cache miss, read all
-                    wb_we_o_next  = 1'b0; // read
+                    wb_cyc_o = 1'b0;
+                    wb_stb_o = 1'b0;
+                    wb_adr_o = 32'b0;
+                    wb_dat_o = 32'b0;
+                    wb_sel_o = 4'b0;
+                    wb_we_o  = 1'b0;    
                 end
+
+                
             end
-            BUS_REQUEST_WRITE_MISS: begin
-                wb_forward = 1'b1;
-                if (no_cache_i_buf) begin // just forward request
-                    wb_cyc_o_next = 1'b1;
-                    wb_stb_o_next = 1'b1;
-                    wb_adr_o_next = addr_i_buf;
-                    wb_dat_o_next = data_i_buf;
-                    wb_sel_o_next = data_sel_i_buf;
-                    wb_we_o_next  = 1'b1; // write
+
+            BUS_VICTIM_OR_DONE: begin // TODO
+                if (~cache_victim) begin // no second bus request
+                    wb_cyc_o = 1'b0;
+                    wb_stb_o = 1'b0;
                 end else begin
-                    wb_cyc_o_next = 1'b1;
-                    wb_stb_o_next = 1'b1;
-                    wb_adr_o_next = cache_addr_out;
-                    wb_dat_o_next = cache_data_out;
-                    wb_sel_o_next = 4'hf; // cache miss, write back all
-                    wb_we_o_next  = 1'b1; // write
+                    wb_cyc_o = 1'b1;
+                    wb_stb_o = 1'b1;
                 end
+                wb_adr_o = cache_addr_out;
+                wb_dat_o = cache_data_out;
+                wb_sel_o = 4'hf; // cache miss, write back all
+                wb_we_o  = 1'b1; // write
             end
-            BUS_REQUEST_SECOND: begin
-                wb_cyc_o_next = 1'b1;
-                wb_stb_o_next = 1'b1;
-                wb_adr_o_next = cache_addr_out;
-                wb_dat_o_next = cache_data_out;
-                wb_sel_o_next = 4'hf; // cache miss, write back all
-                wb_we_o_next  = 1'b1; // write
-            end
-            BUS_WAIT, BUS_WAIT_SECOND, CACHE_FLUSH_BUS_WAIT: begin // keep values
-                wb_forward = 1'b0;
+            CACHE_FLUSH_BUS_WAIT_OR_DONE, BUS_WAIT_OR_DONE,
+            BUS_VICTIM_WAIT_OR_DONE: begin // keep values
 
-                wb_cyc_o_next = wb_cyc_o_buf;
-                wb_stb_o_next = wb_stb_o_buf;
-                wb_adr_o_next = wb_adr_o_buf;
-                wb_dat_o_next = wb_dat_o_buf;
-                wb_sel_o_next = wb_sel_o_buf;
-                wb_we_o_next  = wb_we_o_buf;
+                wb_cyc_o = wb_cyc_o_buf;
+                wb_stb_o = wb_stb_o_buf;
+                wb_adr_o = wb_adr_o_buf;
+                wb_dat_o = wb_dat_o_buf;
+                wb_sel_o = wb_sel_o_buf;
+                wb_we_o  = wb_we_o_buf;
+            
             end
-            BUS_DONE, BUS_DONE_READ, BUS_DONE_SECOND, BUS_WRITE_CACHE, CACHE_FLUSH_BUS_DONE: begin // keep values, and clear next tick
-                wb_forward = 1'b0;
 
-                wb_cyc_o_next = 1'b0;
-                wb_stb_o_next = 1'b0;
-                wb_adr_o_next = 32'b0;
-                wb_dat_o_next = 32'b0;
-                wb_sel_o_next = 4'b0;
-                wb_we_o_next  = 1'b0; 
+            CACHE_FLUSH_BUS_REQUEST_OR_DONE: begin
+                if (cache_hit) begin
+                    wb_cyc_o = 1'b1;
+                    wb_stb_o = 1'b1;
+                end else begin
+                    wb_cyc_o = 1'b0;
+                    wb_stb_o = 1'b0;
+                end
+                wb_adr_o = cache_addr_out;
+                wb_dat_o = cache_data_out;
+                wb_sel_o = 4'hf; // flush all
+                wb_we_o  = 1'b1; // write
             end
-            CACHE_FLUSH_BUS_REQUEST: begin
-                wb_forward = 1'b1;
 
-                wb_cyc_o_next = 1'b1;
-                wb_stb_o_next = 1'b1;
-                wb_adr_o_next = cache_addr_out;
-                wb_dat_o_next = cache_data_out;
-                wb_sel_o_next = 4'hf; // flush all
-                wb_we_o_next  = 1'b1; // write
+            default: begin
+                wb_cyc_o = 1'b0;
+                wb_stb_o = 1'b0;
+                wb_adr_o = 32'b0;
+                wb_dat_o = 32'b0;
+                wb_sel_o = 4'b0;
+                wb_we_o  = 1'b0;  
             end
 
         endcase
@@ -1324,6 +1297,7 @@ module mmu_physical_memory_interface #(
 
     // ack logic
     assign ack_o = do_ack;
+
     logic [31:0] ack_addr_buf;
 
     always_ff @(posedge clk_i) begin
@@ -1331,7 +1305,7 @@ module mmu_physical_memory_interface #(
             ack_addr_buf <= 32'b0;
         end else begin
             if (ack_o) begin
-                ack_addr_buf <= wb_adr_o_buf;
+                ack_addr_buf <= addr_i_buf;
             end
         end
     end
@@ -1356,13 +1330,13 @@ module mmu_physical_memory_interface #(
     // ack data
     always_comb begin
         case (state)
-            CACHE_HIT: begin
+            CACHE_HIT_NO_VICTIM, CACHE_HIT_VICTIM: begin
                 data_o_next         = cache_data_out;
             end
-            BUS_REQUEST_WRITE_MISS: begin
+            BUS_REQUEST_WRITE: begin
                 data_o_next         = 32'b0;
             end
-            BUS_DONE_READ, BUS_WRITE_CACHE: begin
+            BUS_DONE_READ, BUS_DONE_READ_WRITE_BACK: begin
                 data_o_next         = wb_dat_i;
             end
             default: begin
@@ -1382,7 +1356,7 @@ endmodule
 
 
 
-// TODO: you cannot connect wires directly from exe, you need to consider exception
+// TODO: instrustion cache is now set as no flush, but we should invalidate it actually
 // you need provide address before posedge
 module mmu_virtual_memory_interface #(
     parameter CACHE_DATA_SIZE = 32, // bytes
@@ -1602,7 +1576,7 @@ module mmu_virtual_memory_interface #(
             sum_buf                <= 1'b0;
             mode_buf               <= M_MODE;
         end else begin
-            if (serve) begin
+            if (serve_ready) begin
                 vmi_no_cache_i_buf     <= vmi_no_cache_i;
                 vmi_enable_i_buf       <= vmi_enable_i;
                 vmi_write_enable_i_buf <= vmi_write_enable_i;
@@ -1640,7 +1614,7 @@ module mmu_virtual_memory_interface #(
         if (rst_i) begin
             sv32_all_vpn_buf <= 20'b0;
         end else begin
-            if (serve) begin
+            if (serve_ready) begin
                 sv32_all_vpn_buf <= sv32_all_vpn;
             end
         end
@@ -1658,8 +1632,8 @@ module mmu_virtual_memory_interface #(
     logic vmi_we;
     logic vmi_x;
 
-    assign vmi_we = serve ? vmi_write_enable_i_buf : vmi_write_enable_i;
-    assign vmi_x  = serve ? vmi_data_i_buf[0]      : vmi_data_i[0];
+    assign vmi_we = serve_ready ? vmi_write_enable_i_buf : vmi_write_enable_i;
+    assign vmi_x  = serve_ready ? vmi_data_i_buf[0]      : vmi_data_i[0];
 
     logic  sv32_check_bit;
     assign sv32_check_bit = vmi_we ? sv32_pte_perm[`PTE_W] 
@@ -1677,15 +1651,18 @@ module mmu_virtual_memory_interface #(
     assign sv32_pte = sv32_pte_forward ? sv32_pte_next : sv32_pte_buf;
     
     // TODO: move all tlb wires together
+    logic        sv32_tlb_hit_o;
     logic        sv32_tlb_hit;
     logic [21:0] sv32_tlb_ppn_o;
     logic [ 7:0] sv32_tlb_perm_o;
+
+    assign sv32_tlb_hit = debug_sv32_tlb_enable_i & sv32_tlb_hit_o;
 
     always_comb begin
         sv32_pte_forward = 1'b0;
         sv32_pte_next = sv32_pte_buf;
 
-        if (serve) begin
+        if (serve_ready) begin
             sv32_pte_forward = 1'b1;
             sv32_pte_next = {sv32_tlb_ppn_o, 2'b00, sv32_tlb_perm_o}; // invalid is just ok (we are not checking pte_state when not hit)
 
@@ -1780,14 +1757,10 @@ module mmu_virtual_memory_interface #(
 
 
 
-    
-    logic debug_sv32_enable_overwrite;
-    assign debug_sv32_enable_overwrite = sv32_tlb_enable & debug_sv32_tlb_enable_i;
-
     tlb_sv32 tlb_sv32_inst (
         .clk_i          (clk_i),
         .rst_i          (rst_i),
-        .enable_i       (debug_sv32_enable_overwrite),
+        .enable_i       (sv32_tlb_enable),
         .write_enable_i (sv32_tlb_write_enable),
         .clear_i        (flush_i),
 
@@ -1795,14 +1768,14 @@ module mmu_virtual_memory_interface #(
         .ppn_i          (sv32_tlb_ppn_i),
         .perm_i         (sv32_tlb_perm_i),
 
-        .hit_o          (sv32_tlb_hit),
+        .hit_o          (sv32_tlb_hit_o),
         .ppn_o          (sv32_tlb_ppn_o),
         .perm_o         (sv32_tlb_perm_o)
     );
 
     // tlb related logic
     always_comb begin
-        if (serve) begin
+        if (serve_ready) begin
             sv32_tlb_enable       = 1'b1;
             sv32_tlb_vpn          = sv32_all_vpn;
             sv32_tlb_ppn_i        = 22'b0;
@@ -1907,8 +1880,25 @@ module mmu_virtual_memory_interface #(
     end
 
     logic [31:0] physical_addr;
-    assign physical_addr = sv32_enable ? {sv32_pte[`PTE_PPN], serve ? vmi_addr_i[11:0] : vmi_addr_i_buf[11:0]} : vmi_addr_i;
-    
+
+    always_comb begin
+        if (serve_ready) begin
+            if (sv32_enable) begin
+                physical_addr =  {sv32_pte[`PTE_PPN], vmi_addr_i[11:0]};
+            end else begin
+                physical_addr = vmi_addr_i;
+            end
+        end else begin // use buf
+            if (sv32_enable_buf) begin
+                physical_addr =  {sv32_pte[`PTE_PPN], vmi_addr_i_buf[11:0]};
+            end else begin
+                physical_addr = vmi_addr_i_buf;
+            end
+        end
+
+    end
+
+
     //0b10000000000000000000000000000000 - 0b10000000011111111111111111111111
     //0x80000000 - 0x807fffff
     logic in_sram;
@@ -1938,7 +1928,7 @@ module mmu_virtual_memory_interface #(
                     pmi_enable_i       = 1'b1;
                     pmi_write_enable_i = 1'b0;
                     pmi_no_cache_i     = 1'b0;
-                    if (serve) begin
+                    if (serve_ready) begin
                         pmi_addr_i     = sv32_pt_next + sv32_vpn_next[sv32_level_next] * `PTESIZE;
                     end else begin
                         pmi_addr_i     = sv32_pt_next + sv32_vpn[sv32_level_next] * `PTESIZE;
@@ -1948,11 +1938,11 @@ module mmu_virtual_memory_interface #(
                 end
                 MEM_OPERATION: begin
                     pmi_enable_i       = 1'b1;
-                    pmi_write_enable_i = serve ? vmi_write_enable_i : vmi_write_enable_i_buf;
-                    pmi_no_cache_i     = !in_sram | (serve ? vmi_no_cache_i : vmi_no_cache_i_buf);
+                    pmi_write_enable_i = serve_ready ? vmi_write_enable_i : vmi_write_enable_i_buf;
+                    pmi_no_cache_i     = !in_sram | (serve_ready ? vmi_no_cache_i : vmi_no_cache_i_buf);
                     pmi_addr_i         = physical_addr;
-                    pmi_data_i         = serve ? vmi_data_i : vmi_data_i_buf;
-                    pmi_data_sel_i     = serve ? vmi_data_sel_i : vmi_data_sel_i_buf;
+                    pmi_data_i         = serve_ready ? vmi_data_i : vmi_data_i_buf;
+                    pmi_data_sel_i     = serve_ready ? vmi_data_sel_i : vmi_data_sel_i_buf;
                 end
 
             endcase
@@ -1963,7 +1953,7 @@ module mmu_virtual_memory_interface #(
         sv32_pt_next = sv32_pt;
         sv32_level_next = sv32_level;
 
-        if (serve & !sv32_tlb_hit) begin
+        if (serve_ready & !sv32_tlb_hit) begin
             sv32_pt_next = satp_i[21:0] * `PAGESIZE;
             sv32_level_next = `LEVELS - 1;
         end else if (state == FETCH_PTE_DONE_NEXT) begin

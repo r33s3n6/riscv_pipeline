@@ -216,6 +216,14 @@ module lab6_top (
     (* MARK_DEBUG = "TRUE" *) logic [31:0] debug_if_vmi_paddr;
     (* MARK_DEBUG = "TRUE" *) logic [ 1:0] debug_if_vmi_pte_state;
 
+    (* MARK_DEBUG = "TRUE" *) logic [ 2:0] debug_mem_vmi_state;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] debug_mem_vmi_pte;
+    (* MARK_DEBUG = "TRUE" *) logic [ 3:0] debug_mem_vmi_pf_cause;
+
+    (* MARK_DEBUG = "TRUE" *) logic        debug_mem_vmi_tlb_hit;
+    (* MARK_DEBUG = "TRUE" *) logic [31:0] debug_mem_vmi_paddr;
+    (* MARK_DEBUG = "TRUE" *) logic [ 1:0] debug_mem_vmi_pte_state;
+
 
 
 
@@ -690,6 +698,8 @@ module lab6_top (
 
     wire         _if_control_flow_change;
 
+    wire         _if_req_accepted;
+
 
 
     assign _if_pc_misaligned = (_if_inst_pc[1:0] != 2'b00);
@@ -698,24 +708,37 @@ module lab6_top (
     // assign _if_do_next_req = ~rst & ~mem_mem_operation & ~_if_pc_misaligned 
     //                         & ~(_if_if_ack & _if_control_flow_change); 
 
+    // always_comb begin
+    //     _if_do_next_req = 1'b0;
+    //     if (~rst & ~mem_mem_operation & ~_if_pc_misaligned 
+    //              & ~core_tlb_clear & mem_cache_sync_done) begin
+    //         if (_if_if_ack) begin
+    //             if (_if_control_flow_change) begin
+    //                 _if_do_next_req = 1'b0;
+    //             end else begin
+    //                 _if_do_next_req = 1'b1;
+    //             end
+    //         end else begin
+    //             _if_do_next_req = _if_pc_valid;
+    //         end
+    //     end
+    // end
+
     always_comb begin
         _if_do_next_req = 1'b0;
-        if (~rst & ~mem_mem_operation & ~_if_pc_misaligned 
-                 & ~core_tlb_clear & mem_cache_sync_done) begin
-            if (_if_if_ack) begin
-                if (_if_control_flow_change) begin
-                    _if_do_next_req = 1'b0;
-                end else begin
-                    _if_do_next_req = 1'b1;
-                end
-            end else begin
-                _if_do_next_req = _if_pc_valid;
-            end
+        if (~rst & ~_if_pc_misaligned & ~core_tlb_clear & mem_cache_sync_done) begin
+            _if_do_next_req = 1'b1; // always request next instruction
         end
     end
 
-    assign if_request_addr = _if_if_ack ? _if_next_pc : _if_inst_pc;
 
+    always_comb begin
+        if ((exe_is_branch & exe_branch_take) | wb_prev_exception) begin
+            if_request_addr = _if_next_pc;
+        end else begin
+            if_request_addr = _if_inst_pc;
+        end
+    end
 
 
     id_control_flow_change_detector if_cfcd(
@@ -806,9 +829,12 @@ module lab6_top (
         .branch_take_i          (_if_branch_take), // target address computed
         .if_regs_stall_i        (_if_stall),
 
-        .id_next_exception_i    (id_next_exception),
-        .exe_prev_exception_i   (exe_prev_exception),
-        .mem_prev_exception_i   (mem_prev_exception),
+        // .id_next_exception_i    (id_next_exception),
+        // .exe_prev_exception_i   (exe_prev_exception),
+        // .mem_prev_exception_i   (mem_prev_exception),
+        .id_next_exception_i    (1'b0),
+        .exe_prev_exception_i   (1'b0),
+        .mem_prev_exception_i   (1'b0),
         .wb_prev_exception_i    (wb_prev_exception),
 
         .inst_addr_i            (_if_inst_addr),
@@ -824,7 +850,7 @@ module lab6_top (
         .clk_i              (clk),
         .rst_i              (rst),
 
-        .no_flush_cache_i   (1'b1), // we know cache cannot be dirty
+        .no_flush_cache_i   (1'b0), 
 
         // memory interface signals
         .vmi_no_cache_i     (1'b0),
@@ -837,6 +863,8 @@ module lab6_top (
         .vmi_ack_addr_o     (_if_inst_addr),
         .vmi_ack_o          (_if_if_ack),
         .vmi_data_o         (_if_inst),
+
+        // .vmi_req_accepted   (_if_req_accepted),
 
         // status signals (it is upper module's responsibility to keep these signals stable)
         .satp_i             (core_satp),
@@ -860,7 +888,7 @@ module lab6_top (
 
         // debug signals
 
-        .debug_sv32_tlb_enable_i (dip_sw[0]),
+        .debug_sv32_tlb_enable_i (~dip_sw[0]),
 
         .debug_state_o           (debug_if_vmi_state),
         .debug_sv32_pte_o        (debug_if_vmi_pte),
@@ -1680,15 +1708,15 @@ module lab6_top (
 
         // debug signals
 
-        .debug_sv32_tlb_enable_i (dip_sw[0]),
+        .debug_sv32_tlb_enable_i (~dip_sw[0]),
 
-        .debug_state_o           (),
-        .debug_sv32_pte_o        (),
-        .debug_sv32_pf_cause_o   (),
-        .debug_sv32_tlb_hit_o    (),
-        .debug_sv32_pte_state_o  (),
+        .debug_state_o           (debug_mem_vmi_state),
+        .debug_sv32_pte_o        (debug_mem_vmi_pte),
+        .debug_sv32_pf_cause_o   (debug_mem_vmi_pf_cause),
+        .debug_sv32_tlb_hit_o    (debug_mem_vmi_tlb_hit),
+        .debug_sv32_pte_state_o  (debug_mem_vmi_pte_state),
 
-        .debug_paddr_o           ()
+        .debug_paddr_o           (debug_mem_vmi_paddr)
 
     );
 
@@ -1900,7 +1928,14 @@ module lab6_top (
         .probe30(debug_if_vmi_pf_cause),
         .probe31(debug_if_vmi_tlb_hit),
         .probe32(debug_if_vmi_paddr),
-        .probe33(debug_if_vmi_pte_state)
+        .probe33(debug_if_vmi_pte_state),
+
+        .probe34(debug_mem_vmi_state),
+        .probe35(debug_mem_vmi_pte),
+        .probe36(debug_mem_vmi_pf_cause),
+        .probe37(debug_mem_vmi_tlb_hit),
+        .probe38(debug_mem_vmi_paddr),
+        .probe39(debug_mem_vmi_pte_state)
 
     );
 
