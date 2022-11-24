@@ -111,11 +111,12 @@ module mem_bubble_controller (
 endmodule
 
 module mem_pipeline_regs (
-    input wire clk_i,
-    input wire rst_i,
-
-    input wire bubble_i,
-    input wire stall_i,
+    input  wire       clk_i,
+    input  wire       rst_i,
+    
+    input  wire       bubble_i,
+    input  wire       stall_i,
+    input  wire       prev_exception_i,
 
     input wire [ 1:0] mode_i,
     output reg [ 1:0] mode_o,
@@ -187,7 +188,7 @@ module mem_pipeline_regs (
                 mtval_o     <= 32'b0;
             end else begin
                 mode_o <= mode_i;
-                inst_pc_o <= inst_pc_i;
+                
                 data_rd_o <= data_rd_i;
                 reg_rd_o <= reg_rd_i;
                 rf_write_enable_o <= rf_write_enable_i;
@@ -195,10 +196,18 @@ module mem_pipeline_regs (
                 id_csr_o <= id_csr_i;
                 csr_write_enable_o <= csr_write_enable_i;
 
+                if (!prev_exception_i) begin
+                    inst_pc_o <= inst_pc_i;
+                end else begin
+                    inst_pc_o <= 32'b0;
+                end
+
                 if (!exception_i) begin
+
                     csr_write_enable_o <= csr_write_enable_i;
                     rf_write_enable_o <= rf_write_enable_i;
                 end else begin // disable side effects on exception
+
                     csr_write_enable_o <= 1'b0;
                     rf_write_enable_o <= 1'b0;
                 end

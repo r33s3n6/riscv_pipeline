@@ -75,7 +75,7 @@ module tlb_sv32 #(
         hit_idx = {IDX_WIDTH{1'b1}};
         hit_o   = 1'b0;
         for (int i = 0; i < ENTRIES; i = i + 1) begin
-            if (vpn_i == vpn[i] & valid[i]) begin
+            if ((vpn_i == vpn[i]) & valid[i]) begin
                 hit_idx = i;
                 hit_o   = 1'b1;
                 break;
@@ -673,6 +673,17 @@ module mmu_memory_cache #(
     output logic        victim_o // write back needed
 );  
 
+    // logic [15:0] cache_cleared;
+    // always_ff @(posedge clk_i) begin
+    //     if (rst_i) begin
+    //         cache_cleared <= 16'b0;
+    //     end else begin
+    //         if (flush_i) begin
+    //             cache_cleared[flush_set_i] <= 1'b1;
+    //         end
+    //     end
+    // end
+
 
     logic [15:0] tag;
     logic [ 4:0] index;
@@ -725,7 +736,7 @@ module mmu_memory_cache #(
     logic         bram_write_enable;
 
     logic [  4:0] bram_addr_write;
-    logic [ 31:0] bram_addr_read;
+    logic [  4:0] bram_addr_read;
 
     logic [399:0] bram_data_in;
     logic [399:0] bram_data_out;
@@ -829,21 +840,21 @@ module mmu_memory_cache #(
         ST_CACHE_GOT_READ,
         ST_CACHE_GOT_WRITE,
         ST_FLUSH_IDLE,
-        ST_FLUSH_GOT
+        ST_FLUSH_GOT,
+        ST_UNINITIALIZED,
+        ST_INIT_SET
+
     } state_t;
 
     state_t state, state_next;
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            state <= ST_IDLE;
+            state <= ST_UNINITIALIZED;
         end else begin
             state <= state_next;
         end
     end
-
-    // logic [31:0] data_write;
-    // assign data_write = (data_i & sel_bit_mask) | (cache_data & ~sel_bit_mask);
 
     // cache flush logic
     // logic [     CACHE_WAYS-1:0] dirty_way; // set after entering flush state
@@ -852,7 +863,8 @@ module mmu_memory_cache #(
 
     // assign num_dirty_ways and dirty_way
     always_comb begin
-        num_dirty_ways = 0;
+        num_dirty_ways = {(CACHE_WAY_WIDTH+1){1'b0}};
+        dirty_way_index = {CACHE_WAY_WIDTH{1'b0}};
         for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
             if (dirty_arr_out[i]) begin
                 dirty_way_index = i;
@@ -866,7 +878,7 @@ module mmu_memory_cache #(
     logic [CACHE_SET_WIDTH-1:0] flush_set_i_buf;
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            flush_set_i_buf <= 0;
+            flush_set_i_buf <= {CACHE_SET_WIDTH{1'b0}};
         end else begin
             flush_set_i_buf <= flush_set_i;
         end
@@ -902,12 +914,44 @@ module mmu_memory_cache #(
 
 
         case (state) 
+            ST_UNINITIALIZED: begin
+                if (enable_i && flush_i) begin
+                    state_next = ST_INIT_SET;
+                    bram_write_enable = 1'b1;
+                    valid_arr_in = {CACHE_WAYS{1'b0}};
+                    dirty_arr_in = {CACHE_WAYS{1'b0}};
+                end
+            end
+            ST_INIT_SET: begin
+                hit_o = 1'b0; // notify the whole set is flushed done
+                if (flush_set_i_buf == CACHE_SETS-1) begin
+                    if (enable_i) begin // we can goto normal operation, // assert ~flush_i
+                        if (write_enable_i) begin
+                            state_next = ST_CACHE_GOT_WRITE;
+                        end else begin
+                            state_next = ST_CACHE_GOT_READ;
+                        end
+                    end else begin
+                        state_next = ST_IDLE;
+                    end
+                end else if (enable_i && flush_i) begin
+                    state_next = ST_INIT_SET;
+                    bram_write_enable = 1'b1;
+                    valid_arr_in = {CACHE_WAYS{1'b0}};
+                    dirty_arr_in = {CACHE_WAYS{1'b0}};
+                end else begin
+                    state_next = ST_UNINITIALIZED;
+                end
+            end
             ST_FLUSH_GOT: begin // write back cache
                 if (num_dirty_ways > 0) begin
                     hit_o  = 1'b1;
                     addr_o = {9'b1_0000_0000, tag_arr_out[dirty_way_index], flush_set_i_buf , 2'b00 };
                     data_o = data_arr_out[dirty_way_index];
                     dirty_arr_in[dirty_way_index] = 1'b0;
+                    valid_arr_in[dirty_way_index] = 1'b0;
+                    data_arr_in[dirty_way_index]  = 32'h0;
+                    tag_arr_in[dirty_way_index]   = 16'h0;
 
                     bram_write_enable = 1'b1;
                     bram_addr_write   = flush_set_i_buf; // write back last set
@@ -2155,19 +2199,22 @@ module mmu_virtual_memory_interface #(
     // pmi signals is before posedge
     // tlb signals
     logic        sv32_tlb_enable;
+    logic        sv32_tlb_enable_i;
     logic        sv32_tlb_write_enable;
+    logic        sv32_tlb_write_enable_i;
 
     logic [19:0] sv32_tlb_vpn;
     logic [21:0] sv32_tlb_ppn_i;
     logic [ 7:0] sv32_tlb_perm_i;
 
-
+    assign sv32_tlb_write_enable_i = debug_sv32_tlb_enable_i & sv32_tlb_write_enable;
+    assign sv32_tlb_enable_i = debug_sv32_tlb_enable_i & sv32_tlb_enable;
 
     tlb_sv32 tlb_sv32_inst (
         .clk_i          (clk_i),
         .rst_i          (rst_i),
         .enable_i       (sv32_tlb_enable),
-        .write_enable_i (sv32_tlb_write_enable),
+        .write_enable_i (sv32_tlb_write_enable_i),
         .clear_i        (flush_i),
 
         .vpn_i          (sv32_tlb_vpn),

@@ -93,6 +93,7 @@ module exe_pipeline_regs (
 
     input wire        bubble_i,
     input wire        stall_i,
+    input wire        prev_exception_i,
 
     output reg        nop_o,
 
@@ -214,7 +215,7 @@ always_ff @(posedge clk_i) begin
 
         end else begin
             mode_o <= mode_i;
-            inst_pc_o <= inst_pc_i;
+            
             pc_plus4_o <= pc_plus4_i;
             alu_y_o <= alu_y_i;
             
@@ -228,12 +229,22 @@ always_ff @(posedge clk_i) begin
             id_csr_o <= id_csr_i;
             data_csr_o <= data_csr_i;
 
+            if (!prev_exception_i) begin
+                inst_pc_o <= inst_pc_i;
+            end else begin
+                inst_pc_o <= 32'b0;
+            end
+
             if (!exception_i) begin
+
+
                 mem_write_enable_o <= mem_write_enable_i;
                 csr_write_enable_o <= csr_write_enable_i;
                 rf_write_enable_o <= rf_write_enable_i;
                 mem_operation_o <= mem_operation_i;
             end else begin // disable side effects on exception
+
+
                 mem_write_enable_o <= 1'b0;
                 csr_write_enable_o <= 1'b0;
                 rf_write_enable_o <= 1'b0;

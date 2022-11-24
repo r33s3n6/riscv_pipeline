@@ -441,7 +441,8 @@ module id_instruction_decoder (
     assign ebreak_o    = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0000000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b1);
     assign sret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
     assign mret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
-    assign tlb_clear_o = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0);
+    assign tlb_clear_o = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0) // sfence.vma
+                       || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b001 && inst_i[31:20] == 12'b0); // fence.i
 
 endmodule
 
@@ -719,6 +720,7 @@ module id_pipeline_regs (
 
     input wire        bubble_i,
     input wire        stall_i,
+    input wire        prev_exception_i,
 
     output reg        nop_o,
 
@@ -906,18 +908,25 @@ module id_pipeline_regs (
                 
 
                 is_branch_o <= is_branch_i;
-                inst_pc_o <= inst_pc_i;
+                
                 pc_plus4_o <= pc_plus4_i;
-
                 
                 mem_unsigned_ext_o <= mem_unsigned_ext_i;
 
+                if (!prev_exception_i) begin
+                    inst_pc_o <= inst_pc_i;
+                end else begin
+                    inst_pc_o <= 32'b0;
+                end
+
                 if (!exception_i) begin
+
                     mem_write_enable_o <= mem_write_enable_i;
                     csr_write_enable_o <= csr_write_enable_i;
                     rf_write_enable_o <= rf_write_enable_i;
                     mem_operation_o <= mem_operation_i;
                 end else begin // disable side effects on exception
+
                     mem_write_enable_o <= 1'b0;
                     csr_write_enable_o <= 1'b0;
                     rf_write_enable_o <= 1'b0;
