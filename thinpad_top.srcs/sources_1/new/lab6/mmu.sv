@@ -744,7 +744,7 @@ module mmu_memory_cache #(
         if (rst_i) begin
             collision_happened <= 1'b0;
         end else begin
-            if (enable_i & write_enable_i & (bram_addr_write == bram_addr_read)) begin
+            if (bram_write_enable & (bram_addr_write == bram_addr_read)) begin
                 collision_happened <= 1'b1;
             end else begin
                 collision_happened <= 1'b0;
