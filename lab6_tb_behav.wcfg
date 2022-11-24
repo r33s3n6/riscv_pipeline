@@ -12,13 +12,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="6616147166fs"></ZoomStartTime>
-      <ZoomEndTime time="6616492567fs"></ZoomEndTime>
-      <Cursor1Time time="6616361566fs"></Cursor1Time>
+      <ZoomStartTime time="30707600fs"></ZoomStartTime>
+      <ZoomEndTime time="31058481fs"></ZoomEndTime>
+      <Cursor1Time time="30766780fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="381"></NameColumnWidth>
-      <ValueColumnWidth column_width="232"></ValueColumnWidth>
+      <ValueColumnWidth column_width="226"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="16" />
    <wave_markers>
@@ -254,6 +254,7 @@
    <wvobject fp_name="group354" type="group">
       <obj_property name="label">stage_id</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/id_mode" type="array">
          <obj_property name="ElementShortName">id_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">id_mode[1:0]</obj_property>
@@ -966,6 +967,7 @@
    <wvobject fp_name="group394" type="group">
       <obj_property name="label">stage_mem</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/mem_mode" type="array">
          <obj_property name="ElementShortName">mem_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">mem_mode[1:0]</obj_property>
@@ -1066,6 +1068,7 @@
    <wvobject fp_name="group408" type="group">
       <obj_property name="label">stage_wb</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/wb_inst_pc" type="array">
          <obj_property name="ElementShortName">wb_inst_pc[31:0]</obj_property>
          <obj_property name="ObjectShortName">wb_inst_pc[31:0]</obj_property>
@@ -2042,6 +2045,7 @@
          <wvobject fp_name="group875" type="group">
             <obj_property name="label">cache</obj_property>
             <obj_property name="DisplayName">label</obj_property>
+            <obj_property name="isExpanded"></obj_property>
             <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache/clk_i" type="logic">
                <obj_property name="ElementShortName">clk_i</obj_property>
                <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -2139,8 +2143,8 @@
                <obj_property name="ObjectShortName">bram_addr_write[4:0]</obj_property>
             </wvobject>
             <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache/bram_addr_read" type="array">
-               <obj_property name="ElementShortName">bram_addr_read[31:0]</obj_property>
-               <obj_property name="ObjectShortName">bram_addr_read[31:0]</obj_property>
+               <obj_property name="ElementShortName">bram_addr_read[4:0]</obj_property>
+               <obj_property name="ObjectShortName">bram_addr_read[4:0]</obj_property>
             </wvobject>
             <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache/bram_data_in" type="array">
                <obj_property name="ElementShortName">bram_data_in[399:0]</obj_property>
@@ -2232,6 +2236,7 @@
    <wvobject fp_name="group735" type="group">
       <obj_property name="label">mem_vmi</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/clk_i" type="logic">
          <obj_property name="ElementShortName">clk_i</obj_property>
          <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -2611,7 +2616,6 @@
       <wvobject fp_name="group790" type="group">
          <obj_property name="label">pmi</obj_property>
          <obj_property name="DisplayName">label</obj_property>
-         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/clk_i" type="logic">
             <obj_property name="ElementShortName">clk_i</obj_property>
             <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -2828,6 +2832,14 @@
             <obj_property name="ElementShortName">data_o_next[31:0]</obj_property>
             <obj_property name="ObjectShortName">data_o_next[31:0]</obj_property>
          </wvobject>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/state_next" type="array">
+         <obj_property name="ElementShortName">state_next[2:0]</obj_property>
+         <obj_property name="ObjectShortName">state_next[2:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/state" type="array">
+         <obj_property name="ElementShortName">state[2:0]</obj_property>
+         <obj_property name="ObjectShortName">state[2:0]</obj_property>
       </wvobject>
    </wvobject>
 </wave_config>

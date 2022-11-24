@@ -1267,7 +1267,9 @@ module mmu_physical_memory_interface #(
 
     raw_state_t raw_state;
 
-    assign sync_done_o = (raw_state != CACHE_FLUSH_BUS_REQUEST_OR_DONE) && (raw_state != CACHE_FLUSH_BUS_WAIT_OR_DONE);
+
+
+
     
     // TODO: note that no cache write is acked immediately (this may cause problems)
     typedef enum logic [4:0] {
@@ -1289,7 +1291,7 @@ module mmu_physical_memory_interface #(
         BUS_VICTIM_DONE,            // bus victim w/d     : (no ack) (serve)    write victim done
 
         CACHE_FLUSH_BUS_REQUEST,    // cf bus req/done    : (no ack) (no serve) cache flush on entry
-        CACHE_FLUSH_DONE,           // cf bus req/done    : (no ack) (serve)    cache flush all done
+        CACHE_FLUSH_DONE,           // cf bus req/done    : (no ack) (no serve) cache flush all done
         CACHE_FLUSH_NEXT_SET,       // cf bus req/done    : (no ack) (no serve) cache flush next set
         CACHE_FLUSH_BUS_WAIT,       // cf bus wait/done   : (no ack) (no serve) wait for cache flush
         CACHE_FLUSH_BUS_DONE        // cf bus wait/done   : (no ack) (no serve) cache flush one entry bus done
@@ -1324,7 +1326,7 @@ module mmu_physical_memory_interface #(
             BUS_VICTIM_DONE          : begin do_ack = 1'b0; serve_ready = 1'b1; end
  
             CACHE_FLUSH_BUS_REQUEST  : begin do_ack = 1'b0; serve_ready = 1'b0; end
-            CACHE_FLUSH_DONE         : begin do_ack = 1'b0; serve_ready = 1'b1; end
+            CACHE_FLUSH_DONE         : begin do_ack = 1'b0; serve_ready = 1'b0; end
             CACHE_FLUSH_NEXT_SET     : begin do_ack = 1'b0; serve_ready = 1'b0; end
             CACHE_FLUSH_BUS_WAIT     : begin do_ack = 1'b0; serve_ready = 1'b0; end
             CACHE_FLUSH_BUS_DONE     : begin do_ack = 1'b0; serve_ready = 1'b0; end
@@ -1333,6 +1335,21 @@ module mmu_physical_memory_interface #(
         endcase
 
     end
+
+    logic flush_waiting;
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            flush_waiting <= 1'b0;
+        end else begin
+            if (enable_i && flush_i) begin
+                flush_waiting <= 1'b1;
+            end else if (state == CACHE_FLUSH_DONE) begin
+                flush_waiting <= 1'b0;
+            end
+        end
+    end
+
+    assign sync_done_o = (raw_state != CACHE_FLUSH_BUS_REQUEST_OR_DONE) && (raw_state != CACHE_FLUSH_BUS_WAIT_OR_DONE) && !flush_waiting;
 
     logic serve;
 
@@ -1450,7 +1467,7 @@ module mmu_physical_memory_interface #(
         cache_flush_set = {CACHE_SET_WIDTH{1'b0}};
         cache_dirty_in  = 1'b1;
         if (serve) begin
-            if (flush_i) begin
+            if (flush_i || flush_waiting) begin
                 cache_enable       = 1'b1;
                 cache_write_enable = 1'b0;
                 cache_addr_in      = 32'b0;
@@ -1598,9 +1615,9 @@ module mmu_physical_memory_interface #(
             case (state) 
                 // serve ready state
                 IDLE, CACHE_HIT_NO_VICTIM, BUS_DONE_WRITE, BUS_DONE_READ,
-                BUS_NO_VICTIM, BUS_VICTIM_DONE, CACHE_FLUSH_DONE: begin
+                BUS_NO_VICTIM, BUS_VICTIM_DONE: begin
                     if (serve) begin
-                        if (flush_i) begin
+                        if (flush_i || flush_waiting) begin
                             raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
                         end else begin
                             raw_state <= CACHE_HIT_OR_BUS;
@@ -1633,6 +1650,9 @@ module mmu_physical_memory_interface #(
                 end
                 CACHE_FLUSH_BUS_DONE: begin
                     raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
+                end
+                CACHE_FLUSH_DONE: begin
+                    raw_state <= _IDLE;
                 end
                 default: begin
                     raw_state <= _IDLE;
@@ -1831,6 +1851,8 @@ module mmu_virtual_memory_interface #(
     output wire         vmi_ack_o,
     output wire  [31:0] vmi_data_o,
 
+    input  wire         pmi_yield_i,
+
     // status signals (it is upper module's responsibility to keep these signals stable)
     input  wire  [31:0] satp_i, // IM and DM will not request with different modes
     input  wire         sum_i, 
@@ -1861,7 +1883,16 @@ module mmu_virtual_memory_interface #(
     output logic        debug_sv32_tlb_hit_o,
     output logic [ 1:0] debug_sv32_pte_state_o,
 
-    output logic [31:0] debug_paddr_o
+    output logic [31:0] debug_paddr_o,
+
+    output logic        debug_tlb_write_enable_o,
+    output logic [21:0] debug_tlb_ppn_in_o,
+    output logic [19:0] debug_tlb_vpn_in_o,
+
+    output logic [31:0] debug_pmi_addr_in_o,
+    output logic [31:0] debug_pmi_data_out_o,
+    output logic        debug_pmi_ack_o,
+    output logic [31:0] debug_pmi_ack_addr_o
 );
 
     logic         pmi_no_cache_i;
@@ -1885,11 +1916,12 @@ module mmu_virtual_memory_interface #(
         .flush_i         (no_flush_cache_i? 1'b0 : flush_i),
  
         .no_cache_i      (pmi_no_cache_i),
-        .enable_i        (pmi_enable_i),
+        .enable_i        (flush_i ? 1'b1 : (pmi_enable_i & ~pmi_yield_i)),
         .write_enable_i  (pmi_write_enable_i),
         .addr_i          (pmi_addr_i),
         .data_i          (pmi_data_i),
         .data_sel_i      (pmi_data_sel_i),
+
  
         .ack_addr_o      (pmi_ack_addr_o),
         .ack_o           (pmi_ack_o),
@@ -1939,43 +1971,69 @@ module mmu_virtual_memory_interface #(
     logic serve_ready;
     logic do_ack;
 
-    always_comb begin
-        case (state)
-            IDLE: begin
+    // always_comb begin
+    //     case (state)
+    //         IDLE: begin
+    //             serve_ready = 1'b1;
+    //             do_ack = 1'b0;
+    //         end
+    //         FETCH_PTE_WAIT: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b0;
+    //         end
+    //         FETCH_PTE_DONE_NEXT: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b0;
+    //         end
+    //         FETCH_PTE_DONE_LEAF: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b0;
+    //         end
+    //         FETCH_PTE_DONE_FAULT: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b0;
+    //         end
+    //         MEM_WAIT: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b0;
+    //         end
+    //         MEM_DONE: begin
+    //             serve_ready = 1'b1;
+    //             do_ack = 1'b1;
+    //         end
+    //         REPORT_PF: begin
+    //             serve_ready = 1'b0;
+    //             do_ack = 1'b1;
+    //         end
+    //         default: begin
+    //             serve_ready = 1'bx;
+    //             do_ack = 1'bx;
+    //         end
+    //     endcase
+    // end
+
+        always_comb begin
+        case (raw_state)
+            _IDLE: begin
+                do_ack = 1'b0;
                 serve_ready = 1'b1;
-                do_ack = 1'b0;
             end
-            FETCH_PTE_WAIT: begin
+            FETCH_PTE: begin
+                do_ack = 1'b0;
                 serve_ready = 1'b0;
-                do_ack = 1'b0;
             end
-            FETCH_PTE_DONE_NEXT: begin
-                serve_ready = 1'b0;
-                do_ack = 1'b0;
+            MEM_OPERATION: begin
+                if (!pmi_ack) begin
+                    do_ack = 1'b0;
+                    serve_ready = 1'b0;
+                end else begin
+                    do_ack = 1'b1;
+                    serve_ready = 1'b1;
+                end
             end
-            FETCH_PTE_DONE_LEAF: begin
-                serve_ready = 1'b0;
-                do_ack = 1'b0;
-            end
-            FETCH_PTE_DONE_FAULT: begin
-                serve_ready = 1'b0;
-                do_ack = 1'b0;
-            end
-            MEM_WAIT: begin
-                serve_ready = 1'b0;
-                do_ack = 1'b0;
-            end
-            MEM_DONE: begin
-                serve_ready = 1'b1;
+            _REPORT_PF: begin
                 do_ack = 1'b1;
-            end
-            REPORT_PF: begin
                 serve_ready = 1'b0;
-                do_ack = 1'b1;
-            end
-            default: begin
-                serve_ready = 1'bx;
-                do_ack = 1'bx;
             end
         endcase
     end
@@ -2082,8 +2140,8 @@ module mmu_virtual_memory_interface #(
     logic vmi_we;
     logic vmi_x;
 
-    assign vmi_we = serve_ready ? vmi_write_enable_i_buf : vmi_write_enable_i;
-    assign vmi_x  = serve_ready ? vmi_data_i_buf[0]      : vmi_data_i[0];
+    assign vmi_we = serve_ready ? vmi_write_enable_i : vmi_write_enable_i_buf ;
+    assign vmi_x  = serve_ready ? vmi_data_i[0]      : vmi_data_i_buf[0];
 
     logic  sv32_check_bit;
     assign sv32_check_bit = vmi_we ? sv32_pte_perm[`PTE_W] 
@@ -2153,6 +2211,12 @@ module mmu_virtual_memory_interface #(
 
     logic [3:0] debug_sv32_pte_state_cause;
 
+    logic sv32_pte_check_mode;
+    assign sv32_pte_check_mode = serve_ready ? mode_i : mode_buf;
+
+    logic sv32_pte_check_sum;
+    assign sv32_pte_check_sum = serve_ready ? sum_i : sum_buf;
+
     always_comb begin
         // TODO: not check misaligned superpage
         // TODO: not check A/D bits
@@ -2169,11 +2233,11 @@ module mmu_virtual_memory_interface #(
                     sv32_pte_state = PF;
                     debug_sv32_pte_state_cause = 4'h2;
 
-                end else if (~sv32_pte_perm[`PTE_U] & mode_buf == U_MODE) begin
+                end else if (~sv32_pte_perm[`PTE_U] & sv32_pte_check_mode == U_MODE) begin
                     sv32_pte_state = PF;
                     debug_sv32_pte_state_cause = 4'h3;
 
-                end else if (sv32_pte_perm[`PTE_U] & mode_buf == S_MODE & ~sum_buf) begin
+                end else if (sv32_pte_perm[`PTE_U] & sv32_pte_check_mode == S_MODE & ~sv32_pte_check_sum) begin
                     sv32_pte_state = PF;
                     debug_sv32_pte_state_cause = 4'h4;
 
@@ -2213,9 +2277,9 @@ module mmu_virtual_memory_interface #(
     tlb_sv32 tlb_sv32_inst (
         .clk_i          (clk_i),
         .rst_i          (rst_i),
-        .enable_i       (sv32_tlb_enable),
+        .enable_i       (sv32_tlb_enable_i),
         .write_enable_i (sv32_tlb_write_enable_i),
-        .clear_i        (flush_i),
+        .clear_i        (~sync_done_o),
 
         .vpn_i          (sv32_tlb_vpn),
         .ppn_i          (sv32_tlb_ppn_i),
@@ -2239,7 +2303,7 @@ module mmu_virtual_memory_interface #(
             sv32_tlb_vpn          = sv32_all_vpn_buf;
             sv32_tlb_ppn_i        = pmi_data_o[`PTE_PPN];
             sv32_tlb_perm_i       = pmi_data_o[`PTE_PERM];
-            if (state == FETCH_PTE_DONE_LEAF || state == FETCH_PTE_DONE_FAULT) begin
+            if ((state == FETCH_PTE_DONE_LEAF) || (state == FETCH_PTE_DONE_FAULT)) begin
                 sv32_tlb_write_enable = 1'b1;
             end else begin
                 sv32_tlb_write_enable = 1'b0;
@@ -2290,12 +2354,10 @@ module mmu_virtual_memory_interface #(
     end
 
     always_comb begin
-        raw_state_next = _IDLE;
-        case (state) 
-            // serve ready state
-            IDLE, MEM_DONE: begin
+        case (raw_state)
+            _IDLE: begin
                 if (serve) begin
-
+ 
                     if (!sv32_enable) begin
                         raw_state_next = MEM_OPERATION;
                     end else if (sv32_tlb_hit) begin
@@ -2307,30 +2369,95 @@ module mmu_virtual_memory_interface #(
                     end else begin
                         raw_state_next = FETCH_PTE;
                     end
-
+   
                 end else begin
                     raw_state_next = _IDLE;
                 end
             end
-            FETCH_PTE_DONE_NEXT, FETCH_PTE_WAIT: begin
-                raw_state_next = FETCH_PTE;
+            FETCH_PTE: begin
+                if (!pmi_ack) begin
+                    raw_state_next = FETCH_PTE;
+                end else begin
+                    if (sv32_pte_state == OK) begin
+                        raw_state_next = MEM_OPERATION;
+                    end else if (sv32_pte_state == NEXT) begin
+                        raw_state_next = FETCH_PTE;
+                    end else begin
+                        raw_state_next = _REPORT_PF;
+                    end
+                end
             end
-            FETCH_PTE_DONE_LEAF, MEM_WAIT: begin
-                raw_state_next = MEM_OPERATION;
-            end
-            FETCH_PTE_DONE_FAULT: begin
-                raw_state_next = _REPORT_PF;
-            end
-            REPORT_PF: begin
-                raw_state_next = _IDLE;
-            end
-            default: begin
-                raw_state_next = _IDLE;
-            end
-            
-        endcase
+            MEM_OPERATION: begin
+                if (!pmi_ack) begin
+                    raw_state_next = MEM_OPERATION;
+                end else begin
+                    if (serve) begin
  
+                        if (!sv32_enable) begin
+                            raw_state_next = MEM_OPERATION;
+                        end else if (sv32_tlb_hit) begin
+                            if (sv32_pte_state == OK) begin
+                                raw_state_next = MEM_OPERATION;
+                            end else begin
+                                raw_state_next = _REPORT_PF;
+                            end
+                        end else begin
+                            raw_state_next = FETCH_PTE;
+                        end
+    
+                    end else begin
+                        raw_state_next = _IDLE;
+                    end
+                end
+            end
+            _REPORT_PF: begin
+                raw_state_next = _IDLE;
+            end
+        endcase
     end
+
+    // always_comb begin
+    //     raw_state_next = _IDLE;
+    //     case (state) 
+    //         // serve ready state
+    //         IDLE, MEM_DONE: begin
+    //             if (serve) begin
+// 
+    //                 if (!sv32_enable) begin
+    //                     raw_state_next = MEM_OPERATION;
+    //                 end else if (sv32_tlb_hit) begin
+    //                     if (sv32_pte_state == OK) begin
+    //                         raw_state_next = MEM_OPERATION;
+    //                     end else begin
+    //                         raw_state_next = _REPORT_PF;
+    //                     end
+    //                 end else begin
+    //                     raw_state_next = FETCH_PTE;
+    //                 end
+// 
+    //             end else begin
+    //                 raw_state_next = _IDLE;
+    //             end
+    //         end
+    //         FETCH_PTE_DONE_NEXT, FETCH_PTE_WAIT: begin
+    //             raw_state_next = FETCH_PTE;
+    //         end
+    //         FETCH_PTE_DONE_LEAF, MEM_WAIT: begin
+    //             raw_state_next = MEM_OPERATION;
+    //         end
+    //         FETCH_PTE_DONE_FAULT: begin
+    //             raw_state_next = _REPORT_PF;
+    //         end
+    //         REPORT_PF: begin
+    //             raw_state_next = _IDLE;
+    //         end
+    //         default: begin
+    //             raw_state_next = _IDLE;
+    //         end
+    //         
+    //     endcase
+ // 
+    // end
 
     logic [31:0] physical_addr;
 
@@ -2380,7 +2507,7 @@ module mmu_virtual_memory_interface #(
                 FETCH_PTE: begin
                     pmi_enable_i       = 1'b1;
                     pmi_write_enable_i = 1'b0;
-                    pmi_no_cache_i     = 1'b0;
+                    pmi_no_cache_i     = vmi_no_cache_i;
                     if (serve_ready) begin
                         pmi_addr_i     = sv32_pt_next + sv32_vpn_next[sv32_level_next] * `PTESIZE; // TODO: this can be optimized ()
                     end else begin
@@ -2445,7 +2572,7 @@ module mmu_virtual_memory_interface #(
     assign vmi_data_o     = do_ack ? ack_data_next : ack_data_buf;
     assign vmi_ack_addr_o = do_ack ? ack_addr_next : ack_addr_buf;
 
-    assign page_fault_o = raw_state == _REPORT_PF; // TODO: may optimize
+    assign page_fault_o = (raw_state == _REPORT_PF); // TODO: may optimize
 
     assign debug_state_o = state;
     assign debug_sv32_pte_o = sv32_pte;
@@ -2455,6 +2582,14 @@ module mmu_virtual_memory_interface #(
     assign debug_sv32_pte_state_o = sv32_pte_state;
 
     assign debug_paddr_o = physical_addr;
+    assign debug_tlb_write_enable_o = sv32_tlb_write_enable_i;
+    assign debug_tlb_ppn_in_o = sv32_tlb_ppn_i;
+    assign debug_tlb_vpn_in_o = sv32_tlb_vpn;
+
+    assign debug_pmi_addr_in_o      =     pmi_addr_i;
+    assign debug_pmi_data_out_o     =     pmi_data_o;
+    assign debug_pmi_ack_o          =     pmi_ack_o;
+    assign debug_pmi_ack_addr_o     =     pmi_ack_addr_o;
 
 endmodule
 

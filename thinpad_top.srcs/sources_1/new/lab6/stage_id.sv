@@ -444,6 +444,7 @@ module id_instruction_decoder (
     assign tlb_clear_o = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0) // sfence.vma
                        || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b001 && inst_i[31:20] == 12'b0); // fence.i
 
+
 endmodule
 
 module id_control_flow_change_detector(
@@ -488,8 +489,8 @@ module id_control_flow_change_detector(
     assign branch  = (opcode == 7'b1100011);
 
 
-    //assign change_o = ecall || ebreak || sret || mret || sfence_vma || jal || jalr || branch;
-    assign change_o = ecall || ebreak || sret || mret || sfence_vma;
+    assign change_o = ecall || ebreak || sret || mret || sfence_vma || jal || jalr || branch;
+    // assign change_o = ecall || ebreak || sret || mret || sfence_vma;
 
 endmodule
 

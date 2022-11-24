@@ -135,9 +135,9 @@ typedef enum logic [1:0] {
 
 `endif
 
-`define EXP_MRET        32'd24
-`define EXP_SRET        32'd25
-`define EXP_SFENCE_VMA  32'd26
+`define EXP_MRET        32'd25
+`define EXP_SRET        32'd26
+`define EXP_SFENCE_VMA  32'd27
 
 
 `define MSTATUS_SIE    5'd1
