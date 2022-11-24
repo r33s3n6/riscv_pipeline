@@ -673,16 +673,6 @@ module mmu_memory_cache #(
     output logic        victim_o // write back needed
 );  
 
-    // logic [15:0] cache_cleared;
-    // always_ff @(posedge clk_i) begin
-    //     if (rst_i) begin
-    //         cache_cleared <= 16'b0;
-    //     end else begin
-    //         if (flush_i) begin
-    //             cache_cleared[flush_set_i] <= 1'b1;
-    //         end
-    //     end
-    // end
 
 
     logic [15:0] tag;
@@ -739,7 +729,41 @@ module mmu_memory_cache #(
     logic [  4:0] bram_addr_read;
 
     logic [399:0] bram_data_in;
+    logic [399:0] bram_data_out_raw;
+    logic [399:0] bram_data_out_prev_buf;
+
+
     logic [399:0] bram_data_out;
+
+    //logic [  4:0] bram_prev_write_addr;
+
+
+    logic collision_happened;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            collision_happened <= 1'b0;
+        end else begin
+            if (enable_i & write_enable_i & (bram_addr_write == bram_addr_read)) begin
+                collision_happened <= 1'b1;
+            end else begin
+                collision_happened <= 1'b0;
+            end
+        end
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            bram_data_out_prev_buf <= 400'b0;
+            //bram_prev_write_addr   <= 5'b0;
+        end else begin
+            bram_data_out_prev_buf <= bram_data_in;
+            //bram_prev_write_addr   <= bram_addr_write;
+        end
+    end
+
+    assign bram_data_out = collision_happened ? bram_data_out_prev_buf : bram_data_out_raw;
+
     bram_400x32 bram(
         .clka(clk_i),
         .ena(1'b1),
@@ -750,7 +774,7 @@ module mmu_memory_cache #(
         .clkb(clk_i),
         .enb(1'b1),
         .addrb(bram_addr_read),
-        .doutb(bram_data_out)
+        .doutb(bram_data_out_raw)
     );
 
 
@@ -821,15 +845,7 @@ module mmu_memory_cache #(
 
 
 
-    // select bit mask
-    logic [31:0] sel_bit_mask;
 
-    // generate bit mask
-    generate 
-        for (genvar i = 0; i < 32; i = i + 8) begin : gen_sel_bit_mask
-            assign sel_bit_mask[i+7:i] = {8{data_sel_i_buf[i/8]}};
-        end
-    endgenerate
 
 
     // cache hit logic
@@ -866,7 +882,7 @@ module mmu_memory_cache #(
         num_dirty_ways = {(CACHE_WAY_WIDTH+1){1'b0}};
         dirty_way_index = {CACHE_WAY_WIDTH{1'b0}};
         for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
-            if (dirty_arr_out[i]) begin
+            if (valid_arr_out[i] & dirty_arr_out[i]) begin
                 dirty_way_index = i;
                 num_dirty_ways = num_dirty_ways + 1;
             end
@@ -1021,6 +1037,7 @@ module mmu_memory_cache #(
                 if (hit) begin
                     hit_o = 1'b1;
                     data_o = data_arr_out[hit_index];
+                    addr_o = {9'b1_0000_0000, tag_arr_out[hit_index], index_buf, 2'b00 };
                 end
             end
             ST_CACHE_GOT_WRITE: begin
@@ -1039,8 +1056,13 @@ module mmu_memory_cache #(
                 // output logic
                 if (hit) begin
                     hit_o = 1'b1;
+                    addr_o = {9'b1_0000_0000, tag_arr_out[hit_index], index_buf, 2'b00 };
+
                     dirty_arr_in[hit_index] = dirty_i_buf; // actually it must be 1
-                    data_arr_in [hit_index] = (sel_bit_mask & data_i_buf) | (~sel_bit_mask & data_arr_out[hit_index]);
+                    data_arr_in [hit_index][31:24] = data_sel_i_buf[3] ? data_i_buf[31:24] : data_arr_out[hit_index][31:24];
+                    data_arr_in [hit_index][23:16] = data_sel_i_buf[2] ? data_i_buf[23:16] : data_arr_out[hit_index][23:16];
+                    data_arr_in [hit_index][15:8]  = data_sel_i_buf[1] ? data_i_buf[15:8]  : data_arr_out[hit_index][15:8];
+                    data_arr_in [hit_index][7:0]   = data_sel_i_buf[0] ? data_i_buf[7:0]   : data_arr_out[hit_index][7:0];
                     tag_arr_in  [hit_index] = tag_buf;
 
                     bram_addr_write = index_buf;
@@ -1252,7 +1274,11 @@ module mmu_physical_memory_interface #(
     output logic [ 3:0] wb_sel_o,
     output logic        wb_we_o,
 
-    output wire         sync_done_o
+    output wire         sync_done_o,
+
+    output wire  [ 4:0] debug_state_o,
+    output wire         debug_cache_hit_o,
+    output wire         debug_cache_addr_out_o
 );
     
     typedef enum logic [2:0] {
@@ -1262,7 +1288,8 @@ module mmu_physical_memory_interface #(
         BUS_VICTIM_OR_DONE,
         BUS_VICTIM_WAIT_OR_DONE, // write back needed
         CACHE_FLUSH_BUS_REQUEST_OR_DONE,
-        CACHE_FLUSH_BUS_WAIT_OR_DONE
+        CACHE_FLUSH_BUS_WAIT_OR_DONE,
+        _ERROR
     } raw_state_t;
 
     raw_state_t raw_state;
@@ -1294,11 +1321,15 @@ module mmu_physical_memory_interface #(
         CACHE_FLUSH_DONE,           // cf bus req/done    : (no ack) (no serve) cache flush all done
         CACHE_FLUSH_NEXT_SET,       // cf bus req/done    : (no ack) (no serve) cache flush next set
         CACHE_FLUSH_BUS_WAIT,       // cf bus wait/done   : (no ack) (no serve) wait for cache flush
-        CACHE_FLUSH_BUS_DONE        // cf bus wait/done   : (no ack) (no serve) cache flush one entry bus done
+        CACHE_FLUSH_BUS_DONE,       // cf bus wait/done   : (no ack) (no serve) cache flush one entry bus done
+
+        ERROR
        
     } state_t;
 
     state_t state;
+
+    
 
     
 
@@ -1330,6 +1361,8 @@ module mmu_physical_memory_interface #(
             CACHE_FLUSH_NEXT_SET     : begin do_ack = 1'b0; serve_ready = 1'b0; end
             CACHE_FLUSH_BUS_WAIT     : begin do_ack = 1'b0; serve_ready = 1'b0; end
             CACHE_FLUSH_BUS_DONE     : begin do_ack = 1'b0; serve_ready = 1'b0; end
+
+            ERROR                    : begin do_ack = 1'b0; serve_ready = 1'b0; end
  
             default                  : begin do_ack = 1'b0; serve_ready = 1'b0; end
         endcase
@@ -1601,6 +1634,9 @@ module mmu_physical_memory_interface #(
                     state = CACHE_FLUSH_BUS_WAIT;
                 end
             end
+            _ERROR: begin
+                state = ERROR;
+            end
             default: begin
                 state = IDLE;
             end
@@ -1616,6 +1652,12 @@ module mmu_physical_memory_interface #(
                 // serve ready state
                 IDLE, CACHE_HIT_NO_VICTIM, BUS_DONE_WRITE, BUS_DONE_READ,
                 BUS_NO_VICTIM, BUS_VICTIM_DONE: begin
+                    // if (ack_o & cache_hit & (cache_addr_out[31:2] != addr_i_buf[31:2])) begin
+                    //     raw_state <= _ERROR; // cache hit but addr not match
+                    // end else
+                    if (state == CACHE_HIT_NO_VICTIM && ~write_enable_i_buf && (cache_addr_out[31:2] != addr_i_buf[31:2])) begin
+                        raw_state <= _ERROR; // cache hit but addr not match
+                    end else
                     if (serve) begin
                         if (flush_i || flush_waiting) begin
                             raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
@@ -1653,6 +1695,9 @@ module mmu_physical_memory_interface #(
                 end
                 CACHE_FLUSH_DONE: begin
                     raw_state <= _IDLE;
+                end
+                ERROR: begin
+                    raw_state <= _ERROR;
                 end
                 default: begin
                     raw_state <= _IDLE;
@@ -1818,7 +1863,10 @@ module mmu_physical_memory_interface #(
     end
 
 
-    // cache flush control signals
+    
+    assign debug_state_o = state;
+    assign debug_cache_hit_o = cache_hit;
+    assign debug_cache_addr_out_o = cache_addr_out;
 
 
 
@@ -1892,7 +1940,11 @@ module mmu_virtual_memory_interface #(
     output logic [31:0] debug_pmi_addr_in_o,
     output logic [31:0] debug_pmi_data_out_o,
     output logic        debug_pmi_ack_o,
-    output logic [31:0] debug_pmi_ack_addr_o
+    output logic [31:0] debug_pmi_ack_addr_o,
+
+    output wire  [ 4:0] debug_pmi_state,
+    output wire         debug_pmi_cache_hit,
+    output wire         debug_pmi_cache_addr_out
 );
 
     logic         pmi_no_cache_i;
@@ -1936,7 +1988,11 @@ module mmu_virtual_memory_interface #(
         .wb_sel_o        (wb_sel_o),
         .wb_we_o         (wb_we_o),
 
-        .sync_done_o     (sync_done_o)
+        .sync_done_o     (sync_done_o),
+
+        .debug_state_o   (debug_pmi_state),
+        .debug_cache_hit_o (debug_pmi_cache_hit),
+        .debug_cache_addr_out_o (debug_pmi_cache_addr_out)
     );
 
 

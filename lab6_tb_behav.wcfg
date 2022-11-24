@@ -12,13 +12,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="30707600fs"></ZoomStartTime>
-      <ZoomEndTime time="31058481fs"></ZoomEndTime>
-      <Cursor1Time time="30766780fs"></Cursor1Time>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="384601fs"></ZoomEndTime>
+      <Cursor1Time time="0fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="381"></NameColumnWidth>
-      <ValueColumnWidth column_width="226"></ValueColumnWidth>
+      <ValueColumnWidth column_width="220"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="16" />
    <wave_markers>
@@ -165,7 +165,6 @@
    <wvobject fp_name="group373" type="group">
       <obj_property name="label">stage_if</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/if_mode" type="array">
          <obj_property name="ElementShortName">if_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">if_mode[1:0]</obj_property>
@@ -254,7 +253,6 @@
    <wvobject fp_name="group354" type="group">
       <obj_property name="label">stage_id</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/id_mode" type="array">
          <obj_property name="ElementShortName">id_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">id_mode[1:0]</obj_property>
@@ -839,6 +837,7 @@
    <wvobject fp_name="group364" type="group">
       <obj_property name="label">stage_exe</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/exe_mode" type="array">
          <obj_property name="ElementShortName">exe_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">exe_mode[1:0]</obj_property>
@@ -1068,7 +1067,6 @@
    <wvobject fp_name="group408" type="group">
       <obj_property name="label">stage_wb</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/wb_inst_pc" type="array">
          <obj_property name="ElementShortName">wb_inst_pc[31:0]</obj_property>
          <obj_property name="ObjectShortName">wb_inst_pc[31:0]</obj_property>
@@ -1410,7 +1408,6 @@
    <wvobject fp_name="group621" type="group">
       <obj_property name="label">if_vmi</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="group1686" type="group">
          <obj_property name="label">vmi</obj_property>
          <obj_property name="DisplayName">label</obj_property>
@@ -1462,6 +1459,10 @@
                <obj_property name="ElementShortName">vmi_data_o[31:0]</obj_property>
                <obj_property name="ObjectShortName">vmi_data_o[31:0]</obj_property>
             </wvobject>
+         </wvobject>
+         <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi_yield_i" type="logic">
+            <obj_property name="ElementShortName">pmi_yield_i</obj_property>
+            <obj_property name="ObjectShortName">pmi_yield_i</obj_property>
          </wvobject>
          <wvobject fp_name="/lab6_tb/dut/if_im_fetch/satp_i" type="array">
             <obj_property name="ElementShortName">satp_i[31:0]</obj_property>
@@ -2616,6 +2617,7 @@
       <wvobject fp_name="group790" type="group">
          <obj_property name="label">pmi</obj_property>
          <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
          <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/clk_i" type="logic">
             <obj_property name="ElementShortName">clk_i</obj_property>
             <obj_property name="ObjectShortName">clk_i</obj_property>
