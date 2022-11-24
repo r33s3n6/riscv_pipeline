@@ -866,7 +866,7 @@ module lab6_top (
         .no_flush_cache_i   (1'b0), 
 
         // memory interface signals
-        .vmi_no_cache_i     (if_mode != U_MODE),
+        .vmi_no_cache_i     (dip_sw[1]),
         .vmi_enable_i       (_if_do_next_req),
         .vmi_write_enable_i (1'b0),
         .vmi_addr_i         (if_request_addr),
@@ -1692,7 +1692,7 @@ module lab6_top (
         .no_flush_cache_i   (1'b0),
 
         // memory interface signals ()
-        .vmi_no_cache_i     (exe_mode != U_MODE),
+        .vmi_no_cache_i     (dip_sw[1]),
         .vmi_enable_i       (exe_next_mem_operation),
         .vmi_write_enable_i (exe_mem_write_enable),
         .vmi_addr_i         (exe_alu_y),
