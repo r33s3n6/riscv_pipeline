@@ -357,7 +357,7 @@ module id_instruction_decoder (
             if  (   (funct3 == 3'b000 && rs1 == 0 && rd == 0)  // fence
                 ||  (funct3 == 3'b001 && inst_i[31:20] == 12'b0 && rs1 == 5'b0) // fence.i
             ) begin
-                invalid_inst_o = 1'b0; // TODO: implement fence and fence.i (after we have dcache & icache)
+                invalid_inst_o = 1'b0; 
             end
 
         end else if (opcode == 7'b1110011) begin // system

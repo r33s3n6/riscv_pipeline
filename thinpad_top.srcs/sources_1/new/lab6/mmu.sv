@@ -128,465 +128,8 @@ module tlb_sv32 #(
 
 endmodule
 
-/*
 
-// TODO: rewrite logic, pass through if tlb hit, or fall back to memory
-module mmu_sv32(
-    // clk and reset
-    input  wire         clk_i,
-    input  wire         rst_i,
- 
-    input  wire  [31:0] satp_i, // IM and DM will not request with different modes
-    input  wire         sum_i, 
-    input  wire  [ 1:0] mode_i,
 
-    input  wire         tlb_clear_i,
-    output logic        page_fault_o,
-
-    // from IM-DM-bus
-    // wishbone slave interface
-    input  wire         wbs_cyc_i,
-    input  wire         wbs_stb_i,
-    output logic        wbs_ack_o,
-    input  wire  [31:0] wbs_adr_i,
-    input  wire  [31:0] wbs_dat_i, // if this is not zero, then it is a execution request
-    output logic [31:0] wbs_dat_o,
-    input  wire  [ 3:0] wbs_sel_i,
-    input  wire         wbs_we_i,
-
-    // to shared bus
-    // wishbone master interface
-    output logic        wbm_cyc_o,
-    output logic        wbm_stb_o,
-    input  wire         wbm_ack_i,
-    output logic [31:0] wbm_adr_o,
-    output logic [31:0] wbm_dat_o,
-    input  wire  [31:0] wbm_dat_i,
-    output logic [ 3:0] wbm_sel_o,
-    output logic        wbm_we_o,
-
-    output logic [ 1:0] debug_mmu_state_o,
-    output logic [31:0] debug_mmu_pf_pte_o,
-    output logic [ 3:0] debug_mmu_pf_cause_o,
-    input  wire         debug_tlb_enable_i,
-
-    output logic [31:0] debug_paddr_o,
-    output logic        debug_tlb_hit_o,
-    output logic [ 1:0] debug_pte_state_o
-);
-
-    typedef enum logic {
-        BARE = 1'b0,
-        SV32 = 1'b1
-    } satp_mode_t;
-
-    satp_mode_t satp_mode;
-    assign satp_mode = satp_mode_t'(satp_i[31]);
-
-
-    logic sv32_enable;
-    assign sv32_enable = !(satp_mode == BARE | mode_i == M_MODE);
-
-    logic         sv32_wbm_cyc_o;
-    logic         sv32_wbm_stb_o;
-    logic         sv32_wbs_ack_o;
-    logic  [31:0] sv32_wbm_adr_o;
-    logic  [31:0] sv32_wbm_dat_o;
-    logic  [31:0] sv32_wbs_dat_o;
-    logic  [ 3:0] sv32_wbm_sel_o;
-    logic         sv32_wbm_we_o;
-
-    always_comb begin
-        if (!sv32_enable) begin
-            // direct mapping
-            wbm_cyc_o = wbs_cyc_i;
-            wbm_stb_o = wbs_stb_i;
-            wbs_ack_o = wbm_ack_i;
-            wbm_adr_o = wbs_adr_i;
-            wbm_dat_o = wbs_dat_i;
-            wbs_dat_o = wbm_dat_i;
-            wbm_sel_o = wbs_sel_i;
-            wbm_we_o  = wbs_we_i;
-        end else begin
-            // do sv32 translation
-            wbm_cyc_o = sv32_wbm_cyc_o;
-            wbm_stb_o = sv32_wbm_stb_o;
-            wbs_ack_o = sv32_wbs_ack_o;
-            wbm_adr_o = sv32_wbm_adr_o;
-            wbm_dat_o = sv32_wbm_dat_o;
-            wbs_dat_o = sv32_wbs_dat_o;
-            wbm_sel_o = sv32_wbm_sel_o;
-            wbm_we_o  = sv32_wbm_we_o;
-        end
-
-    end
-
-    // Note: this is not optimized for simplicity
-    typedef enum logic [1:0] {
-        IDLE,
-        FETCH_PTE,
-        MEM_OPERATION
-
-    } sv32_state_t;
-    sv32_state_t state, state_next;
-
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            state <= IDLE;
-        end else begin
-            state <= state_next;
-        end
-    end
-    
-    // sv32 parameters
-    logic [ 9:0] sv32_vpn [0:1];
-    logic [19:0] sv32_all_vpn;
-    assign sv32_vpn[1] = wbs_adr_i[31:22];
-    assign sv32_vpn[0] = wbs_adr_i[21:12];
-
-    assign sv32_all_vpn = wbs_adr_i[31:12];
-
-
-    // pte check signals
-    logic [3:0] sv32_check_bit;
-    assign sv32_check_bit = wbs_we_i ? `PTE_W : wbs_dat_i[0] ? `PTE_X : `PTE_R;
-
-    logic  sv32_request_from_master;
-    logic  sv32_response_from_slave;
-
-    assign sv32_request_from_master = sv32_enable & wbs_cyc_i & wbs_stb_i;
-
-    assign sv32_response_from_slave  = sv32_enable & wbm_ack_i;
-
-
-    // tlb signals
-    logic        sv32_tlb_enable;
-    logic [19:0] sv32_tlb_vpn;
-    logic [21:0] sv32_tlb_ppn_i;
-    logic [ 7:0] sv32_tlb_perm_i;
-    logic [21:0] sv32_tlb_ppn_o;
-    logic [ 7:0] sv32_tlb_perm_o;
-    logic        sv32_tlb_hit_o;
-    logic        sv32_tlb_write_enable;
-
-    tlb_sv32 tlb_sv32_inst (
-        .clk_i          (clk_i),
-        .rst_i          (rst_i),
-        .enable_i       (sv32_tlb_enable),
-        .clear_i        (tlb_clear_i),
-        .vpn_i          (sv32_tlb_vpn),
-        .ppn_i          (sv32_tlb_ppn_i),
-        .perm_i         (sv32_tlb_perm_i),
-        .hit_o          (sv32_tlb_hit_o),
-        .ppn_o          (sv32_tlb_ppn_o),
-        .perm_o         (sv32_tlb_perm_o),
-        .write_enable_i (sv32_tlb_write_enable)
-    );
-    logic  sv32_tlb_hit;
-    assign sv32_tlb_hit =  debug_tlb_enable_i & sv32_tlb_hit_o;
-
-    assign sv32_tlb_vpn    = sv32_all_vpn;
-    assign sv32_tlb_enable = (state == IDLE) & sv32_request_from_master;
-
-
-    // walk status
-    logic [31:0] sv32_pt;
-    logic [ 1:0] sv32_level;
-
-    // sv32_wbm_* signals
-
-    logic        sv32_wbm_cyc_buf;
-    logic        sv32_wbm_stb_buf;
-    logic [31:0] sv32_wbm_adr_buf;
-    logic [31:0] sv32_wbm_dat_buf;
-    logic [ 3:0] sv32_wbm_sel_buf;
-    logic        sv32_wbm_we_buf;
-
-    logic [31:0] sv32_pt_buf;   
-    logic [ 1:0] sv32_level_buf;
-
-    logic        sv32_wbm_cyc_next;
-    logic        sv32_wbm_stb_next;
-    logic [31:0] sv32_wbm_adr_next;
-    logic [31:0] sv32_wbm_dat_next;
-    logic [ 3:0] sv32_wbm_sel_next;
-    logic        sv32_wbm_we_next;
-
-    logic [31:0] sv32_pt_next;   
-    logic [ 1:0] sv32_level_next;
-
-    logic        sv32_wbm_forward;
-
-    assign sv32_wbm_forward = 0;
-
-    // if we at state idle, we can immediately start new request by forwarding
-    assign sv32_wbm_cyc_o = sv32_wbm_forward ? sv32_wbm_cyc_next : sv32_wbm_cyc_buf;
-    assign sv32_wbm_stb_o = sv32_wbm_forward ? sv32_wbm_stb_next : sv32_wbm_stb_buf;
-    assign sv32_wbm_adr_o = sv32_wbm_forward ? sv32_wbm_adr_next : sv32_wbm_adr_buf;
-    assign sv32_wbm_dat_o = sv32_wbm_forward ? sv32_wbm_dat_next : sv32_wbm_dat_buf;
-    assign sv32_wbm_sel_o = sv32_wbm_forward ? sv32_wbm_sel_next : sv32_wbm_sel_buf;
-    assign sv32_wbm_we_o  = sv32_wbm_forward ? sv32_wbm_we_next  : sv32_wbm_we_buf;
-
-    assign sv32_pt        = sv32_wbm_forward ? sv32_pt_next      : sv32_pt_buf;
-    assign sv32_level     = sv32_wbm_forward ? sv32_level_next   : sv32_level_buf;
-
-
-    logic sv32_wbm_write_enable;
-    
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            sv32_wbm_cyc_buf <= 1'b0;
-            sv32_wbm_stb_buf <= 1'b0;
-            sv32_wbm_adr_buf <= 32'h0;
-            sv32_wbm_dat_buf <= 32'h0;
-            sv32_wbm_sel_buf <= 4'h0;
-            sv32_wbm_we_buf  <= 1'b0;
-
-            sv32_pt_buf      <= 32'h0;
-            sv32_level_buf   <= 0;
-        end else begin
-
-            if (sv32_wbm_write_enable) begin
-                sv32_wbm_cyc_buf <= sv32_wbm_cyc_next;
-                sv32_wbm_stb_buf <= sv32_wbm_stb_next;
-                sv32_wbm_adr_buf <= sv32_wbm_adr_next;
-                sv32_wbm_dat_buf <= sv32_wbm_dat_next;
-                sv32_wbm_sel_buf <= sv32_wbm_sel_next;
-                sv32_wbm_we_buf  <= sv32_wbm_we_next;
-            end
-
-            sv32_pt_buf      <= sv32_pt_next;
-            sv32_level_buf   <= sv32_level_next;
-
-        end
-    end
-
-
-    logic [31:0] sv32_pte;
-    assign sv32_pte = (sv32_enable & sv32_tlb_hit) ? {sv32_tlb_ppn_o, 2'b00, sv32_tlb_perm_o} : wbm_dat_i;
-
-
-    // pte_state begin 
-    // for permission check
-    logic [7:0] sv32_pte_perm;
-    assign sv32_pte_perm = sv32_pte[7:0];
-
-    typedef enum logic [1:0] {
-        OK,  // permission check ok
-        PF,  // page fault
-        NEXT // next level
-    } sv32_pte_state_t;
-
-    sv32_pte_state_t sv32_pte_state;
-
-    logic [3:0] debug_sv32_pte_state_cause;
-
-
-    always_comb begin
-        // TODO: not check misaligned superpage
-        // TODO: not check A/D bits
-        sv32_pte_state = PF;
-        debug_sv32_pte_state_cause = 4'hf;
-        
-        if (sv32_pte_perm[`PTE_V] == 1'b0 | (~sv32_pte_perm[`PTE_R] & sv32_pte_perm[`PTE_W])) begin
-            sv32_pte_state = PF;
-            debug_sv32_pte_state_cause = 4'h1;
-
-        end else begin
-            if (sv32_pte_perm[`PTE_R] | sv32_pte_perm[`PTE_X]) begin // leaf
-                if (sv32_pte_perm[sv32_check_bit] == 1'b0) begin
-                    sv32_pte_state = PF;
-                    debug_sv32_pte_state_cause = 4'h2;
-
-                end else if (~sv32_pte_perm[`PTE_U] & mode_i == U_MODE) begin
-                    sv32_pte_state = PF;
-                    debug_sv32_pte_state_cause = 4'h3;
-
-                end else if (sv32_pte_perm[`PTE_U] & mode_i == S_MODE & ~sum_i) begin
-                    sv32_pte_state = PF;
-                    debug_sv32_pte_state_cause = 4'h4;
-
-                end else begin
-                    sv32_pte_state = OK;
-                end
-            end else begin
-                if (sv32_level == 0) begin
-                    sv32_pte_state = PF;
-                    debug_sv32_pte_state_cause = 4'h5;
-
-                end else begin
-                    sv32_pte_state = NEXT;
-                end
-            end
-
-        end
-    end
-
-    // pte_state end
-
-    // as slave
-
-    simple_buffer sv32_output_buffer(
-        .clk_i          (clk_i),
-        .rst_i          (rst_i),
-        .data_i         (wbm_dat_i),
-        .data_o         (sv32_wbs_dat_o),
-        .write_enable_i (wbs_ack_o) // TODO: & ~sv32_wbm_we_o
-    );
-
-    
-
-    // state_next, page_fault
-    always_comb begin
-
-        page_fault_o          = 1'b0;
-        state_next            = state;
-        sv32_wbs_ack_o        = 1'b0;
-        sv32_wbm_write_enable = 1'b1;
-
-        case (state)
-            IDLE: begin
-                if (sv32_request_from_master) begin // new request
-                    if(sv32_tlb_hit) begin
-                        if (sv32_pte_state == OK) begin
-                            state_next = MEM_OPERATION; 
-                        end else if (sv32_pte_state == PF) begin
-                            state_next = IDLE;
-                        end
-                    end else begin
-                        state_next = FETCH_PTE;
-                    end  
-
-                end else begin
-                    sv32_wbm_write_enable = 1'b0;
-                end
-            end
-            FETCH_PTE: begin
-                
-                if (wbm_ack_i) begin
-                    if(sv32_pte_state == NEXT) begin
-                        state_next = FETCH_PTE;
-                    end else if (sv32_pte_state == OK) begin
-                        sv32_wbm_write_enable = 1'b1;
-                        state_next = MEM_OPERATION;
-                    end else if (sv32_pte_state == PF) begin
-                        state_next     = IDLE;
-                        sv32_wbs_ack_o = 1'b1;
-                        page_fault_o   = 1'b1;
-                    end
-                end else begin
-                    sv32_wbm_write_enable = 1'b0;
-                end
-            end
-
-            MEM_OPERATION: begin
-                if (wbm_ack_i) begin
-                    state_next = IDLE;
-                    sv32_wbs_ack_o = 1'b1;
-                end else begin 
-                    sv32_wbm_write_enable = 1'b0;
-                end
-            end
-
-
-        endcase
-    end
-
-     
-
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            sv32_tlb_ppn_i        <= 22'h0;
-            sv32_tlb_perm_i       <= 8'h0; 
-            sv32_tlb_write_enable <= 1'b0;   
-        end else begin
-            if ((state == FETCH_PTE) & (sv32_pte_state == OK) & wbm_ack_i) begin
-                sv32_tlb_ppn_i        <= wbm_dat_i[`PTE_PPN];
-                sv32_tlb_perm_i       <= wbm_dat_i[7:0];
-                sv32_tlb_write_enable <= 1'b1; // write tlb
-            end else 
-                sv32_tlb_write_enable <= 1'b0;
-            
-            
-        end
-    end
-
-
-    always_comb begin
-        sv32_pt_next    = sv32_pt_buf;
-        sv32_level_next = sv32_level_buf;
-
-        case (state)
-            IDLE: begin
-                if (sv32_request_from_master) begin // new request
-                    if(!sv32_tlb_hit) begin
-                        sv32_pt_next    = satp_i[21:0] * `PAGESIZE;
-                        sv32_level_next = `LEVELS-1;
-                    end
-                end
-            end
-            FETCH_PTE: begin
-                if (wbm_ack_i) begin
-                    if(sv32_pte_state == NEXT) begin
-                        sv32_pt_next    = wbm_dat_i[`PTE_PPN] * `PAGESIZE;
-                        sv32_level_next = sv32_level - 1;
-                    end 
-                end
-            end
-        endcase
-
-    end
-
-
-
-
-    // wbm signals
-    always_comb begin
-        sv32_wbm_cyc_next =  1'b0;
-        sv32_wbm_stb_next =  1'b0;
-        sv32_wbm_adr_next = 32'b0;
-        sv32_wbm_dat_next = 32'b0;
-        sv32_wbm_sel_next =  4'b0;
-        sv32_wbm_we_next  =  1'b0;
-
-        case (state_next)
-            IDLE: begin
-
-            end
-            FETCH_PTE: begin
-                sv32_wbm_cyc_next = 1'b1;
-                sv32_wbm_stb_next = 1'b1;
-                sv32_wbm_adr_next = sv32_pt_next + sv32_vpn[sv32_level_next] * `PTESIZE;
-                sv32_wbm_dat_next = 32'b0;
-                sv32_wbm_sel_next = 4'b1111;
-                sv32_wbm_we_next  = 1'b0;
-            end
-            MEM_OPERATION: begin
-                sv32_wbm_cyc_next = 1'b1;
-                sv32_wbm_stb_next = 1'b1;
-                sv32_wbm_adr_next = {sv32_pte[`PTE_PPN] , wbs_adr_i[11:0]};
-                sv32_wbm_dat_next = wbs_dat_i;
-                sv32_wbm_sel_next = wbs_sel_i;
-                sv32_wbm_we_next  = wbs_we_i;
-            end
-        endcase
-
-    end
-
-    assign debug_mmu_state_o    = state;
-    assign debug_mmu_pf_cause_o = debug_sv32_pte_state_cause;
-    assign debug_mmu_pf_pte_o   = sv32_pte;
-
-    assign debug_paddr_o        = {sv32_pte[`PTE_PPN] , wbs_adr_i[11:0]};
-    assign debug_tlb_hit_o      = sv32_tlb_hit;
-    assign debug_pte_state_o    = sv32_pte_state;
-
-endmodule
-*/
-
-
-// global
-// TODO: you may want forward if you change design(using cache)
 module mmu_vm_status_regs(
     input  wire         clk_i,
     input  wire         rst_i,
@@ -739,12 +282,14 @@ module mmu_memory_cache #(
 
 
     logic collision_happened;
+    logic collision_happening;
+    assign collision_happening = bram_write_enable & (bram_addr_write == bram_addr_read);
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             collision_happened <= 1'b0;
         end else begin
-            if (bram_write_enable & (bram_addr_write == bram_addr_read)) begin
+            if (collision_happening) begin
                 collision_happened <= 1'b1;
             end else begin
                 collision_happened <= 1'b0;
@@ -772,7 +317,7 @@ module mmu_memory_cache #(
         .dina(bram_data_in),
 
         .clkb(clk_i),
-        .enb(1'b1),
+        .enb(~collision_happening),
         .addrb(bram_addr_read),
         .doutb(bram_data_out_raw)
     );
@@ -866,7 +411,7 @@ module mmu_memory_cache #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            state <= ST_IDLE; // TODO: change to ST_UNINITIALIZED to reset correctly on restart
+            state <= ST_UNINITIALIZED;
         end else begin
             state <= state_next;
         end
@@ -1135,8 +680,6 @@ module mmu_simple_memory_cache #(
     output logic        victim_o // write back needed
 );  
 
-    // TODO: implement cache
-
     // simple cache, test upper logic
     logic [31:0] cache_data; // just one data
     logic [31:0] cache_addr;
@@ -1287,7 +830,7 @@ module mmu_physical_memory_interface #(
     logic wb_cyc_o;
     logic wb_stb_o;
     
-    typedef enum logic [2:0] {
+    typedef enum logic [3:0] {
         _IDLE,
         CACHE_HIT_OR_BUS,
         BUS_WAIT_OR_DONE,
@@ -1295,7 +838,8 @@ module mmu_physical_memory_interface #(
         BUS_VICTIM_WAIT_OR_DONE, // write back needed
         CACHE_FLUSH_BUS_REQUEST_OR_DONE,
         CACHE_FLUSH_BUS_WAIT_OR_DONE,
-        _ERROR
+        _ERROR,
+        _WAIT_INIT
     } raw_state_t;
 
     raw_state_t raw_state;
@@ -1315,7 +859,7 @@ module mmu_physical_memory_interface #(
         BUS_WAIT,                   // bus wait or done   : (no ack) (no serve) wait for bus
         BUS_DONE_WRITE,             // bus wait or done   : (no ack) (serve)    no need to write back to cache (write miss) (acked before)
         BUS_DONE_READ,              // bus wait or done   : (ack)    (serve)    read miss ( no cache, so no write back )
-        BUS_DONE_READ_WRITE_BACK,   // bus wait or done   : (ack)    (no serve) write back to cache (read miss) // TODO: we can serve actually
+        BUS_DONE_READ_WRITE_BACK,   // bus wait or done   : (ack)    (no serve) write back to cache (read miss)
 
         BUS_VICTIM_REQUEST,         // bus victim or done : (no ack) (no serve) start bus request for victim
         BUS_NO_VICTIM,              // bus victim or done : (no ack) (serve)    no victim, serve
@@ -1329,7 +873,8 @@ module mmu_physical_memory_interface #(
         CACHE_FLUSH_BUS_WAIT,       // cf bus wait/done   : (no ack) (no serve) wait for cache flush
         CACHE_FLUSH_BUS_DONE,       // cf bus wait/done   : (no ack) (no serve) cache flush one entry bus done
 
-        ERROR
+        ERROR,
+        WAIT_INIT
        
     } state_t;
 
@@ -1338,7 +883,7 @@ module mmu_physical_memory_interface #(
     
     always_comb begin
         case(state) 
-            BUS_WAIT,BUS_VICTIM_WAIT, CACHE_FLUSH_BUS_WAIT:
+            BUS_WAIT, BUS_VICTIM_WAIT, CACHE_FLUSH_BUS_WAIT:
                 wait_bus_o = 1'b1;
             default:
                 wait_bus_o = 1'b0;
@@ -1394,6 +939,7 @@ module mmu_physical_memory_interface #(
             CACHE_FLUSH_BUS_DONE     : begin do_ack = 1'b0; serve_ready = 1'b0; end
 
             ERROR                    : begin do_ack = 1'b0; serve_ready = 1'b0; end
+            WAIT_INIT                : begin do_ack = 1'b0; serve_ready = 1'b0; end
  
             default                  : begin do_ack = 1'b0; serve_ready = 1'b0; end
         endcase
@@ -1403,7 +949,7 @@ module mmu_physical_memory_interface #(
     logic flush_waiting;
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            flush_waiting <= 1'b0;
+            flush_waiting <= 1'b1; // flush on reset
         end else begin
             if (enable_i && flush_i) begin
                 flush_waiting <= 1'b1;
@@ -1417,7 +963,7 @@ module mmu_physical_memory_interface #(
 
     logic serve;
 
-    assign serve = enable_i & serve_ready;
+    assign serve = enable_i & serve_ready | raw_state == _WAIT_INIT;
 
     // input buffer
     logic        no_cache_i_buf;
@@ -1668,6 +1214,9 @@ module mmu_physical_memory_interface #(
             _ERROR: begin
                 state = ERROR;
             end
+            _WAIT_INIT : begin
+                state = WAIT_INIT;
+            end
             default: begin
                 state = IDLE;
             end
@@ -1677,7 +1226,7 @@ module mmu_physical_memory_interface #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            raw_state <= _IDLE;
+            raw_state <= _WAIT_INIT;
         end else begin
             case (state) 
                 // serve ready state
@@ -1699,6 +1248,9 @@ module mmu_physical_memory_interface #(
                     end else begin
                         raw_state <= _IDLE;
                     end
+                end
+                WAIT_INIT: begin
+                    raw_state <= CACHE_FLUSH_BUS_REQUEST_OR_DONE;
                 end
                 CACHE_HIT_VICTIM, BUS_VICTIM_REQUEST: begin
                     raw_state <= BUS_VICTIM_WAIT_OR_DONE;
@@ -1789,7 +1341,7 @@ module mmu_physical_memory_interface #(
                 
             end
 
-            BUS_VICTIM_OR_DONE: begin // TODO
+            BUS_VICTIM_OR_DONE: begin 
                 if (~cache_victim) begin // no second bus request
                     wb_cyc_o = 1'b0;
                     wb_stb_o = 1'b0;
@@ -1904,8 +1456,6 @@ module mmu_physical_memory_interface #(
 endmodule
 
 
-
-// TODO: instrustion cache is now set as no flush, but we should invalidate it actually
 // you need provide address before posedge
 module mmu_virtual_memory_interface #(
     parameter CACHE_DATA_SIZE = 4, // bytes
@@ -1916,7 +1466,7 @@ module mmu_virtual_memory_interface #(
     input  wire         clk_i,
     input  wire         rst_i,
 
-    input  wire         no_flush_cache_i, // TODO: not implemented fence.i
+    input  wire         no_flush_cache_i, 
 
     // memory interface signals
     input  wire         vmi_no_cache_i,
