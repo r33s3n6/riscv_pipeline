@@ -445,7 +445,8 @@ module id_instruction_decoder (
                        || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b001 && inst_i[31:20] == 12'b0) // fence.i
                        || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b000); // fence
 
-
+    // TODO: sfence.vma flush cache as well, this is because ucore and supervisor don't call fence correctly
+    // as document said, you can modify ucore, and no need to flush cache when clearing tlb
 endmodule
 
 module id_control_flow_change_detector(
