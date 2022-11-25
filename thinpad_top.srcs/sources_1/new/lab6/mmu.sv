@@ -1265,8 +1265,8 @@ module mmu_physical_memory_interface #(
     output wire  [31:0] data_o,
 
     // wbm signals (as master) (fall back to wish bone bus)
-    output logic        wb_cyc_o,
-    output logic        wb_stb_o,
+    output logic        wb_cyc_final_o,
+    output logic        wb_stb_final_o,
     input  wire         wb_ack_i,
     output logic [31:0] wb_adr_o,
     output logic [31:0] wb_dat_o,
@@ -1276,10 +1276,16 @@ module mmu_physical_memory_interface #(
 
     output wire         sync_done_o,
 
+    input  wire         yield_bus_i,
+    output logic        wait_bus_o, // notify instruction fetch yield bus
+
     output wire  [ 4:0] debug_state_o,
     output wire         debug_cache_hit_o,
-    output wire         debug_cache_addr_out_o
+    output wire  [31:0] debug_cache_addr_out_o
 );
+
+    logic wb_cyc_o;
+    logic wb_stb_o;
     
     typedef enum logic [2:0] {
         _IDLE,
@@ -1330,6 +1336,31 @@ module mmu_physical_memory_interface #(
     state_t state;
 
     
+    always_comb begin
+        case(state) 
+            BUS_WAIT,BUS_VICTIM_WAIT, CACHE_FLUSH_BUS_WAIT:
+                wait_bus_o = 1'b1;
+            default:
+                wait_bus_o = 1'b0;
+        endcase
+    end
+
+    logic yield_bus_i_buf;
+    always_ff @(posedge clk_i) begin
+        if(rst_i) begin
+            yield_bus_i_buf <= 1'b0;
+        end else begin
+            if (yield_bus_i && wb_ack_i) begin
+                yield_bus_i_buf <= 1'b1;
+            end else begin
+                yield_bus_i_buf <= 1'b0;
+            end
+        end
+    end
+
+    assign wb_cyc_final_o = yield_bus_i_buf ? 1'b0 : wb_cyc_o;
+    assign wb_stb_final_o = yield_bus_i_buf ? 1'b0 : wb_stb_o;
+
 
     
 
@@ -1900,6 +1931,7 @@ module mmu_virtual_memory_interface #(
     output wire  [31:0] vmi_data_o,
 
     input  wire         pmi_yield_i,
+    output wire         pmi_wait_bus_o,
 
     // status signals (it is upper module's responsibility to keep these signals stable)
     input  wire  [31:0] satp_i, // IM and DM will not request with different modes
@@ -1920,6 +1952,7 @@ module mmu_virtual_memory_interface #(
     output wire         wb_we_o,
 
     output wire         sync_done_o,
+    
 
     // debug signals
 
@@ -1944,7 +1977,7 @@ module mmu_virtual_memory_interface #(
 
     output wire  [ 4:0] debug_pmi_state,
     output wire         debug_pmi_cache_hit,
-    output wire         debug_pmi_cache_addr_out
+    output wire  [31:0] debug_pmi_cache_addr_out
 );
 
     logic         pmi_no_cache_i;
@@ -1957,6 +1990,8 @@ module mmu_virtual_memory_interface #(
     logic         pmi_ack_o;
     logic  [31:0] pmi_data_o;
 
+
+
     mmu_physical_memory_interface # (
         .CACHE_DATA_SIZE (CACHE_DATA_SIZE),
         .CACHE_SETS      (CACHE_SETS),
@@ -1968,7 +2003,7 @@ module mmu_virtual_memory_interface #(
         .flush_i         (no_flush_cache_i? 1'b0 : flush_i),
  
         .no_cache_i      (pmi_no_cache_i),
-        .enable_i        (flush_i ? 1'b1 : (pmi_enable_i & ~pmi_yield_i)),
+        .enable_i        (flush_i ? 1'b1 : pmi_enable_i),
         .write_enable_i  (pmi_write_enable_i),
         .addr_i          (pmi_addr_i),
         .data_i          (pmi_data_i),
@@ -1979,8 +2014,8 @@ module mmu_virtual_memory_interface #(
         .ack_o           (pmi_ack_o),
         .data_o          (pmi_data_o),
  
-        .wb_cyc_o        (wb_cyc_o),
-        .wb_stb_o        (wb_stb_o),
+        .wb_cyc_final_o  (wb_cyc_o),
+        .wb_stb_final_o  (wb_stb_o),
         .wb_ack_i        (wb_ack_i),
         .wb_adr_o        (wb_adr_o),
         .wb_dat_o        (wb_dat_o),
@@ -1988,6 +2023,8 @@ module mmu_virtual_memory_interface #(
         .wb_sel_o        (wb_sel_o),
         .wb_we_o         (wb_we_o),
 
+        .yield_bus_i     (pmi_yield_i),
+        .wait_bus_o      (pmi_wait_bus_o),
         .sync_done_o     (sync_done_o),
 
         .debug_state_o   (debug_pmi_state),

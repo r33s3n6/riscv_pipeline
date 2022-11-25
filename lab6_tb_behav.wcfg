@@ -12,13 +12,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0fs"></ZoomStartTime>
-      <ZoomEndTime time="384601fs"></ZoomEndTime>
-      <Cursor1Time time="0fs"></Cursor1Time>
+      <ZoomStartTime time="1146903916fs"></ZoomStartTime>
+      <ZoomEndTime time="1147089417fs"></ZoomEndTime>
+      <Cursor1Time time="1147058500fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="381"></NameColumnWidth>
-      <ValueColumnWidth column_width="220"></ValueColumnWidth>
+      <ValueColumnWidth column_width="214"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="16" />
    <wave_markers>
@@ -165,6 +165,7 @@
    <wvobject fp_name="group373" type="group">
       <obj_property name="label">stage_if</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject fp_name="/lab6_tb/dut/if_mode" type="array">
          <obj_property name="ElementShortName">if_mode[1:0]</obj_property>
          <obj_property name="ObjectShortName">if_mode[1:0]</obj_property>
@@ -2207,10 +2208,6 @@
                <obj_property name="ElementShortName">hit_index[2:0]</obj_property>
                <obj_property name="ObjectShortName">hit_index[2:0]</obj_property>
             </wvobject>
-            <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache/sel_bit_mask" type="array">
-               <obj_property name="ElementShortName">sel_bit_mask[31:0]</obj_property>
-               <obj_property name="ObjectShortName">sel_bit_mask[31:0]</obj_property>
-            </wvobject>
             <wvobject fp_name="/lab6_tb/dut/if_im_fetch/pmi/cache/state" type="array">
                <obj_property name="ElementShortName">state[2:0]</obj_property>
                <obj_property name="ObjectShortName">state[2:0]</obj_property>
@@ -2834,6 +2831,46 @@
             <obj_property name="ElementShortName">data_o_next[31:0]</obj_property>
             <obj_property name="ObjectShortName">data_o_next[31:0]</obj_property>
          </wvobject>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/addr_i" type="array">
+         <obj_property name="ElementShortName">addr_i[31:0]</obj_property>
+         <obj_property name="ObjectShortName">addr_i[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/addr_o" type="array">
+         <obj_property name="ElementShortName">addr_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">addr_o[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_write_enable" type="logic">
+         <obj_property name="ElementShortName">bram_write_enable</obj_property>
+         <obj_property name="ObjectShortName">bram_write_enable</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_addr_write" type="array">
+         <obj_property name="ElementShortName">bram_addr_write[4:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_addr_write[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_addr_read" type="array">
+         <obj_property name="ElementShortName">bram_addr_read[4:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_addr_read[4:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_data_in" type="array">
+         <obj_property name="ElementShortName">bram_data_in[399:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_data_in[399:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_data_out_raw" type="array">
+         <obj_property name="ElementShortName">bram_data_out_raw[399:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_data_out_raw[399:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_data_out_prev_buf" type="array">
+         <obj_property name="ElementShortName">bram_data_out_prev_buf[399:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_data_out_prev_buf[399:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/bram_data_out" type="array">
+         <obj_property name="ElementShortName">bram_data_out[399:0]</obj_property>
+         <obj_property name="ObjectShortName">bram_data_out[399:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/collision_happened" type="logic">
+         <obj_property name="ElementShortName">collision_happened</obj_property>
+         <obj_property name="ObjectShortName">collision_happened</obj_property>
       </wvobject>
       <wvobject fp_name="/lab6_tb/dut/mem_dm_interface/pmi/cache/state_next" type="array">
          <obj_property name="ElementShortName">state_next[2:0]</obj_property>
