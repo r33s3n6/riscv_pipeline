@@ -866,7 +866,7 @@ module mmu_memory_cache #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            state <= ST_UNINITIALIZED;
+            state <= ST_IDLE; // TODO: change to ST_UNINITIALIZED to reset correctly on restart
         end else begin
             state <= state_next;
         end

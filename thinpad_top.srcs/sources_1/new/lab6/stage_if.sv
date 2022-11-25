@@ -132,6 +132,7 @@ module if_pc_controller (
 
 endmodule
 
+// TODO: this is deprecated, remove it
 // access instruction memory and buffer the result
 module if_im_controller #(
     parameter ADDR_WIDTH = 32,
@@ -341,6 +342,9 @@ module if_bubble_controller (
     input wire [31:0] inst_pc_i,
     input wire [31:0] inst_addr_i,
 
+    input wire        id_is_branch_i,
+    input wire        exe_is_branch_i,
+
     input wire        id_next_exception_i,
     input wire        exe_next_exception_i,
     input wire        mem_next_exception_i,
@@ -353,7 +357,9 @@ module if_bubble_controller (
                         || id_next_exception_i
                         || exe_next_exception_i
                         || mem_next_exception_i
-                        || wb_prev_exception_i;
+                        || wb_prev_exception_i
+                        || id_is_branch_i
+                        || exe_is_branch_i;
 
 endmodule
 

@@ -1,7 +1,7 @@
 // Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2019.2 (win64) Build 2708876 Wed Nov  6 21:40:23 MST 2019
-// Date        : Thu Nov 24 22:53:28 2022
+// Date        : Fri Nov 25 16:15:52 2022
 // Host        : DESKTOP-J3OH9BI running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode synth_stub
 //               G:/Workspaces/2022F/vivado/cod22-fuzx20/thinpad_top.srcs/sources_1/ip/ila_0/ila_0_stub.v
@@ -19,8 +19,8 @@ module ila_0(clk, probe0, probe1, probe2, probe3, probe4, probe5,
   probe18, probe19, probe20, probe21, probe22, probe23, probe24, probe25, probe26, probe27, probe28, 
   probe29, probe30, probe31, probe32, probe33, probe34, probe35, probe36, probe37, probe38, probe39, 
   probe40, probe41, probe42, probe43, probe44, probe45, probe46, probe47, probe48, probe49, probe50, 
-  probe51, probe52)
-/* synthesis syn_black_box black_box_pad_pin="clk,probe0[1:0],probe1[63:0],probe2[63:0],probe3[0:0],probe4[31:0],probe5[31:0],probe6[31:0],probe7[31:0],probe8[31:0],probe9[31:0],probe10[31:0],probe11[31:0],probe12[0:0],probe13[0:0],probe14[0:0],probe15[31:0],probe16[31:0],probe17[31:0],probe18[3:0],probe19[0:0],probe20[31:0],probe21[31:0],probe22[31:0],probe23[31:0],probe24[31:0],probe25[31:0],probe26[0:0],probe27[1:0],probe28[2:0],probe29[31:0],probe30[3:0],probe31[0:0],probe32[31:0],probe33[1:0],probe34[2:0],probe35[31:0],probe36[3:0],probe37[0:0],probe38[31:0],probe39[1:0],probe40[0:0],probe41[21:0],probe42[0:0],probe43[31:0],probe44[19:0],probe45[31:0],probe46[31:0],probe47[31:0],probe48[0:0],probe49[31:0],probe50[4:0],probe51[0:0],probe52[31:0]" */;
+  probe51, probe52, probe53, probe54, probe55, probe56, probe57, probe58, probe59, probe60)
+/* synthesis syn_black_box black_box_pad_pin="clk,probe0[1:0],probe1[63:0],probe2[63:0],probe3[0:0],probe4[31:0],probe5[31:0],probe6[31:0],probe7[31:0],probe8[31:0],probe9[31:0],probe10[31:0],probe11[31:0],probe12[0:0],probe13[0:0],probe14[0:0],probe15[31:0],probe16[31:0],probe17[31:0],probe18[3:0],probe19[0:0],probe20[31:0],probe21[31:0],probe22[31:0],probe23[31:0],probe24[31:0],probe25[31:0],probe26[0:0],probe27[1:0],probe28[2:0],probe29[31:0],probe30[3:0],probe31[0:0],probe32[31:0],probe33[1:0],probe34[2:0],probe35[31:0],probe36[3:0],probe37[0:0],probe38[31:0],probe39[1:0],probe40[0:0],probe41[21:0],probe42[0:0],probe43[31:0],probe44[19:0],probe45[31:0],probe46[31:0],probe47[31:0],probe48[0:0],probe49[31:0],probe50[4:0],probe51[0:0],probe52[31:0],probe53[31:0],probe54[31:0],probe55[31:0],probe56[0:0],probe57[0:0],probe58[0:0],probe59[3:0],probe60[0:0]" */;
   input clk;
   input [1:0]probe0;
   input [63:0]probe1;
@@ -75,4 +75,12 @@ module ila_0(clk, probe0, probe1, probe2, probe3, probe4, probe5,
   input [4:0]probe50;
   input [0:0]probe51;
   input [31:0]probe52;
+  input [31:0]probe53;
+  input [31:0]probe54;
+  input [31:0]probe55;
+  input [0:0]probe56;
+  input [0:0]probe57;
+  input [0:0]probe58;
+  input [3:0]probe59;
+  input [0:0]probe60;
 endmodule

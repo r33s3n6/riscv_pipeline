@@ -29,7 +29,11 @@ module sram_controller #(
     output wire sram_ce_n,
     output wire sram_oe_n,
     output wire sram_we_n,
-    output wire [SRAM_BYTES-1:0] sram_be_n
+    output wire [SRAM_BYTES-1:0] sram_be_n,
+
+    output wire [SRAM_DATA_WIDTH-1:0] debug_data_out,
+    output wire [SRAM_DATA_WIDTH-1:0] debug_data_in,
+    output wire                       debug_data_is_in
 );
 
   // set up inout
@@ -50,6 +54,7 @@ module sram_controller #(
 
   assign sram_data = sram_data_t_comb ? {SRAM_DATA_WIDTH{1'bz}} : sram_data_to_comb;
   assign sram_data_from_comb = sel_bit_mask_comb & sram_data;
+
 
 
   // define states
@@ -174,6 +179,8 @@ module sram_controller #(
   
   end
 
-
+  assign debug_data_in = sram_data;
+  assign debug_data_out = sram_data_to_comb;
+  assign debug_data_is_in = sram_data_t_comb;
 
 endmodule
