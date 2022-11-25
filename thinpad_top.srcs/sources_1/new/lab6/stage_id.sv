@@ -442,7 +442,8 @@ module id_instruction_decoder (
     assign sret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
     assign mret_o      = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0011000 && rd == 5'b0 && rs1 == 5'b0 && rs2 == 5'b00010);
     assign tlb_clear_o = (opcode == 7'b1110011 && funct3 == 3'b000 && funct7 == 7'b0001001 && rd == 5'b0) // sfence.vma
-                       || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b001 && inst_i[31:20] == 12'b0); // fence.i
+                       || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b001 && inst_i[31:20] == 12'b0) // fence.i
+                       || (opcode == 7'b0001111 && rd == 5'b0 && rs1 == 5'b0 && funct3 == 3'b000); // fence
 
 
 endmodule

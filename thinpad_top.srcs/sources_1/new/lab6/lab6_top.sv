@@ -758,7 +758,7 @@ module lab6_top (
     // end
 
     // branch
-    assign _if_branch_take = exe_is_branch & exe_branch_take & ~id_stall;
+    assign _if_branch_take = exe_is_branch & exe_branch_take & ~id_stall; // TODO: stall delay is so long
     assign _if_branch_last = id_is_branch | (exe_is_branch & id_stall);
 
 
