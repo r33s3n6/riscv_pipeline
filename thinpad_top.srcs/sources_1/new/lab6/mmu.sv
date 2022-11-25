@@ -1614,47 +1614,6 @@ module mmu_virtual_memory_interface #(
     logic serve_ready;
     logic do_ack;
 
-    // always_comb begin
-    //     case (state)
-    //         IDLE: begin
-    //             serve_ready = 1'b1;
-    //             do_ack = 1'b0;
-    //         end
-    //         FETCH_PTE_WAIT: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b0;
-    //         end
-    //         FETCH_PTE_DONE_NEXT: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b0;
-    //         end
-    //         FETCH_PTE_DONE_LEAF: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b0;
-    //         end
-    //         FETCH_PTE_DONE_FAULT: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b0;
-    //         end
-    //         MEM_WAIT: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b0;
-    //         end
-    //         MEM_DONE: begin
-    //             serve_ready = 1'b1;
-    //             do_ack = 1'b1;
-    //         end
-    //         REPORT_PF: begin
-    //             serve_ready = 1'b0;
-    //             do_ack = 1'b1;
-    //         end
-    //         default: begin
-    //             serve_ready = 1'bx;
-    //             do_ack = 1'bx;
-    //         end
-    //     endcase
-    // end
-
         always_comb begin
         case (raw_state)
             _IDLE: begin
@@ -2058,49 +2017,6 @@ module mmu_virtual_memory_interface #(
             end
         endcase
     end
-
-    // always_comb begin
-    //     raw_state_next = _IDLE;
-    //     case (state) 
-    //         // serve ready state
-    //         IDLE, MEM_DONE: begin
-    //             if (serve) begin
-// 
-    //                 if (!sv32_enable) begin
-    //                     raw_state_next = MEM_OPERATION;
-    //                 end else if (sv32_tlb_hit) begin
-    //                     if (sv32_pte_state == OK) begin
-    //                         raw_state_next = MEM_OPERATION;
-    //                     end else begin
-    //                         raw_state_next = _REPORT_PF;
-    //                     end
-    //                 end else begin
-    //                     raw_state_next = FETCH_PTE;
-    //                 end
-// 
-    //             end else begin
-    //                 raw_state_next = _IDLE;
-    //             end
-    //         end
-    //         FETCH_PTE_DONE_NEXT, FETCH_PTE_WAIT: begin
-    //             raw_state_next = FETCH_PTE;
-    //         end
-    //         FETCH_PTE_DONE_LEAF, MEM_WAIT: begin
-    //             raw_state_next = MEM_OPERATION;
-    //         end
-    //         FETCH_PTE_DONE_FAULT: begin
-    //             raw_state_next = _REPORT_PF;
-    //         end
-    //         REPORT_PF: begin
-    //             raw_state_next = _IDLE;
-    //         end
-    //         default: begin
-    //             raw_state_next = _IDLE;
-    //         end
-    //         
-    //     endcase
- // 
-    // end
 
     logic [31:0] physical_addr;
 
