@@ -136,6 +136,20 @@ module lab6_top (
 
     (* MARK_DEBUG = "TRUE" *) logic        core_tlb_clear;
 
+    (* MARK_DEBUG = "TRUE" *) logic        core_disable_tlb;
+    (* MARK_DEBUG = "TRUE" *) logic        core_disable_cache;
+    
+
+    assign core_disable_tlb   = dip_sw[0];
+    assign core_disable_cache = ~dip_sw[1]; // default disable cache for testcase's convenience
+
+    assign leds[0] = core_disable_tlb;
+    assign leds[1] = core_disable_cache;
+
+    assign leds[15:14] = core_mode;
+    assign leds[13] = core_time_irq;
+    
+
     /* =========== Wishbone Arbiter begin =========== */
     logic        wbm0_cyc_o;
     logic        wbm0_stb_o;
@@ -899,7 +913,7 @@ module lab6_top (
         .no_flush_cache_i   (1'b0), 
 
         // memory interface signals
-        .vmi_no_cache_i     (dip_sw[1]),
+        .vmi_no_cache_i     (core_disable_cache),
         .vmi_enable_i       (_if_do_next_req),
         .vmi_write_enable_i (1'b0),
         .vmi_addr_i         (if_request_addr),
@@ -935,7 +949,7 @@ module lab6_top (
 
         // debug signals
 
-        .debug_sv32_tlb_enable_i (~dip_sw[0]),
+        .debug_sv32_tlb_enable_i (~core_disable_tlb),
 
         .debug_state_o           (debug_if_vmi_state),
         .debug_sv32_pte_o        (debug_if_vmi_pte),
@@ -1729,7 +1743,7 @@ module lab6_top (
         .no_flush_cache_i   (1'b0),
 
         // memory interface signals ()
-        .vmi_no_cache_i     (dip_sw[1]),
+        .vmi_no_cache_i     (core_disable_cache),
         .vmi_enable_i       (exe_next_mem_operation),
         .vmi_write_enable_i (exe_mem_write_enable),
         .vmi_addr_i         (exe_alu_y),
@@ -1764,7 +1778,7 @@ module lab6_top (
 
         // debug signals
 
-        .debug_sv32_tlb_enable_i (~dip_sw[0]),
+        .debug_sv32_tlb_enable_i (~core_disable_tlb),
 
         .debug_state_o           (debug_mem_vmi_state),
         .debug_sv32_pte_o        (debug_mem_vmi_pte),
