@@ -42,7 +42,7 @@ endmodule
 // TODO: replace with optimized version
 // simple, read in 1 cycle
 module tlb_sv32 #(
-    parameter ENTRIES   = 4,
+    parameter ENTRIES   = 8,
     parameter IDX_WIDTH = $clog2(ENTRIES)
 ) (
     input  wire         clk_i,
@@ -187,11 +187,15 @@ endmodule
 // you MUST provide valid signals BEFORE posedge clk_i
 // and you can get valid data AFTER posedge clk_i
 module mmu_memory_cache #(
-    parameter CACHE_DATA_SIZE = 4, // bytes
-    parameter CACHE_SETS      = 32,
-    parameter CACHE_WAYS      = 8,
-    parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS),
-    parameter CACHE_WAY_WIDTH = $clog2(CACHE_WAYS)
+    parameter CACHE_DATA_SIZE  = 4, // bytes
+    parameter CACHE_SETS       = 1024,
+    parameter CACHE_WAYS       = 8,
+    parameter CACHE_SET_WIDTH  = $clog2(CACHE_SETS),
+    parameter CACHE_WAY_WIDTH  = $clog2(CACHE_WAYS),
+    parameter CACHE_TAG_WIDTH  = 21 - CACHE_SET_WIDTH,
+    parameter CACHE_DATA_WIDTH = CACHE_DATA_SIZE * 8,
+    parameter BRAM_WAY_WIDTH   = (2+CACHE_TAG_WIDTH+CACHE_DATA_WIDTH),
+    parameter BRAM_WIDTH       = BRAM_WAY_WIDTH*CACHE_WAYS
 )
 (
     input  wire         clk_i,
@@ -199,7 +203,6 @@ module mmu_memory_cache #(
 
     input  wire         flush_i,
     input  wire  [CACHE_SET_WIDTH-1:0] flush_set_i,
-    // output wire         flush_hit_o,
 
     input  wire         enable_i,
     input  wire         write_enable_i,
@@ -218,18 +221,18 @@ module mmu_memory_cache #(
 
 
 
-    logic [15:0] tag;
-    logic [ 4:0] index;
-    assign tag   = addr_i[22:7];
-    assign index = addr_i[6:2];
+    logic [CACHE_TAG_WIDTH-1:0] tag;
+    logic [CACHE_SET_WIDTH-1:0] index;
+    assign tag   = addr_i[22:22-CACHE_TAG_WIDTH+1];
+    assign index = addr_i[22-CACHE_TAG_WIDTH:2];
 
-    logic [15:0] tag_buf;
-    logic [ 4:0] index_buf;
+    logic [CACHE_TAG_WIDTH-1:0] tag_buf;
+    logic [CACHE_SET_WIDTH-1:0] index_buf;
     
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            index_buf <= 5'b0;
-            tag_buf   <= 16'b0;
+            index_buf <= 0;
+            tag_buf   <= 0;
         end else begin
             index_buf <= index;
             tag_buf   <= tag;
@@ -239,19 +242,16 @@ module mmu_memory_cache #(
     logic [31:0] data_i_buf;
     logic [ 3:0] data_sel_i_buf;
     logic dirty_i_buf;
-    //logic addr_i_buf;
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             data_i_buf     <= 32'b0;
             data_sel_i_buf <=  4'b0;
             dirty_i_buf    <=  1'b0;
-            //addr_i_buf     <= 32'b0;
         end else begin
             data_i_buf     <= data_i;
             data_sel_i_buf <= data_sel_i;
             dirty_i_buf    <= dirty_i;
-            //addr_i_buf     <= addr_i;
         end
     end
 
@@ -268,17 +268,15 @@ module mmu_memory_cache #(
 
     logic         bram_write_enable;
 
-    logic [  4:0] bram_addr_write;
-    logic [  4:0] bram_addr_read;
+    logic [CACHE_SET_WIDTH-1:0] bram_addr_write;
+    logic [CACHE_SET_WIDTH-1:0] bram_addr_read;
 
-    logic [399:0] bram_data_in;
-    logic [399:0] bram_data_out_raw;
-    logic [399:0] bram_data_out_prev_buf;
+    logic [BRAM_WIDTH-1:0] bram_data_in;
+    logic [BRAM_WIDTH-1:0] bram_data_out_raw;
+    logic [BRAM_WIDTH-1:0] bram_data_out_prev_buf;
 
 
-    logic [399:0] bram_data_out;
-
-    //logic [  4:0] bram_prev_write_addr;
+    logic [BRAM_WIDTH-1:0] bram_data_out;
 
 
     logic collision_happened;
@@ -299,17 +297,28 @@ module mmu_memory_cache #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            bram_data_out_prev_buf <= 400'b0;
-            //bram_prev_write_addr   <= 5'b0;
+            bram_data_out_prev_buf <= 0;
         end else begin
             bram_data_out_prev_buf <= bram_data_in;
-            //bram_prev_write_addr   <= bram_addr_write;
         end
     end
 
     assign bram_data_out = collision_happened ? bram_data_out_prev_buf : bram_data_out_raw;
 
-    bram_400x32 bram(
+    // bram_400x32 bram(
+    //     .clka(clk_i),
+    //     .ena(1'b1),
+    //     .wea(bram_write_enable),
+    //     .addra(bram_addr_write),
+    //     .dina(bram_data_in),
+// 
+    //     .clkb(clk_i),
+    //     .enb(~collision_happening),
+    //     .addrb(bram_addr_read),
+    //     .doutb(bram_data_out_raw)
+    // );
+
+    bram_360x1024 bram(
         .clka(clk_i),
         .ena(1'b1),
         .wea(bram_write_enable),
@@ -325,34 +334,34 @@ module mmu_memory_cache #(
 
     logic [CACHE_WAYS-1:0] valid_arr_out;
     logic [CACHE_WAYS-1:0] dirty_arr_out;
-    logic [          15:0] tag_arr_out   [0:CACHE_WAYS-1];
-    logic [          31:0] data_arr_out  [0:CACHE_WAYS-1];
+    logic [CACHE_TAG_WIDTH-1:0] tag_arr_out   [0:CACHE_WAYS-1];
+    logic [               31:0] data_arr_out  [0:CACHE_WAYS-1];
 
     logic [     CACHE_WAYS-1:0] cache_hit;
 
     logic [CACHE_WAYS-1:0] valid_arr_in;
     logic [CACHE_WAYS-1:0] dirty_arr_in; 
-    logic [          15:0] tag_arr_in   [0:CACHE_WAYS-1];
-    logic [          31:0] data_arr_in  [0:CACHE_WAYS-1];
+    logic [CACHE_TAG_WIDTH-1:0] tag_arr_in   [0:CACHE_WAYS-1];
+    logic [               31:0] data_arr_in  [0:CACHE_WAYS-1];
     
 
     // assign those arr
     generate
         for (genvar i = 0; i < CACHE_WAYS; i = i + 1) begin : gen_arr_out_wires
-            assign valid_arr_out[i] = bram_data_out[50*i+49];
-            assign dirty_arr_out[i] = bram_data_out[50*i+48];
-            assign tag_arr_out[i]   = bram_data_out[50*i+47:50*i+32];
-            assign data_arr_out[i]  = bram_data_out[50*i+31:50*i];
+            assign valid_arr_out[i] = bram_data_out[BRAM_WAY_WIDTH*i+33+CACHE_TAG_WIDTH]                     ;
+            assign dirty_arr_out[i] = bram_data_out[BRAM_WAY_WIDTH*i+32+CACHE_TAG_WIDTH]                     ;
+            assign tag_arr_out[i]   = bram_data_out[BRAM_WAY_WIDTH*i+31+CACHE_TAG_WIDTH:BRAM_WAY_WIDTH*i+32] ;
+            assign data_arr_out[i]  = bram_data_out[BRAM_WAY_WIDTH*i+31:BRAM_WAY_WIDTH*i]                    ;
             assign cache_hit[i]     = (tag_arr_out[i] == tag_buf) & valid_arr_out[i];
         end
     endgenerate
 
     generate
         for (genvar i = 0; i < CACHE_WAYS; i = i + 1) begin : gen_arr_in_wires
-            assign bram_data_in[50*i+49]         = valid_arr_in[i]; 
-            assign bram_data_in[50*i+48]         = dirty_arr_in[i]; 
-            assign bram_data_in[50*i+47:50*i+32] =   tag_arr_in[i];  
-            assign bram_data_in[50*i+31:50*i]    =  data_arr_in[i]; 
+            assign bram_data_in[BRAM_WAY_WIDTH*i+33+CACHE_TAG_WIDTH]                     = valid_arr_in[i]; 
+            assign bram_data_in[BRAM_WAY_WIDTH*i+32+CACHE_TAG_WIDTH]                     = dirty_arr_in[i]; 
+            assign bram_data_in[BRAM_WAY_WIDTH*i+31+CACHE_TAG_WIDTH:BRAM_WAY_WIDTH*i+32] =   tag_arr_in[i];  
+            assign bram_data_in[BRAM_WAY_WIDTH*i+31:BRAM_WAY_WIDTH*i]                    =  data_arr_in[i]; 
         end
     endgenerate
 
@@ -365,7 +374,7 @@ module mmu_memory_cache #(
     // assign clean_available and clean_index
     always_comb begin
         clean_available = 1'b0;
-        clean_index     = {CACHE_WAY_WIDTH{1'b0}};
+        clean_index     = 0;
         for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
             if (~(valid_arr_out[i] & dirty_arr_out[i])) begin
                 clean_available = 1'b1;
@@ -378,7 +387,7 @@ module mmu_memory_cache #(
     // assign hit and hit_index
     always_comb begin
         hit       = 1'b0;
-        hit_index = {CACHE_WAY_WIDTH{1'b0}};
+        hit_index = 0;
         for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
             if (cache_hit[i]) begin
                 hit       = 1'b1;
@@ -389,12 +398,7 @@ module mmu_memory_cache #(
     end
 
 
-
-
-
-
     // cache hit logic
-
 
     typedef enum logic [2:0] {
         ST_IDLE,
@@ -418,18 +422,17 @@ module mmu_memory_cache #(
     end
 
     // cache flush logic
-    // logic [     CACHE_WAYS-1:0] dirty_way; // set after entering flush state
     logic [  CACHE_WAY_WIDTH:0] num_dirty_ways;
     logic [CACHE_WAY_WIDTH-1:0] dirty_way_index;
 
     // assign num_dirty_ways and dirty_way
     always_comb begin
-        num_dirty_ways = {(CACHE_WAY_WIDTH+1){1'b0}};
-        dirty_way_index = {CACHE_WAY_WIDTH{1'b0}};
+        num_dirty_ways = 0;
+        dirty_way_index = 0;
         for (int i = 0; i < CACHE_WAYS; i = i + 1) begin
             if (valid_arr_out[i] & dirty_arr_out[i]) begin
                 dirty_way_index = i;
-                num_dirty_ways = num_dirty_ways + 1;
+                num_dirty_ways = num_dirty_ways + 1; // TODO: this can be replaced
             end
         end
     end
@@ -439,7 +442,7 @@ module mmu_memory_cache #(
     logic [CACHE_SET_WIDTH-1:0] flush_set_i_buf;
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            flush_set_i_buf <= {CACHE_SET_WIDTH{1'b0}};
+            flush_set_i_buf <= 0;
         end else begin
             flush_set_i_buf <= flush_set_i;
         end
@@ -473,14 +476,13 @@ module mmu_memory_cache #(
 
         
 
-
         case (state) 
             ST_UNINITIALIZED: begin
                 if (enable_i && flush_i) begin
                     state_next = ST_INIT_SET;
                     bram_write_enable = 1'b1;
-                    valid_arr_in = {CACHE_WAYS{1'b0}};
-                    dirty_arr_in = {CACHE_WAYS{1'b0}};
+                    valid_arr_in = 0;
+                    dirty_arr_in = 0;
                 end
             end
             ST_INIT_SET: begin
@@ -498,8 +500,8 @@ module mmu_memory_cache #(
                 end else if (enable_i && flush_i) begin
                     state_next = ST_INIT_SET;
                     bram_write_enable = 1'b1;
-                    valid_arr_in = {CACHE_WAYS{1'b0}};
-                    dirty_arr_in = {CACHE_WAYS{1'b0}};
+                    valid_arr_in = 0;
+                    dirty_arr_in = 0;
                 end else begin
                     state_next = ST_UNINITIALIZED;
                 end
@@ -512,7 +514,7 @@ module mmu_memory_cache #(
                     dirty_arr_in[dirty_way_index] = 1'b0;
                     valid_arr_in[dirty_way_index] = 1'b0;
                     data_arr_in[dirty_way_index]  = 32'h0;
-                    tag_arr_in[dirty_way_index]   = 16'h0;
+                    tag_arr_in[dirty_way_index]   = 0;
 
                     bram_write_enable = 1'b1;
                     bram_addr_write   = flush_set_i_buf; // write back last set
@@ -670,7 +672,7 @@ endmodule
 // and you can get valid data AFTER posedge clk_i
 module mmu_simple_memory_cache #(
     parameter CACHE_DATA_SIZE = 4, // bytes
-    parameter CACHE_SETS      = 32,
+    parameter CACHE_SETS      = 1024,
     parameter CACHE_WAYS      = 8,
     parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS) 
 )
@@ -801,7 +803,7 @@ endmodule
 // and you can get valid data AFTER posedge clk_i
 module mmu_physical_memory_interface #(
     parameter CACHE_DATA_SIZE = 4, // bytes
-    parameter CACHE_SETS      = 32,  
+    parameter CACHE_SETS      = 1024,  
     parameter CACHE_WAYS      = 8,
     parameter CACHE_SET_WIDTH = $clog2(CACHE_SETS) 
 )
@@ -1500,7 +1502,7 @@ endmodule
 // you need provide address before posedge
 module mmu_virtual_memory_interface #(
     parameter CACHE_DATA_SIZE = 4, // bytes
-    parameter CACHE_SETS      = 32,
+    parameter CACHE_SETS      = 1024,
     parameter CACHE_WAYS      = 8
 ) 
 (
