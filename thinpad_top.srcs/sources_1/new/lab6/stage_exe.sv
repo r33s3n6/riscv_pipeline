@@ -27,41 +27,71 @@ module exe_clz(
 
 endmodule
 
-
-module exe_alu(
-  input  wire signed [31:0] a,
-  input  wire        [31:0] b,
-  input  wire        [31:0] mask, // writable bits
-  input  wire        [ 3:0] op,
-  output logic       [31:0] y
+module exe_xperm8 (
+    input  wire  [31:0] elem_i,
+    input  wire  [31:0] idx_i,
+    output wire  [31:0] rd_o
 );
 
-  wire [5:0] clz_a;
-  exe_clz exe_clz_inst(
-    .val32(a),
-    .result(clz_a)
-  );
+    logic [7:0] elem_arr [0:3];
+    generate
+        for (genvar i = 0; i < 4; i = i + 1) begin : gen_elem_arr
+            assign elem_arr[i] = elem_i[8*i+7:8*i];
+        end
+    endgenerate 
 
-  always_comb begin
-    case (op)
-      `ALU_ADD   : y = a  +  b;
-      `ALU_SUB   : y = a  -  b;
-      `ALU_SLL   : y = a <<  b[4:0];
-      `ALU_SLT   : y =   signed'(a) <   signed'(b);
-      `ALU_SLTU  : y = unsigned'(a) < unsigned'(b);
-      `ALU_XOR   : y = a  ^  b;
-      `ALU_SRL   : y = a >>  b[4:0];
-      `ALU_SRA   : y = a >>> b[4:0];
-      `ALU_OR    : y = b  |  (a & mask); // set
-      `ALU_AND   : y = a  &  b;
-      `ALU_XNOR  : y = a  ^ ~b;
-      `ALU_CLZ   : y = {26'b0, clz_a[5:0]};
-      `ALU_MIN   : y =   signed'(a) <   signed'(b) ? a : b;
-      `ALU_CLR   : y = b & ~(a & mask);
-      `ALU_USE_A : y = (b & ~mask) | (a & mask);
-      default    : y = {32{1'bx}};
-    endcase
-  end
+
+    generate
+        for (genvar i = 0; i < 4; i = i + 1) begin : gen_rd_o
+            assign rd_o[8*i+7:8*i] = idx_i[8*i+7:8*i+2] == 6'b0 ? elem_arr[idx_i[8*i+1:8*i]] : 8'b0;
+        end
+    endgenerate 
+
+endmodule
+
+
+module exe_alu(
+    input  wire signed [31:0] a,
+    input  wire        [31:0] b,
+    input  wire        [31:0] mask, // writable bits
+    input  wire        [ 3:0] op,
+    output logic       [31:0] y
+);
+
+    wire [5:0] clz_a;
+    exe_clz exe_clz_inst(
+      .val32(a),
+      .result(clz_a)
+    );
+  
+    wire [31:0] xperm8_rd;
+    exe_xperm8 exe_xperm8_inst(
+        .elem_i(a),
+        .idx_i(b),
+        .rd_o(xperm8_rd)
+    );
+  
+    always_comb begin
+        case (op)
+            `ALU_ADD    : y = a  +  b;
+            `ALU_SUB    : y = a  -  b;
+            `ALU_SLL    : y = a <<  b[4:0];
+            `ALU_SLT    : y =   signed'(a) <   signed'(b);
+            `ALU_SLTU   : y = unsigned'(a) < unsigned'(b);
+            `ALU_XOR    : y = a  ^  b;
+            `ALU_SRL    : y = a >>  b[4:0];
+            `ALU_SRA    : y = a >>> b[4:0];
+            `ALU_OR     : y = b  |  (a & mask); // set
+            `ALU_AND    : y = a  &  b;
+            `ALU_XNOR   : y = a  ^ ~b;
+            `ALU_CLZ    : y = {26'b0, clz_a[5:0]};
+            `ALU_MIN    : y =   signed'(a) <   signed'(b) ? a : b;
+            `ALU_CLR    : y = b & ~(a & mask);
+            `ALU_USE_A  : y = (b & ~mask) | (a & mask);
+            `ALU_XPERM8 : y = xperm8_rd;
+            default     : y = {32{1'bx}};
+        endcase
+    end
     
 endmodule
 

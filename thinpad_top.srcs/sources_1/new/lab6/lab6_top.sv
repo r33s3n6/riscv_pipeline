@@ -736,6 +736,7 @@ module lab6_top (
 
     wire         _if_branch_last;
     wire         _if_branch_take;
+    wire         _if_raw_branch_take;
     logic        _if_do_next_req;
 
     wire         _if_pc_misaligned;
@@ -772,14 +773,15 @@ module lab6_top (
     // end
 
     // branch
-    assign _if_branch_take = exe_is_branch & exe_branch_take & ~id_stall; // TODO: stall delay is so long
+    assign _if_raw_branch_take = exe_is_branch & exe_branch_take;
+    assign _if_branch_take = _if_raw_branch_take & ~id_stall; // TODO: stall delay is so long
     assign _if_branch_last = id_is_branch | (exe_is_branch & id_stall);
 
 
     always_comb begin
         _if_do_next_req = 1'b0;
         // TODO: this orignally use pc_valid and some other signals simply, but it seems cause vivado to fail
-        if (~rst & ~_if_pc_misaligned & ~core_tlb_clear & ~_if_branch_last
+        if (~rst & ~_if_pc_misaligned & ~core_tlb_clear & ~id_is_branch
             & mem_cache_sync_done & ~id_exp_exception & ~exe_prev_exception 
             & ~mem_prev_exception & ~wb_prev_exception 
             & ~(_if_control_flow_change &(_if_inst_addr == _if_inst_pc))) begin
@@ -791,7 +793,7 @@ module lab6_top (
     always_comb begin
         // id stall, then we don't care the influence of exe
         // TODO: actually this can be optimized :)
-        if (  _if_branch_take
+        if (  _if_raw_branch_take
             | wb_prev_exception 
             | (_if_inst_addr == _if_inst_pc)) begin
 

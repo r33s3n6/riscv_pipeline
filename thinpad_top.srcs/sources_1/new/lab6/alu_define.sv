@@ -17,6 +17,7 @@
 `define ALU_MIN   4'b1010
 `define ALU_CLR   4'b1011
 `define ALU_USE_A 4'b1110
+`define ALU_XPERM8 4'b1111
 
 // comparator operations
 `define CMP_EQ   3'b000

@@ -175,6 +175,8 @@ module id_instruction_decoder (
         end else begin
             if (inst_type == R_TYPE && funct7[6:0] == 7'b0000101) begin // min
                 alu_op_o[3:0] = `ALU_MIN;
+            end else if (opcode == 7'b0110011 && funct7[6:0] == 7'b0010100 && funct3 == 3'b100) begin // xperm8
+                alu_op_o[3:0] = `ALU_XPERM8;
             end else if (opcode == 7'b1110011 && funct3[1:0] == 2'b01) begin // csrrw{,i}
                 alu_op_o[3:0] = `ALU_USE_A;
                 csr_mask_o = csr_mask;
@@ -348,6 +350,7 @@ module id_instruction_decoder (
                 ||  (funct3 == 3'b101 && funct7 == 7'b0100000) // sra
                 ||  (funct3 == 3'b110 && funct7 == 7'b0000000) // or
                 ||  (funct3 == 3'b111 && funct7 == 7'b0000000) // and
+                ||  (funct3 == 3'b100 && funct7 == 7'b0010100) // xperm8
             ) begin
                 invalid_inst_o = 1'b0;
             end
